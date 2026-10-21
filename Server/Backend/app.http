@@ -1,0 +1,89 @@
+@app_HostAddress = http://localhost:5047
+
+### Check PostgreSQL connectivity
+GET {{app_HostAddress}}/api/health/database
+Accept: application/json
+
+### List categories
+GET {{app_HostAddress}}/api/categories
+Accept: application/json
+
+### Register a customer
+POST {{app_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "customer@example.com",
+  "displayName": "BigFit Customer",
+  "password": "ChangeThis!Password123"
+}
+
+### Sign in (use the returned accessToken as a Bearer token below)
+POST {{app_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@example.com",
+  "password": "ChangeThis!Password123"
+}
+
+### Create a category
+POST {{app_HostAddress}}/api/categories
+Content-Type: application/json
+
+{
+  "name": "Dresses",
+  "gender": "Women",
+  "description": "Big size dresses"
+}
+
+### List products with catalogue filters
+GET {{app_HostAddress}}/api/products?search=shirt&size=3XL&color=Black&gender=Women&inStock=true&sortBy=price_asc&page=1&pageSize=24
+Accept: application/json
+
+### Create staff (Admin JWT required)
+POST {{app_HostAddress}}/api/admin/staff
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "staff@example.com",
+  "displayName": "BigFit Store Staff",
+  "temporaryPassword": "ChangeThis!Password123"
+}
+
+### Create a product with size/color variants
+POST {{app_HostAddress}}/api/products
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "name": "Classic BigFit Shirt",
+  "description": "Everyday relaxed-fit shirt",
+  "price": 499000,
+  "salePrice": 399000,
+  "currencyCode": "VND",
+  "imageUrl": "https://example.com/classic-shirt.jpg",
+  "categoryId": "7a82d2ef-e144-42ba-a51a-30a72983399d",
+  "isActive": true,
+  "variants": [
+    {
+      "sku": "BFS-CLASSIC-3XL-BLK",
+      "size": "3XL",
+      "color": "Black",
+      "stockQuantity": 12
+    }
+  ]
+}
+
+### Add a product variant and stock (replace product ID with the created product ID)
+POST {{app_HostAddress}}/api/products/00000000-0000-0000-0000-000000000000/variants
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "sku": "BFS-CLASSIC-4XL-NAVY",
+  "size": "4XL",
+  "color": "Navy",
+  "stockQuantity": 8
+}
