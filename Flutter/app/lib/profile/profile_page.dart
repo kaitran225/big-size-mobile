@@ -4,6 +4,9 @@ import '../models/store_product.dart';
 import '../shared/app_strings.dart';
 import '../shared/widgets/app_info_note.dart';
 import '../shared/widgets/app_list_tile_card.dart';
+import 'customer_reviews_page.dart';
+import 'fit_preferences_page.dart';
+import 'profile_edit_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key, required this.session});
@@ -34,20 +37,23 @@ class ProfilePage extends StatelessWidget {
         ),
         Center(child: Text(session?.email ?? AppStrings.signInToSaveProfile)),
         const SizedBox(height: 20),
-        const AppListTileCard(
+        AppListTileCard(
           icon: Icons.badge_outlined,
           title: AppStrings.accountType,
           subtitle: AppStrings.customerProfile,
+          onTap: () => _open(context, const ProfileEditPage()),
         ),
-        const AppListTileCard(
+        AppListTileCard(
           icon: Icons.straighten_outlined,
           title: AppStrings.fitPreferences,
           subtitle: AppStrings.fitPreferencesValue,
+          onTap: () => _open(context, const FitPreferencesPage()),
         ),
-        const AppListTileCard(
+        AppListTileCard(
           icon: Icons.rate_review_outlined,
           title: AppStrings.myReviews,
           subtitle: AppStrings.reviewsNotConnected,
+          onTap: () => _open(context, const CustomerReviewsPage()),
         ),
         const SizedBox(height: 12),
         const AppInfoNote(
@@ -57,4 +63,7 @@ class ProfilePage extends StatelessWidget {
       ],
     ),
   );
+
+  static void _open(BuildContext context, Widget page) =>
+      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
 }

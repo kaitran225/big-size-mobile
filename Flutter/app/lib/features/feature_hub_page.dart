@@ -4,6 +4,7 @@ import '../admin/store_management_page.dart';
 import '../map/delivery_map_page.dart';
 import '../models/store_product.dart';
 import '../payment/payment_page.dart';
+import '../payment/payment_result_page.dart';
 import '../profile/profile_page.dart';
 import '../security/security_page.dart';
 import '../shared/app_strings.dart';
@@ -42,6 +43,12 @@ class FeatureHubPage extends StatelessWidget {
           title: AppStrings.paymentMethods,
           subtitle: AppStrings.paymentMethodsSubtitle,
           onTap: () => _open(context, const PaymentPage()),
+        ),
+        AppListTileCard(
+          icon: Icons.receipt_long_outlined,
+          title: AppStrings.paymentResultTitle,
+          subtitle: AppStrings.paymentResultSubtitle,
+          onTap: () => _open(context, const PaymentResultPage()),
         ),
         AppListTileCard(
           icon: Icons.security_outlined,

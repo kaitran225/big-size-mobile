@@ -4,6 +4,9 @@ import '../shared/app_strings.dart';
 import '../shared/widgets/app_info_note.dart';
 import '../shared/widgets/app_list_tile_card.dart';
 import '../shared/widgets/app_section_header.dart';
+import 'email_verification_page.dart';
+import 'otp_entry_page.dart';
+import 'password_reset_page.dart';
 
 class SecurityPage extends StatelessWidget {
   const SecurityPage({super.key});
@@ -25,6 +28,7 @@ class SecurityPage extends StatelessWidget {
             AppStrings.verifyEmailDescription,
             AppStrings.emailServicePending,
           ),
+          onTap: () => _open(context, const EmailVerificationPage()),
           isThreeLine: true,
         ),
         AppListTileCard(
@@ -34,6 +38,7 @@ class SecurityPage extends StatelessWidget {
             AppStrings.resetPasswordDescription,
             AppStrings.resetApiPending,
           ),
+          onTap: () => _open(context, const PasswordResetPage()),
           isThreeLine: true,
         ),
         AppListTileCard(
@@ -43,6 +48,7 @@ class SecurityPage extends StatelessWidget {
             AppStrings.otpDescription,
             AppStrings.otpApiPending,
           ),
+          onTap: () => _open(context, const OtpEntryPage()),
           isThreeLine: true,
         ),
         const SizedBox(height: 12),
@@ -50,4 +56,7 @@ class SecurityPage extends StatelessWidget {
       ],
     ),
   );
+
+  static void _open(BuildContext context, Widget page) =>
+      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
 }

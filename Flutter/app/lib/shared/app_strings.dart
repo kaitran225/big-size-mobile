@@ -11,7 +11,6 @@ abstract final class AppStrings {
 
   static const String cancel = 'Cancel';
   static const String save = 'Save';
-  static const String continueAction = 'Continue';
   static const String later = 'Later';
   static const String tryAgain = 'Try again';
   static const String refresh = 'Refresh';
@@ -159,37 +158,15 @@ abstract final class AppStrings {
   // Payment ---------------------------------------------------------------
 
   static const String paymentTitle = 'Payment';
-  static const String choosePaymentMethod = 'Choose a payment method';
-  static const String paymentTotalNote =
-      'Your order total will appear here at checkout.';
-  static const String paymentCod = 'Cash on delivery';
-  static const String paymentCodSubtitle = 'Pay when your order arrives';
-  static const String paymentBank = 'Bank transfer';
-  static const String paymentBankSubtitle =
-      'Transfer instructions will be shown at checkout';
-  static const String paymentGateway = 'VNPay / MoMo';
-  static const String paymentGatewaySubtitle =
-      'Sandbox integration is not configured';
-  static const String paymentFrameNotice =
-      'This is a UI frame. No payment is created or charged until a backend '
-      'payment API and provider sandbox are connected.';
-  static const String paymentPreviewSnack =
-      'Preview only: payment processing is not connected.';
 
   // Map -------------------------------------------------------------------
 
   static const String mapTitle = 'Choose delivery location';
-  static const String mapSearchHint = 'Search for an address';
-  static const String demoLocation = 'BigFit demo location';
-  static const String mapPreviewNotice =
-      'Map preview only. Add a Maps SDK key to enable live maps and device '
-      'location.';
-  static const String selectedLocation = 'Selected location';
-  static const String useThisLocation = 'Use this location';
 
   // Profile ---------------------------------------------------------------
 
   static const String profileTitle = 'My profile';
+  static const String profileEditTitle = 'Account details';
   static const String avatarFallback = 'B';
   static const String guest = 'Guest';
   static const String signInToSaveProfile = 'Sign in to save your profile';
@@ -261,6 +238,15 @@ abstract final class AppStrings {
       'store data.';
   static const String storeManagementRestricted =
       'Store management is available to Admin and Store Staff accounts.';
+
+  // Placeholders ----------------------------------------------------------
+
+  static const String notImplementedLabel = 'NOT IMPLEMENTED';
+  static const String notImplementedNotice =
+      'This feature is scheduled for a later module.';
+  static const String paymentResultTitle = 'Payment result';
+  static const String paymentResultSubtitle =
+      'Success and failure states after a provider callback';
 
   // Errors ----------------------------------------------------------------
 

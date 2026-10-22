@@ -4,6 +4,9 @@ import '../shared/app_strings.dart';
 import '../shared/widgets/app_info_note.dart';
 import '../shared/widgets/app_list_tile_card.dart';
 import '../shared/widgets/app_section_header.dart';
+import 'admin_orders_page.dart';
+import 'admin_products_page.dart';
+import 'admin_reviews_page.dart';
 
 class StoreManagementPage extends StatelessWidget {
   const StoreManagementPage({super.key, required this.roles});
@@ -25,20 +28,23 @@ class StoreManagementPage extends StatelessWidget {
               children: [
                 const AppSectionHeader(text: AppStrings.managementOverview),
                 const SizedBox(height: 12),
-                const AppListTileCard(
+                AppListTileCard(
                   icon: Icons.inventory_2_outlined,
                   title: AppStrings.productsAndInventory,
                   subtitle: AppStrings.productsAndInventoryDetail,
+                  onTap: () => _open(context, const AdminProductsPage()),
                 ),
-                const AppListTileCard(
+                AppListTileCard(
                   icon: Icons.receipt_long_outlined,
                   title: AppStrings.ordersTitle,
                   subtitle: AppStrings.ordersDetail,
+                  onTap: () => _open(context, const AdminOrdersPage()),
                 ),
-                const AppListTileCard(
+                AppListTileCard(
                   icon: Icons.rate_review_outlined,
                   title: AppStrings.customerReviews,
                   subtitle: AppStrings.customerReviewsDetail,
+                  onTap: () => _open(context, const AdminReviewsPage()),
                 ),
                 const SizedBox(height: 12),
                 const AppInfoNote(
@@ -58,4 +64,7 @@ class StoreManagementPage extends StatelessWidget {
             ),
     );
   }
+
+  static void _open(BuildContext context, Widget page) =>
+      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
 }
