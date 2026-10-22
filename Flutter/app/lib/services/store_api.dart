@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -340,9 +340,9 @@ class StoreApi {
         if (detail is String && detail.isNotEmpty) return detail;
       }
     } on FormatException {
-      return AppStrings.requestFailed(response.statusCode);
+      return AppStrings.requestFailedWithStatus(response.statusCode);
     }
-    return AppStrings.requestFailed(response.statusCode);
+    return AppStrings.requestFailedWithStatus(response.statusCode);
   }
 
   void close() => _client.close();

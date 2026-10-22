@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
 import '../shared/app_strings.dart';
@@ -33,7 +33,7 @@ class ProductPriceLine extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          AppStrings.discountOffLower(product.discountPercent),
+          AppStrings.discountText(product.discountPercent),
           style: const TextStyle(
             color: Color(0xFFB43B31),
             fontWeight: FontWeight.w700,

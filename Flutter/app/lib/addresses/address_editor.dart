@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
 import '../shared/app_strings.dart';
@@ -59,7 +59,7 @@ class _AddressEditorState extends State<AddressEditor> {
   @override
   Widget build(BuildContext context) => AppDialog(
     title: widget.address == null
-        ? AppStrings.addAddressTitle
+        ? AppStrings.addAddress
         : AppStrings.editAddressTitle,
     cancelLabel: AppStrings.cancel,
     confirmLabel: AppStrings.save,

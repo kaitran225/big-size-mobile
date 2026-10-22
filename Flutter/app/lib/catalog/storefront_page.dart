@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../addresses/addresses_page.dart';
 import '../assistant/assistant_page.dart';
@@ -302,7 +302,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
       showAppErrorSnackBar(
         context,
         error,
-        fallback: AppStrings.errorChangeServer(error),
+        fallback: AppStrings.changeServerFailed(error),
       );
     }
   }
@@ -428,7 +428,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
             icon: const Icon(Icons.dns_outlined),
           ),
           IconButton(
-            tooltip: AppStrings.tooltipAiStylist,
+            tooltip: AppStrings.aiStylist,
             onPressed: () => _ensureSignedIn().then((ready) {
               if (ready && mounted) {
                 _openFeature(AssistantPage(api: widget.api, gender: _gender));
@@ -438,7 +438,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
           ),
           if (_session != null)
             IconButton(
-              tooltip: AppStrings.tooltipNotifications,
+              tooltip: AppStrings.notificationsTitle,
               onPressed: () => _openFeature(NotificationsPage(api: widget.api)),
               icon: const Icon(Icons.notifications_outlined),
             ),
@@ -453,8 +453,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
           ),
           IconButton(
             tooltip: _session == null
-                ? AppStrings.tooltipSignIn
-                : AppStrings.tooltipAccount,
+                ? AppStrings.signIn
+                : AppStrings.account,
             onPressed: _openAccount,
             icon: Icon(_session == null ? Icons.person_outline : Icons.person),
           ),
@@ -579,7 +579,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
           ),
           const NavigationDestination(
             icon: Icon(Icons.account_circle_outlined),
-            label: AppStrings.navAccount,
+            label: AppStrings.account,
           ),
           const NavigationDestination(
             icon: Icon(Icons.grid_view_outlined),
@@ -730,8 +730,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
 
   Widget _buildEmptyState() => const EmptyStateView(
     icon: Icons.checkroom_outlined,
-    title: AppStrings.emptyTitle,
-    message: AppStrings.emptySubtitle,
+    title: AppStrings.catalogEmptyTitle,
+    message: AppStrings.catalogEmptySubtitle,
   );
 
   Future<void> _showBag(BuildContext context) async {

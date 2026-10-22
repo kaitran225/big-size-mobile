@@ -1,15 +1,29 @@
+/// Every user-facing string in the BigFit app.
+///
+/// How to read this file:
+///
+///   * One constant per **distinct** string. Two constants never hold the
+///     same value, so the value is always a reliable way to find the name.
+///   * The name predicts the role of the string:
+///     - `error...` / `...Failed`  failure messages
+///     - `...Title`                screen or card titles
+///     - `...Empty`                "nothing here yet" messages
+///     - `...Hint`                 input hints
+///     - `...Label`                field and option labels
+///     - `...Subtitle` / `...Description` / `...Message` / `...Note`
+///                                supporting copy
+///     - `tooltip...`              icon button tooltips
+///   * Constants are grouped by the screen that shows them, so a string is
+///     found by going to its feature and scanning the group.
+///   * The last group holds the builders for strings that depend on runtime
+///     data. They read as sentences and are named after what they produce.
 abstract final class AppStrings {
-  // ---------------------------------------------------------------------
-  // App wide
-  // ---------------------------------------------------------------------
+  // App -------------------------------------------------------------------
 
   static const String appTitle = 'BigFit';
   static const String brandName = 'BIGFIT';
-  static const String separator = ' · ';
 
-  // ---------------------------------------------------------------------
-  // Shared actions and labels
-  // ---------------------------------------------------------------------
+  // Actions ---------------------------------------------------------------
 
   static const String cancel = 'Cancel';
   static const String save = 'Save';
@@ -19,9 +33,7 @@ abstract final class AppStrings {
   static const String refresh = 'Refresh';
   static const String required = 'Required';
 
-  // ---------------------------------------------------------------------
-  // Storefront
-  // ---------------------------------------------------------------------
+  // Storefront ------------------------------------------------------------
 
   static const String heroTitle = 'Clothing that fits';
   static const String heroSubtitle = 'Explore the BigFit collection';
@@ -38,18 +50,15 @@ abstract final class AppStrings {
   static const String sortPriceDesc = 'Price ↓';
   static const String sortNewest = 'Newest';
   static const String loadMore = 'Load more';
-  static const String emptyTitle = 'Your next favourite fit is on its way.';
-  static const String emptySubtitle =
+  static const String catalogEmptyTitle = 'Your next favourite fit is on its way.';
+  static const String catalogEmptySubtitle =
       'The cleaned catalogue is ready for review. Products will appear here '
       'after you approve and import the CSV.';
   static const String navShop = 'Shop';
   static const String navSale = 'Sale';
-  static const String navAccount = 'Account';
   static const String navMore = 'More';
 
-  // ---------------------------------------------------------------------
-  // Store connection
-  // ---------------------------------------------------------------------
+  // Store connection ------------------------------------------------------
 
   static const String storeConnectionTitle = 'Store connection';
   static const String renderDeployment = 'Render deployment';
@@ -58,9 +67,7 @@ abstract final class AppStrings {
       'The API path is added automatically. Changing servers signs you out so '
       'credentials are not reused on another server.';
 
-  // ---------------------------------------------------------------------
-  // Account sheet
-  // ---------------------------------------------------------------------
+  // Account sheet ---------------------------------------------------------
 
   static const String ordersTitle = 'Orders';
   static const String favoritesTitle = 'Favorites';
@@ -72,9 +79,7 @@ abstract final class AppStrings {
   static const String signIn = 'Sign in';
   static const String account = 'Account';
 
-  // ---------------------------------------------------------------------
-  // Authentication
-  // ---------------------------------------------------------------------
+  // Authentication --------------------------------------------------------
 
   static const String joinBigFit = 'Join BigFit';
   static const String welcomeBack = 'Welcome back';
@@ -94,9 +99,7 @@ abstract final class AppStrings {
   static const String validationPasswordLength = 'Use at least 12 characters.';
   static const String validationPasswordRequired = 'Enter your password.';
 
-  // ---------------------------------------------------------------------
-  // Product
-  // ---------------------------------------------------------------------
+  // Product ---------------------------------------------------------------
 
   static const String soldOut = 'SOLD OUT';
   static const String sizeAndColour = 'Size & colour';
@@ -104,9 +107,7 @@ abstract final class AppStrings {
   static const String addToBag = 'Add to bag';
   static const String addToFavorites = 'Add to favorites';
 
-  // ---------------------------------------------------------------------
-  // Cart and checkout
-  // ---------------------------------------------------------------------
+  // Cart and checkout -----------------------------------------------------
 
   static const String shoppingBagTitle = 'Shopping bag';
   static const String bagEmpty = 'Your bag is empty.';
@@ -124,35 +125,27 @@ abstract final class AppStrings {
       'backend yet.';
   static const String createOrder = 'Create order';
 
-  // ---------------------------------------------------------------------
-  // Favorites
-  // ---------------------------------------------------------------------
+  // Favorites -------------------------------------------------------------
 
   static const String favoritesEmpty = 'No favorites saved yet.';
   static const String addedToFavorites = 'Added to your favorites.';
 
-  // ---------------------------------------------------------------------
-  // Orders
-  // ---------------------------------------------------------------------
+  // Orders ----------------------------------------------------------------
 
   static const String orderHistoryTitle = 'Order history';
   static const String ordersEmpty = 'No orders yet.';
 
-  // ---------------------------------------------------------------------
-  // Addresses
-  // ---------------------------------------------------------------------
+  // Addresses -------------------------------------------------------------
 
   static const String deliveryAddressesTitle = 'Delivery addresses';
   static const String addressesEmpty = 'No delivery addresses saved yet.';
   static const String mapSdkNotice =
       'Map SDK is not configured. You can save optional coordinates '
       'manually; saved locations are sent to the backend.';
-  static const String addAddressTitle = 'Add address';
   static const String editAddressTitle = 'Edit address';
   static const String defaultAddressLabel = 'Home';
   static const String defaultCountryCode = 'VN';
   static const String setAsDefault = 'Set as default';
-  static const String defaultSuffix = ' · Default';
   static const String fieldAddressLabel = 'Address label';
   static const String fieldRecipientName = 'Recipient name';
   static const String fieldPhoneNumber = 'Phone number';
@@ -164,17 +157,13 @@ abstract final class AppStrings {
   static const String fieldLatitude = 'Latitude (optional)';
   static const String fieldLongitude = 'Longitude (optional)';
 
-  // ---------------------------------------------------------------------
-  // Notifications
-  // ---------------------------------------------------------------------
+  // Notifications ---------------------------------------------------------
 
   static const String pushNotConnectedNotice =
       'Live push updates are not connected yet';
   static const String notificationsEmpty = 'You are all caught up.';
 
-  // ---------------------------------------------------------------------
-  // Assistant
-  // ---------------------------------------------------------------------
+  // Assistant -------------------------------------------------------------
 
   static const String assistantTitle = 'BigFit AI stylist';
   static const String assistantSubtitle =
@@ -182,9 +171,7 @@ abstract final class AppStrings {
   static const String assistantEmpty = 'How can I help you find your fit?';
   static const String assistantInputHint = 'Ask your stylist…';
 
-  // ---------------------------------------------------------------------
-  // Payment
-  // ---------------------------------------------------------------------
+  // Payment ---------------------------------------------------------------
 
   static const String paymentTitle = 'Payment';
   static const String choosePaymentMethod = 'Choose a payment method';
@@ -204,9 +191,7 @@ abstract final class AppStrings {
   static const String paymentPreviewSnack =
       'Preview only: payment processing is not connected.';
 
-  // ---------------------------------------------------------------------
-  // Map
-  // ---------------------------------------------------------------------
+  // Map -------------------------------------------------------------------
 
   static const String mapTitle = 'Choose delivery location';
   static const String mapSearchHint = 'Search for an address';
@@ -217,9 +202,7 @@ abstract final class AppStrings {
   static const String selectedLocation = 'Selected location';
   static const String useThisLocation = 'Use this location';
 
-  // ---------------------------------------------------------------------
-  // Profile
-  // ---------------------------------------------------------------------
+  // Profile ---------------------------------------------------------------
 
   static const String profileTitle = 'My profile';
   static const String avatarFallback = 'B';
@@ -236,9 +219,7 @@ abstract final class AppStrings {
       'Profile editing and size preferences are shown as a frame. The current '
       'backend does not expose profile update or review endpoints.';
 
-  // ---------------------------------------------------------------------
-  // Account security
-  // ---------------------------------------------------------------------
+  // Account security ------------------------------------------------------
 
   static const String securityTitle = 'Account security';
   static const String securityHeadline = 'Protect your BigFit account';
@@ -260,9 +241,7 @@ abstract final class AppStrings {
       'UI preview only. Email delivery, OTP verification, retry limits, and '
       'password reset are not active.';
 
-  // ---------------------------------------------------------------------
-  // Feature hub
-  // ---------------------------------------------------------------------
+  // Feature hub -----------------------------------------------------------
 
   static const String featureHubTitle = 'More from BigFit';
   static const String yourAccount = 'Your account';
@@ -272,7 +251,6 @@ abstract final class AppStrings {
   static const String profileAndFitSignedIn =
       'Personal details, sizes, and reviews';
   static const String deliveryMap = 'Delivery map';
-  static const String chooseDeliveryLocation = 'Choose a delivery location';
   static const String paymentMethods = 'Payment methods';
   static const String paymentMethodsSubtitle =
       'COD, bank transfer, and gateway preview';
@@ -283,9 +261,7 @@ abstract final class AppStrings {
   static const String storeToolsSubtitle =
       'Products, inventory, orders, and reviews';
 
-  // ---------------------------------------------------------------------
-  // Store management
-  // ---------------------------------------------------------------------
+  // Store management ------------------------------------------------------
 
   static const String storeManagementTitle = 'Store management';
   static const String managementOverview = 'Management overview';
@@ -302,12 +278,8 @@ abstract final class AppStrings {
   static const String storeManagementRestricted =
       'Store management is available to Admin and Store Staff accounts.';
 
-  // ---------------------------------------------------------------------
-  // Errors
-  // ---------------------------------------------------------------------
+  // Errors ----------------------------------------------------------------
 
-  static const String errorGeneric =
-      'Could not complete the request. Please try again.';
   static const String errorRequestFailed =
       'The request failed. Please try again.';
   static const String errorSession =
@@ -316,7 +288,6 @@ abstract final class AppStrings {
       'Could not reach the BigFit store API. Check the server and API_BASE_URL.';
   static const String errorLoadMore = 'Could not load more products.';
   static const String errorLoadBag = 'Could not load your bag.';
-  static const String errorLoadCart = 'Could not load the shopping bag.';
   static const String errorAddToBag = 'Could not add this item to your bag.';
   static const String errorSaveFavorite = 'Could not save this favorite.';
   static const String errorSignIn =
@@ -327,42 +298,18 @@ abstract final class AppStrings {
   static const String invalidBaseUrl =
       'Enter a valid HTTP or HTTPS API base URL.';
 
-  // ---------------------------------------------------------------------
-  // Currency
-  // ---------------------------------------------------------------------
-
-  /// Symbols rendered next to a price for the currencies BigFit sells in.
-  static const Map<String, String> currencySymbols = {
-    'EUR': '€',
-    'USD': '\$',
-    'VND': '₫',
-  };
-
-  /// Currency displayed without decimal places.
-  static const String zeroDecimalCurrency = 'VND';
-
-  static String currencySymbol(String currencyCode) =>
-      currencySymbols[currencyCode] ?? '$currencyCode ';
-
-  // ---------------------------------------------------------------------
-  // Tooltips
-  // ---------------------------------------------------------------------
+  // Tooltips --------------------------------------------------------------
 
   static const String tooltipChooseServer = 'Choose API server';
-  static const String tooltipAiStylist = 'AI stylist';
-  static const String tooltipNotifications = 'Notifications';
-  static const String tooltipSignIn = 'Sign in';
-  static const String tooltipAccount = 'Account';
   static const String tooltipSearch = 'Search';
-  static const String tooltipRefresh = 'Refresh';
-  static const String tooltipAddAddress = 'Add address';
   static const String tooltipDeleteAddress = 'Delete address';
   static const String tooltipDeleteNotification = 'Delete notification';
   static const String tooltipRemoveItem = 'Remove item';
 
-  // ---------------------------------------------------------------------
-  // Composed strings
-  // ---------------------------------------------------------------------
+  // Builders --------------------------------------------------------------
+  //
+  // Strings that depend on runtime data. Each one is named after the text it
+  // produces so the call site reads like the sentence it shows.
 
   static String roleLabel(String roles) => 'Role: $roles';
 
@@ -370,19 +317,17 @@ abstract final class AppStrings {
 
   static String connectedTo(String url) => 'Connected to $url';
 
-  static String errorChangeServer(Object error) =>
+  static String changeServerFailed(Object error) =>
       'Could not change the API server: $error';
 
-  static String totalCountLabel(int count) => '$count products';
-
   static String productCountLabel(int shown, int total) =>
-      '$shown of ${totalCountLabel(total)}';
+      '$shown of $total products';
 
   static String shoppingBagTooltip(int count) => 'Shopping bag ($count)';
 
-  static String discountOff(int? percent) => '${percent ?? 0}% OFF';
+  static String discountBadge(int? percent) => '${percent ?? 0}% OFF';
 
-  static String discountOffLower(int? percent) => '${percent ?? 0}% off';
+  static String discountText(int? percent) => '${percent ?? 0}% off';
 
   static String addedToBag(String productName, String size) =>
       '$productName · $size added to bag';
@@ -390,11 +335,11 @@ abstract final class AppStrings {
   static String orderCreated(String orderNumber) =>
       'Order $orderNumber created. Payment is pending integration.';
 
-  static String requestFailed(int statusCode) =>
+  static String requestFailedWithStatus(int statusCode) =>
       'Request failed ($statusCode).';
 
-  static String addressWithDefault(String label, bool isDefault) =>
-      isDefault ? '$label$defaultSuffix' : label;
+  static String addressTitle(String label, bool isDefault) =>
+      isDefault ? '$label · Default' : label;
 
   static String addressSummary(
     String recipient,

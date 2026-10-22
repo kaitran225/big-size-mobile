@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
 import '../shared/app_strings.dart';
@@ -53,7 +53,7 @@ class ProductTile extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        AppStrings.discountOff(product.discountPercent),
+                        AppStrings.discountBadge(product.discountPercent),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,

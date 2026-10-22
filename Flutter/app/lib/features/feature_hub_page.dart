@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../admin/store_management_page.dart';
 import '../map/delivery_map_page.dart';
@@ -34,7 +34,7 @@ class FeatureHubPage extends StatelessWidget {
         AppListTileCard(
           icon: Icons.map_outlined,
           title: AppStrings.deliveryMap,
-          subtitle: AppStrings.chooseDeliveryLocation,
+          subtitle: AppStrings.mapTitle,
           onTap: () => _open(context, const DeliveryMapPage()),
         ),
         AppListTileCard(

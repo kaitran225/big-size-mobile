@@ -95,7 +95,7 @@ class _AddressesPageState extends State<AddressesPage> {
       title: const Text(AppStrings.deliveryAddressesTitle),
       actions: [
         IconButton(
-          tooltip: AppStrings.tooltipAddAddress,
+          tooltip: AppStrings.addAddress,
           onPressed: () => _editAddress(),
           icon: const Icon(Icons.add),
         ),
@@ -123,7 +123,7 @@ class _AddressesPageState extends State<AddressesPage> {
                           : Icons.place_outlined,
                     ),
                     title: Text(
-                      AppStrings.addressWithDefault(
+                      AppStrings.addressTitle(
                         address.label,
                         address.isDefault,
                       ),

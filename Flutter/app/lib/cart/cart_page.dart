@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../addresses/addresses_page.dart';
 import '../models/store_product.dart';
@@ -50,7 +50,7 @@ class _CartPageState extends State<CartPage> {
         setState(() {
           _error = error is StoreApiException
               ? error.message
-              : AppStrings.errorLoadCart;
+              : AppStrings.errorLoadBag;
           _loading = false;
         });
       }

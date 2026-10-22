@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
 import '../services/store_api.dart';
@@ -57,7 +57,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       title: const Text(AppStrings.notificationsTitle),
       actions: [
         IconButton(
-          tooltip: AppStrings.tooltipRefresh,
+          tooltip: AppStrings.refresh,
           onPressed: () => setState(_reload),
           icon: const Icon(Icons.refresh),
         ),
