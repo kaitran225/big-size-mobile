@@ -74,6 +74,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
                             product.imageUrl!,
                             width: 52,
                             fit: BoxFit.cover,
+                            webHtmlElementStrategy:
+                                WebHtmlElementStrategy.fallback,
                           ),
                     title: Text(product.name),
                     subtitle: Text(

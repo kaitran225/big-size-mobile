@@ -254,6 +254,8 @@ class _CartPageState extends State<CartPage> {
                                   width: 76,
                                   height: 90,
                                   fit: BoxFit.cover,
+                                  webHtmlElementStrategy:
+                                      WebHtmlElementStrategy.fallback,
                                   errorBuilder: (_, _, _) => const SizedBox(
                                     width: 76,
                                     height: 90,

@@ -48,6 +48,8 @@ class ProductTile extends StatelessWidget {
                       : Image.network(
                           product.imageUrl!,
                           fit: BoxFit.cover,
+                          webHtmlElementStrategy:
+                              WebHtmlElementStrategy.fallback,
                           errorBuilder: (context, error, stackTrace) =>
                               _imagePlaceholder(),
                         ),
@@ -207,6 +209,7 @@ class _ProductDetailsSheetState extends State<ProductDetailsSheet> {
                     height: 250,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                     errorBuilder: (context, error, stackTrace) =>
                         const SizedBox(height: 40),
                   ),
