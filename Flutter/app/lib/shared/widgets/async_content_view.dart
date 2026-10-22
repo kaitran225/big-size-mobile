@@ -13,12 +13,16 @@ class AsyncContentView<T> extends StatelessWidget {
     required this.builder,
     this.isEmpty,
     this.emptyMessage,
+    this.emptyIcon,
+    this.emptyTitle,
   });
 
   final Future<T> future;
   final Widget Function(BuildContext context, T data) builder;
   final bool Function(T data)? isEmpty;
   final String? emptyMessage;
+  final IconData? emptyIcon;
+  final String? emptyTitle;
 
   @override
   Widget build(BuildContext context) => FutureBuilder<T>(
@@ -32,7 +36,11 @@ class AsyncContentView<T> extends StatelessWidget {
       }
       final data = snapshot.data as T;
       if (isEmpty?.call(data) == true) {
-        return EmptyStateView(message: emptyMessage);
+        return EmptyStateView(
+          icon: emptyIcon,
+          title: emptyTitle,
+          message: emptyMessage,
+        );
       }
       return builder(context, data);
     },

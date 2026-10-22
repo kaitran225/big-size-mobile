@@ -158,6 +158,14 @@ abstract final class AppStrings {
   // Payment ---------------------------------------------------------------
 
   static const String paymentTitle = 'Payment';
+  static const String paymentCod = 'Cash on delivery';
+  static const String paymentCodSubtitle = 'Pay when your order arrives';
+  static const String paymentBank = 'Bank transfer';
+  static const String paymentBankSubtitle =
+      'Transfer instructions are sent after checkout';
+  static const String paymentGateway = 'VNPay / MoMo sandbox';
+  static const String paymentGatewaySubtitle =
+      'Simulated provider flow, no real money is charged';
 
   // Map -------------------------------------------------------------------
 
@@ -238,6 +246,126 @@ abstract final class AppStrings {
       'store data.';
   static const String storeManagementRestricted =
       'Store management is available to Admin and Store Staff accounts.';
+
+  // Storefront redesign ---------------------------------------------------
+
+  static const String promoHeadline = 'Up to 40% off mid-season styles';
+  static const String promoCaption = 'Free delivery over 2.000.000 VND';
+  static const String shopAll = 'Shop all';
+  static const String newIn = 'New in';
+  static const String bestSellers = 'Best sellers';
+  static const String womenCategory = 'Women';
+  static const String menCategory = 'Men';
+  static const String shopBySize = 'Shop by size';
+  static const String viewAll = 'View all';
+  static const String freeDeliveryNote = 'Free delivery on orders over 2.000.000 VND';
+  static const String easyReturnsNote = 'Free size exchange within 14 days';
+  static const String securePaymentNote = 'Secure checkout with sandbox payment';
+  static const String resultsFor = 'Results for';
+
+  // Product page ----------------------------------------------------------
+
+  static const String productDetailsTitle = 'Product';
+  static const String selectSize = 'Select a size';
+  static const String selectSizeFirst = 'Choose a size to continue';
+  static const String quantity = 'Quantity';
+  static const String productOverview = 'Overview';
+  static const String productCare = 'Care and fit';
+  static const String productCareNote =
+      'Machine wash cold, dry flat, and wash with similar colours.';
+  static const String fitGuarantee = 'BigFit fit guarantee';
+  static const String fitGuaranteeNote =
+      'Every order includes a free size exchange if the fit is not right.';
+  static const String onlyLeft = 'Only %d left';
+  static const String addToBagAndCheckout = 'Add to bag and checkout';
+
+  // Checkout --------------------------------------------------------------
+
+  static const String checkoutTitle = 'Checkout';
+  static const String stepContact = 'Contact';
+  static const String stepAddress = 'Address';
+  static const String stepPayment = 'Payment';
+  static const String stepDone = 'Done';
+  static const String useSavedContact = 'Use a saved contact';
+  static const String newContact = 'New contact';
+  static const String saveAndContinue = 'Save and continue';
+  static const String contactSaved = 'Contact saved';
+  static const String noSavedContacts = 'No saved contacts yet';
+  static const String deliveryAddressStep = 'Delivery address';
+  static const String dropPinHint =
+      'Tap the map to drop a pin on your address, then drag it to fine-tune.';
+  static const String pinPlaced = 'Pin placed';
+  static const String coordinatesLabel = 'Coordinates';
+  static const String clearPin = 'Clear pin';
+  static const String orderSummary = 'Order summary';
+  static const String delivery = 'Delivery';
+  static const String free = 'Free';
+  static const String total = 'Total';
+  static const String paymentStepTitle = 'Payment method';
+  static const String sandboxBanner = 'Sandbox mode';
+  static const String sandboxBannerNote =
+      'Payments run against a local sandbox. No real money is charged.';
+  static const String simulateFailure = 'Simulate a declined payment';
+  static const String processingPayment = 'Processing payment…';
+  static const String placeOrder = 'Place order';
+  static const String orderPlacedTitle = 'Order placed';
+  static const String orderPlacedBody =
+      'Your order is confirmed. Track it any time from your order history.';
+  static const String trackOrder = 'Track order';
+  static const String continueShopping = 'Continue shopping';
+  static const String paymentDeclinedTitle = 'Payment declined';
+  static const String paymentDeclinedBody =
+      'The sandbox gateway rejected this payment. Try another method.';
+  static const String tryAgain = 'Try again';
+  static const String paymentReference = 'Reference';
+
+  // Orders and tracking ----------------------------------------------------
+
+  static const String orderHistoryTitle = 'Order history';
+  static const String noOrdersTitle = 'No orders yet';
+  static const String noOrdersBody =
+      'When you place an order it will appear here with its tracking.';
+  static const String orderStatusTitle = 'Status';
+  static const String shipmentTracking = 'Shipment tracking';
+  static const String stagePlaced = 'Order placed';
+  static const String stageConfirmed = 'Confirmed';
+  static const String stagePacked = 'Packed';
+  static const String stageShipped = 'Shipped';
+  static const String stageOutForDelivery = 'Out for delivery';
+  static const String stageDelivered = 'Delivered';
+  static const String trackingNumber = 'Tracking number';
+  static const String courier = 'Courier';
+  static const String orderItems = 'Items';
+  static const String orderPlacedOn = 'Placed on';
+  static const String shippingTo = 'Shipping to';
+
+  // Staff tools ------------------------------------------------------------
+
+  static const String staffShipmentsTitle = 'Shipment tracker';
+  static const String staffShipmentsSubtitle =
+      'Live board of every shipment leaving the warehouse';
+  static const String advanceStatus = 'Advance status';
+  static const String markDelivered = 'Mark delivered';
+  static const String boardNote =
+      'Shipment states are held on the device for this demo.';
+  static const String noShipments = 'No shipments on the board';
+  static const String customerLabel = 'Customer';
+
+  // Account page -----------------------------------------------------------
+
+  static const String accountTitle = 'My account';
+  static const String accountSubtitle = 'Orders, addresses and account security';
+  static const String accountOrders = 'Orders';
+  static const String accountAddresses = 'Addresses';
+  static const String accountFavorites = 'Favourites';
+  static const String accountNotifications = 'Notifications';
+  static const String accountStylist = 'AI stylist';
+  static const String accountSecurity = 'Account security';
+  static const String accountMore = 'More features';
+  static const String accountStaff = 'Staff tools';
+  static const String accountOverview = 'Overview';
+  static const String signOutAction = 'Sign out';
+  static const String signedInAs = 'Signed in as';
 
   // Placeholders ----------------------------------------------------------
 

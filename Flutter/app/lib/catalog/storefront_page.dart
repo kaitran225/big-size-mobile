@@ -9,12 +9,13 @@ import '../features/feature_hub_page.dart';
 import '../models/store_product.dart';
 import '../notifications/notifications_page.dart';
 import '../orders/orders_page.dart';
+import '../profile/profile_page.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/widgets/app_snack_bar.dart';
 import '../shared/widgets/empty_state_view.dart';
 import '../shared/widgets/error_state_view.dart';
-import 'product_details_sheet.dart';
+import 'product_details_page.dart';
 import 'product_skeleton_card.dart';
 import 'product_tile.dart';
 
@@ -312,14 +313,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
   }
 
   void _openProduct(StoreProduct product) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => ProductDetailsSheet(
-        product: product,
-        onAddToBag: (variant) => _addToCart(product, variant),
-        onToggleFavorite: () => _toggleFavorite(product),
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ProductDetailsPage(api: widget.api, product: product),
       ),
     );
   }
@@ -458,7 +454,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
           ),
           IconButton(
             tooltip: _session == null ? AppStrings.signIn : AppStrings.account,
-            onPressed: _openAccount,
+            onPressed: () => _openFeature(ProfilePage(api: widget.api)),
             icon: Icon(_session == null ? Icons.person_outline : Icons.person),
           ),
           const SizedBox(width: 8),
@@ -566,7 +562,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
             setState(() => _onSale = !_onSale);
             _loadStore();
           } else if (index == 2) {
-            _openAccount();
+            _openFeature(ProfilePage(api: widget.api));
           } else if (index == 3) {
             _openFeature(FeatureHubPage(session: _session));
           }
