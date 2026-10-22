@@ -3,8 +3,9 @@
 import '../admin/store_management_page.dart';
 import '../map/delivery_map_page.dart';
 import '../models/store_product.dart';
+import '../services/store_api.dart';
+import '../staff/shipment_board_page.dart';
 import '../payment/payment_page.dart';
-import '../payment/payment_result_page.dart';
 import '../profile/profile_page.dart';
 import '../security/security_page.dart';
 import '../shared/app_strings.dart';
@@ -12,8 +13,9 @@ import '../shared/widgets/app_list_tile_card.dart';
 import '../shared/widgets/app_section_header.dart';
 
 class FeatureHubPage extends StatelessWidget {
-  const FeatureHubPage({super.key, required this.session});
+  const FeatureHubPage({super.key, required this.api, required this.session});
 
+  final StoreApi api;
   final AuthSession? session;
 
   @override
@@ -30,7 +32,7 @@ class FeatureHubPage extends StatelessWidget {
           subtitle: session == null
               ? AppStrings.profileAndFitPreview
               : AppStrings.profileAndFitSignedIn,
-          onTap: () => _open(context, ProfilePage(session: session)),
+          onTap: () => _open(context, ProfilePage(api: api)),
         ),
         AppListTileCard(
           icon: Icons.map_outlined,
@@ -45,12 +47,6 @@ class FeatureHubPage extends StatelessWidget {
           onTap: () => _open(context, const PaymentPage()),
         ),
         AppListTileCard(
-          icon: Icons.receipt_long_outlined,
-          title: AppStrings.paymentResultTitle,
-          subtitle: AppStrings.paymentResultSubtitle,
-          onTap: () => _open(context, const PaymentResultPage()),
-        ),
-        AppListTileCard(
           icon: Icons.security_outlined,
           title: AppStrings.securityTitle,
           subtitle: AppStrings.accountSecuritySubtitle,
@@ -60,6 +56,12 @@ class FeatureHubPage extends StatelessWidget {
           const SizedBox(height: 20),
           const AppSectionHeader(text: AppStrings.storeTools),
           const SizedBox(height: 10),
+          AppListTileCard(
+            icon: Icons.local_shipping_outlined,
+            title: AppStrings.staffShipmentsTitle,
+            subtitle: AppStrings.shipmentTracking,
+            onTap: () => _open(context, ShipmentBoardPage(api: api)),
+          ),
           AppListTileCard(
             icon: Icons.store_mall_directory_outlined,
             title: AppStrings.storeManagementTitle,

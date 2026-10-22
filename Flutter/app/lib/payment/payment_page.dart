@@ -71,24 +71,30 @@ class _PaymentPageState extends State<PaymentPage> {
           const SizedBox(height: AppSpacing.lg),
           Text(AppStrings.paymentStepTitle, style: theme.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.md),
-          ...PaymentMethod.values.map(
-            (method) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: Card(
-                child: RadioListTile<PaymentMethod>(
-                  value: method,
-                  groupValue: _method,
-                  onChanged: (value) =>
-                      setState(() => _method = value ?? _method),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
+          RadioGroup<PaymentMethod>(
+            groupValue: _method,
+            onChanged: (method) {
+              if (method != null) setState(() => _method = method);
+            },
+            child: Column(
+              children: [
+                for (final method in PaymentMethod.values)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: Card(
+                      child: RadioListTile<PaymentMethod>(
+                        value: method,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
+                        title: Text(
+                          _methodLabel(method),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
                   ),
-                  title: Text(
-                    _methodLabel(method),
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
+              ],
             ),
           ),
           SwitchListTile(

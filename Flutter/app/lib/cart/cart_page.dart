@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import 'checkout_page.dart';
 import '../models/store_product.dart';
@@ -138,7 +138,7 @@ class _CartPageState extends State<CartPage> {
   }
 
   Widget _buildCheckoutBar(Cart cart) {
-    final shipping = 4.9;
+    const shipping = 0.0;
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surface,
@@ -160,10 +160,7 @@ class _CartPageState extends State<CartPage> {
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     Text(
-                      formatPrice(
-                        cart.subtotal + shipping,
-                        cart.currencyCode,
-                      ),
+                      formatPrice(cart.subtotal + shipping, cart.currencyCode),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ],
@@ -246,7 +243,9 @@ class _CartLine extends StatelessWidget {
                   children: [
                     _StepperButton(
                       icon: Icons.remove,
-                      onPressed: busy ? null : () => onChange(item.quantity - 1),
+                      onPressed: busy
+                          ? null
+                          : () => onChange(item.quantity - 1),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(
@@ -256,8 +255,7 @@ class _CartLine extends StatelessWidget {
                     ),
                     _StepperButton(
                       icon: Icons.add,
-                      onPressed:
-                          busy || item.quantity >= item.stockQuantity
+                      onPressed: busy || item.quantity >= item.stockQuantity
                           ? null
                           : () => onChange(item.quantity + 1),
                     ),
@@ -309,7 +307,7 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final shipping = 4.9;
+    const shipping = 0.0;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),

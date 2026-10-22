@@ -52,6 +52,7 @@ class _MapPointPickerState extends State<MapPointPicker> {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final size = Size(constraints.maxWidth, widget.height);
+      final pin = _pin ?? _positionForCoordinates(size);
       return ClipRRect(
         borderRadius: BorderRadius.circular(AppRadii.lg),
         child: GestureDetector(
@@ -61,14 +62,12 @@ class _MapPointPickerState extends State<MapPointPicker> {
           child: Stack(
             children: [
               Positioned.fill(
-                child: CustomPaint(
-                  painter: _DeliveryMapPainter(pin: _pin),
-                ),
+                child: CustomPaint(painter: _DeliveryMapPainter(pin: pin)),
               ),
-              if (_pin != null)
+              if (pin != null)
                 Positioned(
-                  left: _pin!.dx - 22,
-                  top: _pin!.dy - 46,
+                  left: pin.dx - 22,
+                  top: pin.dy - 46,
                   child: const _PinMarker(),
                 ),
               Positioned(
@@ -104,6 +103,25 @@ class _MapPointPickerState extends State<MapPointPicker> {
     },
   );
 
+  Offset? _positionForCoordinates(Size size) {
+    final latitude = _latitude;
+    final longitude = _longitude;
+    if (latitude == null ||
+        longitude == null ||
+        latitude < _minLatitude ||
+        latitude > _maxLatitude ||
+        longitude < _minLongitude ||
+        longitude > _maxLongitude) {
+      return null;
+    }
+    return Offset(
+      (longitude - _minLongitude) /
+          (_maxLongitude - _minLongitude) *
+          size.width,
+      (_maxLatitude - latitude) / (_maxLatitude - _minLatitude) * size.height,
+    );
+  }
+
   void _updatePin(Offset position, Size size) {
     final dx = position.dx.clamp(0.0, size.width);
     final dy = position.dy.clamp(0.0, size.height);
@@ -133,11 +151,7 @@ class _PinMarker extends StatelessWidget {
           color: AppColors.brand,
           shape: BoxShape.circle,
         ),
-        child: const Icon(
-          Icons.location_on,
-          color: Colors.white,
-          size: 20,
-        ),
+        child: const Icon(Icons.location_on, color: Colors.white, size: 20),
       ),
       Container(width: 2, height: 12, color: AppColors.brand),
     ],

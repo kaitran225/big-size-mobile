@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../addresses/addresses_page.dart';
 import '../assistant/assistant_page.dart';
 import '../auth/auth_sheet.dart';
 import '../cart/cart_page.dart';
-import '../favorites/favorites_page.dart';
 import '../features/feature_hub_page.dart';
 import '../models/store_product.dart';
 import '../notifications/notifications_page.dart';
-import '../orders/orders_page.dart';
 import '../profile/profile_page.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
@@ -47,8 +44,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
   bool _loadingMore = false;
 
   bool get _isAdmin => (_session?.roles ?? const <String>[]).any(
-        (role) => role.toLowerCase().contains('admin'),
-      );
+    (role) => role.toLowerCase().contains('admin'),
+  );
 
   @override
   void initState() {
@@ -149,106 +146,6 @@ class _StorefrontPageState extends State<StorefrontPage> {
     }
   }
 
-  Future<void> _openAccount() async {
-    if (_session != null) {
-      final shouldSignOut = await showModalBottomSheet<bool>(
-        context: context,
-        showDragHandle: true,
-        builder: (context) => SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _session!.displayName,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 4),
-                Text(_session!.email),
-                const SizedBox(height: 6),
-                Text(AppStrings.roleLabel(_session!.roles.join(', '))),
-                const SizedBox(height: 20),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _accountAction(
-                      context,
-                      AppStrings.ordersTitle,
-                      Icons.receipt_long_outlined,
-                      () => _openFeature(OrdersPage(api: widget.api)),
-                    ),
-                    _accountAction(
-                      context,
-                      AppStrings.favoritesTitle,
-                      Icons.favorite_border,
-                      () => _openFeature(FavoritesPage(api: widget.api)),
-                    ),
-                    _accountAction(
-                      context,
-                      AppStrings.addressesTitle,
-                      Icons.location_on_outlined,
-                      () => _openFeature(AddressesPage(api: widget.api)),
-                    ),
-                    _accountAction(
-                      context,
-                      AppStrings.notificationsTitle,
-                      Icons.notifications_outlined,
-                      () => _openFeature(NotificationsPage(api: widget.api)),
-                    ),
-                    _accountAction(
-                      context,
-                      AppStrings.aiStylist,
-                      Icons.auto_awesome_outlined,
-                      () => _openFeature(
-                        AssistantPage(api: widget.api, gender: _gender),
-                      ),
-                    ),
-                    _accountAction(
-                      context,
-                      AppStrings.moreFeatures,
-                      Icons.grid_view_outlined,
-                      () => _openFeature(FeatureHubPage(session: _session!)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                OutlinedButton.icon(
-                  onPressed: () => Navigator.pop(context, true),
-                  icon: const Icon(Icons.logout),
-                  label: const Text(AppStrings.signOut),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-      if (shouldSignOut == true) {
-        await widget.api.signOut();
-        if (mounted) {
-          setState(() {
-            _session = null;
-            _cartCount = 0;
-          });
-        }
-      }
-      return;
-    }
-
-    final session = await showModalBottomSheet<AuthSession>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => AuthSheet(api: widget.api),
-    );
-    if (session != null && mounted) {
-      setState(() => _session = session);
-      await _refreshCartCount();
-    }
-  }
-
   Future<void> _chooseApiBaseUrl() async {
     final selectedUrl = await showModalBottomSheet<String>(
       context: context,
@@ -320,20 +217,6 @@ class _StorefrontPageState extends State<StorefrontPage> {
     );
   }
 
-  Widget _accountAction(
-    BuildContext context,
-    String label,
-    IconData icon,
-    VoidCallback onTap,
-  ) => ActionChip(
-    avatar: Icon(icon, size: 18),
-    label: Text(label),
-    onPressed: () {
-      Navigator.pop(context);
-      onTap();
-    },
-  );
-
   Future<void> _openFeature(Widget page) async {
     await Navigator.of(context)
         .push(MaterialPageRoute<void>(builder: (_) => page));
@@ -361,40 +244,6 @@ class _StorefrontPageState extends State<StorefrontPage> {
     } catch (error) {
       if (!mounted) return;
       showAppErrorSnackBar(context, error, fallback: AppStrings.errorLoadBag);
-    }
-  }
-
-  Future<void> _addToCart(StoreProduct product, StoreVariant variant) async {
-    if (!await _ensureSignedIn()) return;
-    try {
-      final cart = await widget.api.addCartItem(productVariantId: variant.id);
-      if (!mounted) return;
-      setState(() => _cartCount = cart.itemCount);
-      showAppSnackBar(
-        context,
-        AppStrings.addedToBag(product.name, variant.size),
-        behavior: SnackBarBehavior.floating,
-      );
-    } catch (error) {
-      if (!mounted) return;
-      showAppErrorSnackBar(context, error, fallback: AppStrings.errorAddToBag);
-    }
-  }
-
-  Future<void> _toggleFavorite(StoreProduct product) async {
-    if (!await _ensureSignedIn()) return;
-    try {
-      await widget.api.addFavorite(product.id);
-      if (mounted) {
-        showAppSnackBar(context, AppStrings.addedToFavorites);
-      }
-    } catch (error) {
-      if (!mounted) return;
-      showAppErrorSnackBar(
-        context,
-        error,
-        fallback: AppStrings.errorSaveFavorite,
-      );
     }
   }
 
@@ -564,7 +413,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
           } else if (index == 2) {
             _openFeature(ProfilePage(api: widget.api));
           } else if (index == 3) {
-            _openFeature(FeatureHubPage(session: _session));
+            _openFeature(FeatureHubPage(api: widget.api, session: _session));
           }
         },
         destinations: [

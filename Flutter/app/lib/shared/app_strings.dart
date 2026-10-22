@@ -89,6 +89,7 @@ abstract final class AppStrings {
   static const String sizeAndColour = 'Size & colour';
   static const String currentlyUnavailable = 'Currently unavailable';
   static const String addToBag = 'Add to bag';
+  static const String buyNow = 'Buy now';
   static const String addToFavorites = 'Add to favorites';
 
   // Cart and checkout -----------------------------------------------------
@@ -170,6 +171,7 @@ abstract final class AppStrings {
   // Map -------------------------------------------------------------------
 
   static const String mapTitle = 'Choose delivery location';
+  static const String useThisLocation = 'Use this location';
 
   // Profile ---------------------------------------------------------------
 
@@ -258,9 +260,11 @@ abstract final class AppStrings {
   static const String menCategory = 'Men';
   static const String shopBySize = 'Shop by size';
   static const String viewAll = 'View all';
-  static const String freeDeliveryNote = 'Free delivery on orders over 2.000.000 VND';
+  static const String freeDeliveryNote =
+      'Free delivery on orders over 2.000.000 VND';
   static const String easyReturnsNote = 'Free size exchange within 14 days';
-  static const String securePaymentNote = 'Secure checkout with sandbox payment';
+  static const String securePaymentNote =
+      'Secure checkout with sandbox payment';
   static const String resultsFor = 'Results for';
 
   // Product page ----------------------------------------------------------
@@ -276,7 +280,7 @@ abstract final class AppStrings {
   static const String fitGuarantee = 'BigFit fit guarantee';
   static const String fitGuaranteeNote =
       'Every order includes a free size exchange if the fit is not right.';
-  static const String onlyLeft = 'Only %d left';
+  static String onlyLeft(int quantity) => 'Only $quantity left';
   static const String addToBagAndCheckout = 'Add to bag and checkout';
 
   // Checkout --------------------------------------------------------------
@@ -316,12 +320,10 @@ abstract final class AppStrings {
   static const String paymentDeclinedTitle = 'Payment declined';
   static const String paymentDeclinedBody =
       'The sandbox gateway rejected this payment. Try another method.';
-  static const String tryAgain = 'Try again';
   static const String paymentReference = 'Reference';
 
   // Orders and tracking ----------------------------------------------------
 
-  static const String orderHistoryTitle = 'Order history';
   static const String noOrdersTitle = 'No orders yet';
   static const String noOrdersBody =
       'When you place an order it will appear here with its tracking.';
@@ -354,7 +356,8 @@ abstract final class AppStrings {
   // Account page -----------------------------------------------------------
 
   static const String accountTitle = 'My account';
-  static const String accountSubtitle = 'Orders, addresses and account security';
+  static const String accountSubtitle =
+      'Orders, addresses and account security';
   static const String accountOrders = 'Orders';
   static const String accountAddresses = 'Addresses';
   static const String accountFavorites = 'Favourites';

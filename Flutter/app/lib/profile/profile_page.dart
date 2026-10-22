@@ -62,11 +62,10 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  bool get _isStaff =>
-      (_session?.roles ?? const <String>[]).any((role) {
-        final normalized = role.toLowerCase();
-        return normalized.contains('admin') || normalized.contains('staff');
-      });
+  bool get _isStaff => (_session?.roles ?? const <String>[]).any((role) {
+    final normalized = role.toLowerCase();
+    return normalized.contains('admin') || normalized.contains('staff');
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -226,9 +225,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _MenuRow(
           icon: Icons.auto_awesome_outlined,
           label: AppStrings.accountStylist,
-          onTap: () => _open(
-            AssistantPage(api: widget.api, gender: 'Women'),
-          ),
+          onTap: () => _open(AssistantPage(api: widget.api, gender: 'Women')),
         ),
         const Divider(indent: AppSpacing.lg, endIndent: AppSpacing.lg),
         _MenuRow(
@@ -240,7 +237,8 @@ class _ProfilePageState extends State<ProfilePage> {
         _MenuRow(
           icon: Icons.grid_view_outlined,
           label: AppStrings.accountMore,
-          onTap: () => _open(FeatureHubPage(session: _session)),
+          onTap: () =>
+              _open(FeatureHubPage(api: widget.api, session: _session)),
         ),
         if (_isStaff) ...[
           const Divider(indent: AppSpacing.lg, endIndent: AppSpacing.lg),

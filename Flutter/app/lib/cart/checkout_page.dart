@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../auth/auth_sheet.dart';
 import '../models/checkout_models.dart';
 import '../models/store_product.dart';
 import '../orders/order_detail_page.dart';
 import '../payment/sandbox_gateway.dart';
+import '../services/shipment_board.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
@@ -44,10 +44,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Cart? _cart;
   List<CustomerAddress> _addresses = [];
   CustomerAddress? _selectedAddress;
-  bool _useNewContact = false;
   double? _latitude;
   double? _longitude;
-  PaymentMethod _method = PaymentMethod.cod;
+  PaymentMethod _method = PaymentMethod.gateway;
   bool _decline = false;
   bool _busy = false;
   String? _error;
@@ -85,7 +84,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       setState(() {
         _cart = results[0] as Cart;
         _addresses = results[1] as List<CustomerAddress>;
-        _selectedAddress = _addresses.where((a) => a.isDefault).firstOrNull ??
+        _selectedAddress =
+            _addresses.where((a) => a.isDefault).firstOrNull ??
             _addresses.firstOrNull;
         _busy = false;
       });
@@ -127,7 +127,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
       setState(() {
         _addresses = [..._addresses, saved];
         _selectedAddress = saved;
-        _useNewContact = false;
         _busy = false;
         _step = CheckoutStep.address;
       });
@@ -145,22 +144,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
     if (!_addressFormKey.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      final saved = await widget.api.saveAddress(
-        {
-          'label': address.label,
-          'recipientName': address.recipientName,
-          'phoneNumber': address.phoneNumber,
-          'addressLine': _addressControllers['addressLine']!.text.trim(),
-          'city': _addressControllers['city']!.text.trim(),
-          'province': _addressControllers['province']!.text.trim(),
-          'postalCode': _addressControllers['postalCode']!.text.trim(),
-          'countryCode': _addressControllers['countryCode']!.text.trim(),
-          'latitude': _latitude,
-          'longitude': _longitude,
-          'isDefault': address.isDefault,
-        },
-        id: address.id,
-      );
+      final saved = await widget.api.saveAddress({
+        'label': address.label,
+        'recipientName': address.recipientName,
+        'phoneNumber': address.phoneNumber,
+        'addressLine': _addressControllers['addressLine']!.text.trim(),
+        'city': _addressControllers['city']!.text.trim(),
+        'province': _addressControllers['province']!.text.trim(),
+        'postalCode': _addressControllers['postalCode']!.text.trim(),
+        'countryCode': _addressControllers['countryCode']!.text.trim(),
+        'latitude': _latitude,
+        'longitude': _longitude,
+        'isDefault': address.isDefault,
+      }, id: address.id);
       if (!mounted) return;
       setState(() {
         _addresses = [
@@ -187,31 +183,35 @@ class _CheckoutPageState extends State<CheckoutPage> {
       _error = null;
     });
     try {
-      final order = await widget.api.createOrder(
-        shippingAddressId: address.id,
-      );
-      if (!mounted) return;
-      setState(() {
-        _order = order;
-        _busy = false;
-        _step = CheckoutStep.payment;
-      });
-
-      final result = await _gateway.charge(
+      final payment = await _gateway.charge(
         method: _method,
-        amount: order.totalAmount,
-        currencyCode: order.currencyCode,
+        amount: cart.subtotal,
+        currencyCode: cart.currencyCode,
         decline: _decline,
       );
       if (!mounted) return;
-      setState(() {
-        _payment = result;
-        _busy = false;
-        _step = result.approved ? CheckoutStep.done : CheckoutStep.payment;
-      });
-      if (!result.approved) {
+      if (!payment.approved) {
+        setState(() {
+          _payment = payment;
+          _busy = false;
+        });
         showAppSnackBar(context, AppStrings.paymentDeclinedTitle);
+        return;
       }
+
+      final order = await widget.api.createOrder(shippingAddressId: address.id);
+      if (!mounted) return;
+      final session = await widget.api.loadSession();
+      ShipmentBoard.instance.track(
+        order,
+        customerName: session?.displayName ?? address.recipientName,
+      );
+      setState(() {
+        _order = order;
+        _payment = payment;
+        _busy = false;
+        _step = CheckoutStep.done;
+      });
     } catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
@@ -230,7 +230,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   void _selectAddress(CustomerAddress address) {
     setState(() {
       _selectedAddress = address;
-      _useNewContact = false;
       _latitude = address.latitude;
       _longitude = address.longitude;
       _addressControllers['addressLine']!.text = address.addressLine;
@@ -335,32 +334,39 @@ class _CheckoutPageState extends State<CheckoutPage> {
         const SizedBox(height: AppSpacing.md),
         if (_addresses.isEmpty)
           _sectionCard(
-            Text(
-              AppStrings.noSavedContacts,
-              style: theme.textTheme.bodyMedium,
-            ),
+            Text(AppStrings.noSavedContacts, style: theme.textTheme.bodyMedium),
           )
         else
-          ..._addresses.map(
-            (address) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: _sectionCard(
-                RadioListTile<String>(
-                  value: address.id,
-                  groupValue: _selectedAddress?.id,
-                  onChanged: (_) => _selectAddress(address),
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    address.label,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+          RadioGroup<String>(
+            groupValue: _selectedAddress?.id,
+            onChanged: (id) {
+              final address = _addresses
+                  .where((item) => item.id == id)
+                  .firstOrNull;
+              if (address != null) _selectAddress(address);
+            },
+            child: Column(
+              children: [
+                for (final address in _addresses)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: _sectionCard(
+                      RadioListTile<String>(
+                        value: address.id,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          address.label,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        subtitle: Text(
+                          '${address.recipientName} · ${address.phoneNumber}\n'
+                          '${address.fullAddress}',
+                        ),
+                        isThreeLine: true,
+                      ),
+                    ),
                   ),
-                  subtitle: Text(
-                    '${address.recipientName} · ${address.phoneNumber}\n'
-                    '${address.fullAddress}',
-                  ),
-                  isThreeLine: true,
-                ),
-              ),
+              ],
             ),
           ),
         const SizedBox(height: AppSpacing.sm),
@@ -450,7 +456,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(AppStrings.deliveryAddressStep, style: theme.textTheme.titleMedium),
+        Text(
+          AppStrings.deliveryAddressStep,
+          style: theme.textTheme.titleMedium,
+        ),
         const SizedBox(height: AppSpacing.sm),
         Text(AppStrings.dropPinHint, style: theme.textTheme.bodySmall),
         const SizedBox(height: AppSpacing.md),
@@ -525,9 +534,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           child: FilledButton.icon(
             onPressed: _busy || address == null ? null : _saveDeliveryPoint,
             icon: const Icon(Icons.arrow_forward),
-            label: Text(
-              _busy ? AppStrings.pleaseWait : AppStrings.stepPayment,
-            ),
+            label: Text(_busy ? AppStrings.pleaseWait : AppStrings.stepPayment),
           ),
         ),
       ],
@@ -578,22 +585,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
         const SizedBox(height: AppSpacing.lg),
         Text(AppStrings.paymentStepTitle, style: theme.textTheme.titleMedium),
         const SizedBox(height: AppSpacing.md),
-        ...PaymentMethod.values.map(
-          (method) => Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-            child: _sectionCard(
-              RadioListTile<PaymentMethod>(
-                value: method,
-                groupValue: _method,
-                onChanged: (value) => setState(() => _method = value ?? _method),
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  _methodLabel(method),
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+        RadioGroup<PaymentMethod>(
+          groupValue: _method,
+          onChanged: (method) {
+            if (method != null) setState(() => _method = method);
+          },
+          child: Column(
+            children: [
+              for (final method in PaymentMethod.values)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: _sectionCard(
+                    RadioListTile<PaymentMethod>(
+                      value: method,
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        _methodLabel(method),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      subtitle: Text(_methodNote(method)),
+                    ),
+                  ),
                 ),
-                subtitle: Text(_methodNote(method)),
-              ),
-            ),
+            ],
           ),
         ),
         SwitchListTile(
@@ -640,7 +654,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final theme = Theme.of(context);
     final subtotal = cart?.subtotal ?? 0;
     final currency = cart?.currencyCode ?? 'EUR';
-    final shipping = cart == null || cart.items.isEmpty ? 0.0 : 4.9;
+    final shipping = 0.0;
     return _sectionCard(
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -661,10 +675,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           ),
           if (address != null) ...[
             const Divider(height: AppSpacing.xl),
-            Text(
-              AppStrings.shippingTo,
-              style: theme.textTheme.labelLarge,
-            ),
+            Text(AppStrings.shippingTo, style: theme.textTheme.labelLarge),
             const SizedBox(height: 4),
             Text(address.fullAddress),
             if (_latitude != null && _longitude != null)
@@ -748,10 +759,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ? null
                 : () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) => OrderDetailPage(
-                        api: widget.api,
-                        order: order,
-                      ),
+                      builder: (_) =>
+                          OrderDetailPage(api: widget.api, order: order),
                     ),
                   ),
             icon: const Icon(Icons.local_shipping_outlined),
@@ -762,7 +771,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
             child: const Text(AppStrings.continueShopping),
           ),
         ),

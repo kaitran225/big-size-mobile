@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../auth/auth_sheet.dart';
+import '../cart/cart_page.dart';
 import '../cart/checkout_page.dart';
 import '../models/store_product.dart';
 import '../services/store_api.dart';
@@ -12,7 +13,11 @@ import 'product_price_line.dart';
 
 /// Full page for one product with size selection and bag actions.
 class ProductDetailsPage extends StatefulWidget {
-  const ProductDetailsPage({super.key, required this.api, required this.product});
+  const ProductDetailsPage({
+    super.key,
+    required this.api,
+    required this.product,
+  });
 
   final StoreApi api;
   final StoreProduct product;
@@ -51,6 +56,17 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             pinned: true,
             stretch: true,
             backgroundColor: AppColors.canvas,
+            actions: [
+              IconButton(
+                tooltip: AppStrings.shoppingBagTitle,
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => CartPage(api: widget.api),
+                  ),
+                ),
+                icon: const Icon(Icons.shopping_bag_outlined),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: _HeroImage(url: product.imageUrl),
             ),
@@ -94,8 +110,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   if (variant == null)
                     Text(
                       AppStrings.selectSizeFirst,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: AppColors.danger),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.danger,
+                      ),
                     )
                   else
                     Text(
@@ -256,19 +273,35 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               ),
               const SizedBox(width: AppSpacing.lg),
               Expanded(
-                child: FilledButton.icon(
-                  onPressed: variant == null || _busy
-                      ? null
-                      : () => _addToBag(variant, checkout: true),
-                  icon: const Icon(Icons.shopping_bag_outlined),
-                  label: Text(
-                    _busy ? AppStrings.pleaseWait : AppStrings.addToBag,
-                  ),
-                ),
-              ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: variant == null || _busy
+                            ? null
+                            : () => _addToBag(variant),
+                        child: Text(
+                          _busy ? AppStrings.pleaseWait : AppStrings.addToBag,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: variant == null || _busy
+                            ? null
+                            : () => _buyNow(variant),
+                        child: Text(
+                          _busy ? AppStrings.pleaseWait : AppStrings.buyNow,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -277,38 +310,44 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     );
   }
 
-  Future<void> _addToBag(StoreVariant variant, {required bool checkout}) async {
+  Future<void> _addToBag(StoreVariant variant) async {
     if (!await _ensureSignedIn()) return;
     setState(() => _busy = true);
     try {
-      var cart = await widget.api.addCartItem(
+      await widget.api.addCartItem(
         productVariantId: variant.id,
         quantity: _quantity,
       );
       if (!mounted) return;
       setState(() => _busy = false);
-      if (!checkout) {
-        showAppSnackBar(
-          context,
-          AppStrings.addedToBag(widget.product.name, variant.size),
-        );
-        return;
-      }
-      cart = await widget.api.getCart();
-      if (!mounted) return;
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => CheckoutPage(api: widget.api),
-        ),
+      showAppSnackBar(
+        context,
+        AppStrings.addedToBag(widget.product.name, variant.size),
       );
     } catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
-      showAppErrorSnackBar(
-        context,
-        error,
-        fallback: AppStrings.errorAddToBag,
+      showAppErrorSnackBar(context, error, fallback: AppStrings.errorAddToBag);
+    }
+  }
+
+  Future<void> _buyNow(StoreVariant variant) async {
+    if (!await _ensureSignedIn()) return;
+    setState(() => _busy = true);
+    try {
+      await widget.api.addCartItem(
+        productVariantId: variant.id,
+        quantity: _quantity,
       );
+      if (!mounted) return;
+      setState(() => _busy = false);
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => CheckoutPage(api: widget.api)),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      showAppErrorSnackBar(context, error, fallback: AppStrings.errorAddToBag);
     }
   }
 

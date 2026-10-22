@@ -79,7 +79,7 @@ class _DeliveryMapPageState extends State<DeliveryMapPage> {
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: hasPoint
-                  ? () => Navigator.of(context).pop(<double, double>{
+                  ? () => Navigator.of(context).pop<Map<String, double>>({
                       'latitude': _latitude!,
                       'longitude': _longitude!,
                     })

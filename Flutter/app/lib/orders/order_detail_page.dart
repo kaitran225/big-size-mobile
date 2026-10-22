@@ -80,10 +80,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text(
-            AppStrings.shipmentTracking,
-            style: theme.textTheme.titleMedium,
-          ),
+          Text(AppStrings.shipmentTracking, style: theme.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.md),
           Card(
             child: Padding(
@@ -122,7 +119,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               child: Column(
                 children: [
                   for (final item in order.items) ...[
-                    _OrderLine(item: item),
+                    _OrderLine(item: item, currencyCode: order.currencyCode),
                     const Divider(height: AppSpacing.lg),
                   ],
                   _TotalRow(
@@ -159,10 +156,7 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(
-      horizontal: AppSpacing.md,
-      vertical: 6,
-    ),
+    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
     decoration: BoxDecoration(
       color: AppColors.brandSoft,
       borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -201,9 +195,10 @@ class _MetaLine extends StatelessWidget {
 }
 
 class _OrderLine extends StatelessWidget {
-  const _OrderLine({required this.item});
+  const _OrderLine({required this.item, required this.currencyCode});
 
   final OrderItem item;
+  final String currencyCode;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -233,7 +228,7 @@ class _OrderLine extends StatelessWidget {
           ],
         ),
       ),
-      Text(formatPrice(item.lineTotal, 'EUR')),
+      Text(formatPrice(item.lineTotal, currencyCode)),
     ],
   );
 }
