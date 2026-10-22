@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../shared/app_strings.dart';
+import '../shared/widgets/app_info_note.dart';
+import '../shared/widgets/app_list_tile_card.dart';
+import '../shared/widgets/app_section_header.dart';
+import '../shared/widgets/app_snack_bar.dart';
 
 class PaymentPage extends StatefulWidget {
   const PaymentPage({super.key});
@@ -18,10 +22,7 @@ class _PaymentPageState extends State<PaymentPage> {
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(
-          AppStrings.choosePaymentMethod,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
+        const AppSectionHeader(text: AppStrings.choosePaymentMethod),
         const SizedBox(height: 4),
         const Text(AppStrings.paymentTotalNote),
         const SizedBox(height: 16),
@@ -44,12 +45,11 @@ class _PaymentPageState extends State<PaymentPage> {
           subtitle: AppStrings.paymentGatewaySubtitle,
         ),
         const SizedBox(height: 12),
-        const _IntegrationNote(text: AppStrings.paymentFrameNotice),
+        const AppInfoNote(text: AppStrings.paymentFrameNotice),
         const SizedBox(height: 20),
         FilledButton(
-          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text(AppStrings.paymentPreviewSnack)),
-          ),
+          onPressed: () =>
+              showAppSnackBar(context, AppStrings.paymentPreviewSnack),
           child: const Text(AppStrings.continueAction),
         ),
       ],
@@ -63,39 +63,14 @@ class _PaymentPageState extends State<PaymentPage> {
     required String subtitle,
   }) {
     final selected = _method == value;
-    return Card(
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: Icon(
-          selected ? Icons.radio_button_checked : Icons.radio_button_off,
-        ),
-        onTap: () => setState(() => _method = value),
+    return AppListTileCard(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      trailing: Icon(
+        selected ? Icons.radio_button_checked : Icons.radio_button_off,
       ),
+      onTap: () => setState(() => _method = value),
     );
   }
-}
-
-class _IntegrationNote extends StatelessWidget {
-  const _IntegrationNote({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Theme.of(context).colorScheme.secondaryContainer,
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Icon(Icons.info_outline),
-        const SizedBox(width: 10),
-        Expanded(child: Text(text)),
-      ],
-    ),
-  );
 }

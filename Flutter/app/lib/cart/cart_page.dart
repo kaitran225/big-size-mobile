@@ -5,7 +5,10 @@ import '../models/store_product.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
-import '../shared/widgets/skeleton_box.dart';
+import '../shared/widgets/app_dialog.dart';
+import '../shared/widgets/app_snack_bar.dart';
+import '../shared/widgets/error_state_view.dart';
+import '../shared/widgets/skeleton_row_list.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key, required this.api});
@@ -85,19 +88,11 @@ class _CartPageState extends State<CartPage> {
         setState(() => _busy = false);
         final openAddresses = await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text(AppStrings.addressNeededTitle),
+          builder: (context) => AppDialog(
+            title: AppStrings.addressNeededTitle,
             content: const Text(AppStrings.addressNeededMessage),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text(AppStrings.later),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text(AppStrings.addAddress),
-              ),
-            ],
+            cancelLabel: AppStrings.later,
+            confirmLabel: AppStrings.addAddress,
           ),
         );
         if (openAddresses == true && mounted) {
@@ -117,8 +112,10 @@ class _CartPageState extends State<CartPage> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => StatefulBuilder(
-          builder: (context, setDialogState) => AlertDialog(
-            title: const Text(AppStrings.reviewOrderTitle),
+          builder: (context, setDialogState) => AppDialog(
+            title: AppStrings.reviewOrderTitle,
+            cancelLabel: AppStrings.cancel,
+            confirmLabel: AppStrings.createOrder,
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,16 +151,6 @@ class _CartPageState extends State<CartPage> {
                 ),
               ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text(AppStrings.cancel),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text(AppStrings.createOrder),
-              ),
-            ],
           ),
         ),
       );
@@ -172,9 +159,7 @@ class _CartPageState extends State<CartPage> {
       final order = await widget.api.createOrder(shippingAddressId: selectedId);
       await _load();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.orderCreated(order.orderNumber))),
-        );
+        showAppSnackBar(context, AppStrings.orderCreated(order.orderNumber));
       }
     } catch (error) {
       if (mounted) _showError(error);
@@ -184,14 +169,10 @@ class _CartPageState extends State<CartPage> {
   }
 
   void _showError(Object error) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          error is StoreApiException
-              ? error.message
-              : AppStrings.errorRequestFailed,
-        ),
-      ),
+    showAppErrorSnackBar(
+      context,
+      error,
+      fallback: AppStrings.errorRequestFailed,
     );
   }
 
@@ -199,32 +180,9 @@ class _CartPageState extends State<CartPage> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text(AppStrings.shoppingBagTitle)),
     body: _loading
-        ? ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: 4,
-            separatorBuilder: (_, _) => const SizedBox(height: 20),
-            itemBuilder: (context, index) => const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SkeletonBox(width: 76, height: 90, borderRadius: 12),
-                SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SkeletonBox(width: 150),
-                      SizedBox(height: 9),
-                      SkeletonBox(width: 100),
-                      SizedBox(height: 16),
-                      SkeletonBox(width: 80),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          )
+        ? const SkeletonRowList()
         : _error != null
-        ? Center(child: Text(_error!, textAlign: TextAlign.center))
+        ? ErrorStateView(message: _error!)
         : _cart!.items.isEmpty
         ? const Center(child: Text(AppStrings.bagEmpty))
         : Column(

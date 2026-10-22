@@ -7,6 +7,8 @@ import '../payment/payment_page.dart';
 import '../profile/profile_page.dart';
 import '../security/security_page.dart';
 import '../shared/app_strings.dart';
+import '../shared/widgets/app_list_tile_card.dart';
+import '../shared/widgets/app_section_header.dart';
 
 class FeatureHubPage extends StatelessWidget {
   const FeatureHubPage({super.key, required this.session});
@@ -19,12 +21,9 @@ class FeatureHubPage extends StatelessWidget {
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(
-          AppStrings.yourAccount,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
+        const AppSectionHeader(text: AppStrings.yourAccount),
         const SizedBox(height: 10),
-        _FeatureTile(
+        AppListTileCard(
           icon: Icons.person_outline,
           title: AppStrings.profileAndFit,
           subtitle: session == null
@@ -32,19 +31,19 @@ class FeatureHubPage extends StatelessWidget {
               : AppStrings.profileAndFitSignedIn,
           onTap: () => _open(context, ProfilePage(session: session)),
         ),
-        _FeatureTile(
+        AppListTileCard(
           icon: Icons.map_outlined,
           title: AppStrings.deliveryMap,
           subtitle: AppStrings.chooseDeliveryLocation,
           onTap: () => _open(context, const DeliveryMapPage()),
         ),
-        _FeatureTile(
+        AppListTileCard(
           icon: Icons.payments_outlined,
           title: AppStrings.paymentMethods,
           subtitle: AppStrings.paymentMethodsSubtitle,
           onTap: () => _open(context, const PaymentPage()),
         ),
-        _FeatureTile(
+        AppListTileCard(
           icon: Icons.security_outlined,
           title: AppStrings.accountSecurity,
           subtitle: AppStrings.accountSecuritySubtitle,
@@ -52,12 +51,9 @@ class FeatureHubPage extends StatelessWidget {
         ),
         if (_isStaffOrAdmin(session?.roles ?? const [])) ...[
           const SizedBox(height: 20),
-          Text(
-            AppStrings.storeTools,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          const AppSectionHeader(text: AppStrings.storeTools),
           const SizedBox(height: 10),
-          _FeatureTile(
+          AppListTileCard(
             icon: Icons.store_mall_directory_outlined,
             title: AppStrings.storeManagementTitle,
             subtitle: AppStrings.storeToolsSubtitle,
@@ -78,29 +74,4 @@ class FeatureHubPage extends StatelessWidget {
 
   static Future<void> _open(BuildContext context, Widget page) =>
       Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
-}
-
-class _FeatureTile extends StatelessWidget {
-  const _FeatureTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Card(
-    child: ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
-    ),
-  );
 }

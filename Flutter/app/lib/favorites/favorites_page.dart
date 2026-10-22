@@ -4,6 +4,8 @@ import '../models/store_product.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
+import '../shared/widgets/async_content_view.dart';
+import '../shared/widgets/app_snack_bar.dart';
 
 class FavoritesPage extends StatefulWidget {
   const FavoritesPage({super.key, required this.api});
@@ -33,8 +35,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
       if (mounted) setState(_load);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(displayError(error))));
+        showAppErrorSnackBar(context, error);
       }
     }
   }
@@ -50,51 +51,38 @@ class _FavoritesPageState extends State<FavoritesPage> {
         ),
       ],
     ),
-    body: FutureBuilder<List<FavoriteProduct>>(
+    body: AsyncContentView<List<FavoriteProduct>>(
       future: _favorites,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text(displayError(snapshot.error!)));
-        }
-        final products = snapshot.data!;
-        if (products.isEmpty) {
-          return const Center(child: Text(AppStrings.favoritesEmpty));
-        }
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: products
-              .map(
-                (product) => Card(
-                  child: ListTile(
-                    leading: product.imageUrl == null
-                        ? const Icon(Icons.checkroom_outlined)
-                        : Image.network(
-                            product.imageUrl!,
-                            width: 52,
-                            fit: BoxFit.cover,
-                            webHtmlElementStrategy:
-                                WebHtmlElementStrategy.fallback,
-                          ),
-                    title: Text(product.name),
-                    subtitle: Text(
-                      formatPrice(product.currentPrice, product.currencyCode),
-                    ),
-                    trailing: IconButton(
-                      onPressed: () => _remove(product),
-                      icon: const Icon(
-                        Icons.favorite,
-                        color: Color(0xFFB43B31),
-                      ),
-                    ),
+      isEmpty: (items) => items.isEmpty,
+      emptyMessage: AppStrings.favoritesEmpty,
+      builder: (context, products) => ListView(
+        padding: const EdgeInsets.all(16),
+        children: products
+            .map(
+              (product) => Card(
+                child: ListTile(
+                  leading: product.imageUrl == null
+                      ? const Icon(Icons.checkroom_outlined)
+                      : Image.network(
+                          product.imageUrl!,
+                          width: 52,
+                          fit: BoxFit.cover,
+                          webHtmlElementStrategy:
+                              WebHtmlElementStrategy.fallback,
+                        ),
+                  title: Text(product.name),
+                  subtitle: Text(
+                    formatPrice(product.currentPrice, product.currencyCode),
+                  ),
+                  trailing: IconButton(
+                    onPressed: () => _remove(product),
+                    icon: const Icon(Icons.favorite, color: Color(0xFFB43B31)),
                   ),
                 ),
-              )
-              .toList(),
-        );
-      },
+              ),
+            )
+            .toList(),
+      ),
     ),
   );
 }

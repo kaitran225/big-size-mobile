@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../shared/app_strings.dart';
+import '../shared/widgets/app_info_note.dart';
+import '../shared/widgets/app_list_tile_card.dart';
+import '../shared/widgets/app_section_header.dart';
 
 class StoreManagementPage extends StatelessWidget {
   const StoreManagementPage({super.key, required this.roles});
@@ -20,64 +23,39 @@ class StoreManagementPage extends StatelessWidget {
           ? ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                Text(
-                  AppStrings.managementOverview,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
+                const AppSectionHeader(text: AppStrings.managementOverview),
                 const SizedBox(height: 12),
-                const _ManagementCard(
+                const AppListTileCard(
                   icon: Icons.inventory_2_outlined,
                   title: AppStrings.productsAndInventory,
-                  detail: AppStrings.productsAndInventoryDetail,
+                  subtitle: AppStrings.productsAndInventoryDetail,
                 ),
-                const _ManagementCard(
+                const AppListTileCard(
                   icon: Icons.receipt_long_outlined,
                   title: AppStrings.ordersTitle,
-                  detail: AppStrings.ordersDetail,
+                  subtitle: AppStrings.ordersDetail,
                 ),
-                const _ManagementCard(
+                const AppListTileCard(
                   icon: Icons.rate_review_outlined,
                   title: AppStrings.customerReviews,
-                  detail: AppStrings.customerReviewsDetail,
+                  subtitle: AppStrings.customerReviewsDetail,
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  AppStrings.managementNotConnected,
-                  textAlign: TextAlign.center,
+                const AppInfoNote(
+                  text: AppStrings.managementNotConnected,
+                  style: AppInfoNoteStyle.plain,
                 ),
               ],
             )
           : const Center(
               child: Padding(
                 padding: EdgeInsets.all(32),
-                child: Text(
-                  AppStrings.storeManagementRestricted,
-                  textAlign: TextAlign.center,
+                child: AppInfoNote(
+                  text: AppStrings.storeManagementRestricted,
+                  style: AppInfoNoteStyle.plain,
                 ),
               ),
             ),
     );
   }
-}
-
-class _ManagementCard extends StatelessWidget {
-  const _ManagementCard({
-    required this.icon,
-    required this.title,
-    required this.detail,
-  });
-
-  final IconData icon;
-  final String title;
-  final String detail;
-
-  @override
-  Widget build(BuildContext context) => Card(
-    child: ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(detail),
-      trailing: const Icon(Icons.chevron_right),
-    ),
-  );
 }

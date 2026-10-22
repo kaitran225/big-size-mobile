@@ -1,8 +1,3 @@
-/// Every user-facing string rendered by the BigFit app lives in this file.
-///
-/// Values are grouped by feature. Strings that need runtime data are built by
-/// the static helpers at the bottom of each group so the wording stays in one
-/// place.
 abstract final class AppStrings {
   // ---------------------------------------------------------------------
   // App wide
@@ -420,4 +415,7 @@ abstract final class AppStrings {
 
   static String notificationSubtitle(String message, String date) =>
       '$message\n$date';
+
+  static String descriptionWithStatus(String description, String status) =>
+      '$description\n$status';
 }

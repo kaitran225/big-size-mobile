@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../shared/app_strings.dart';
+import 'map_preview.dart';
 
 class DeliveryMapPage extends StatefulWidget {
   const DeliveryMapPage({super.key});
@@ -42,7 +43,7 @@ class _DeliveryMapPageState extends State<DeliveryMapPage> {
         Expanded(
           child: Stack(
             children: [
-              const Positioned.fill(child: _MapPreview()),
+              const Positioned.fill(child: MapPreview()),
               const Center(
                 child: Padding(
                   padding: EdgeInsets.only(bottom: 38),
@@ -114,68 +115,4 @@ class _DeliveryMapPageState extends State<DeliveryMapPage> {
       ],
     ),
   );
-}
-
-class _MapPreview extends StatelessWidget {
-  const _MapPreview();
-
-  @override
-  Widget build(BuildContext context) => CustomPaint(
-    painter: _MapPreviewPainter(Theme.of(context).colorScheme),
-    child: const SizedBox.expand(),
-  );
-}
-
-class _MapPreviewPainter extends CustomPainter {
-  const _MapPreviewPainter(this.colorScheme);
-
-  final ColorScheme colorScheme;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()..color = const Color(0xFFE8EDE6),
-    );
-    final roadPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.9)
-      ..strokeWidth = 18
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    final path = Path()
-      ..moveTo(-30, size.height * 0.24)
-      ..cubicTo(
-        size.width * 0.24,
-        size.height * 0.36,
-        size.width * 0.54,
-        size.height * 0.12,
-        size.width + 20,
-        size.height * 0.32,
-      );
-    canvas.drawPath(path, roadPaint);
-    final crossRoad = Path()
-      ..moveTo(size.width * 0.32, -20)
-      ..cubicTo(
-        size.width * 0.4,
-        size.height * 0.34,
-        size.width * 0.2,
-        size.height * 0.58,
-        size.width * 0.43,
-        size.height + 20,
-      );
-    canvas.drawPath(crossRoad, roadPaint);
-    final parkPaint = Paint()
-      ..color = colorScheme.primary.withValues(alpha: 0.08);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(size.width * 0.62, size.height * 0.48, 120, 90),
-        const Radius.circular(22),
-      ),
-      parkPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _MapPreviewPainter oldDelegate) =>
-      colorScheme != oldDelegate.colorScheme;
 }

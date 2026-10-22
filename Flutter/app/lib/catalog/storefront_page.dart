@@ -4,7 +4,6 @@ import '../addresses/addresses_page.dart';
 import '../assistant/assistant_page.dart';
 import '../auth/auth_sheet.dart';
 import '../cart/cart_page.dart';
-import '../catalog/product_components.dart';
 import '../favorites/favorites_page.dart';
 import '../features/feature_hub_page.dart';
 import '../models/store_product.dart';
@@ -12,6 +11,12 @@ import '../notifications/notifications_page.dart';
 import '../orders/orders_page.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
+import '../shared/widgets/app_snack_bar.dart';
+import '../shared/widgets/empty_state_view.dart';
+import '../shared/widgets/error_state_view.dart';
+import 'product_details_sheet.dart';
+import 'product_skeleton_card.dart';
+import 'product_tile.dart';
 
 class StorefrontPage extends StatefulWidget {
   const StorefrontPage({super.key, required this.api});
@@ -290,20 +295,14 @@ class _StorefrontPageState extends State<StorefrontPage> {
       });
       await _loadStore();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.connectedTo(widget.api.baseUrl))),
-        );
+        showAppSnackBar(context, AppStrings.connectedTo(widget.api.baseUrl));
       }
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            error is StoreApiException
-                ? error.message
-                : AppStrings.errorChangeServer(error),
-          ),
-        ),
+      showAppErrorSnackBar(
+        context,
+        error,
+        fallback: AppStrings.errorChangeServer(error),
       );
     }
   }
@@ -361,15 +360,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
       if (mounted) setState(() => _cartCount = cart.itemCount);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            error is StoreApiException
-                ? error.message
-                : AppStrings.errorLoadBag,
-          ),
-        ),
-      );
+      showAppErrorSnackBar(context, error, fallback: AppStrings.errorLoadBag);
     }
   }
 
@@ -379,23 +370,14 @@ class _StorefrontPageState extends State<StorefrontPage> {
       final cart = await widget.api.addCartItem(productVariantId: variant.id);
       if (!mounted) return;
       setState(() => _cartCount = cart.itemCount);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.addedToBag(product.name, variant.size)),
-          behavior: SnackBarBehavior.floating,
-        ),
+      showAppSnackBar(
+        context,
+        AppStrings.addedToBag(product.name, variant.size),
+        behavior: SnackBarBehavior.floating,
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            error is StoreApiException
-                ? error.message
-                : AppStrings.errorAddToBag,
-          ),
-        ),
-      );
+      showAppErrorSnackBar(context, error, fallback: AppStrings.errorAddToBag);
     }
   }
 
@@ -404,20 +386,14 @@ class _StorefrontPageState extends State<StorefrontPage> {
     try {
       await widget.api.addFavorite(product.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.addedToFavorites)),
-        );
+        showAppSnackBar(context, AppStrings.addedToFavorites);
       }
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            error is StoreApiException
-                ? error.message
-                : AppStrings.errorSaveFavorite,
-          ),
-        ),
+      showAppErrorSnackBar(
+        context,
+        error,
+        fallback: AppStrings.errorSaveFavorite,
       );
     }
   }
@@ -507,14 +483,11 @@ class _StorefrontPageState extends State<StorefrontPage> {
                 ),
               )
             else if (_error != null)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _buildError(theme),
-              )
+              SliverFillRemaining(hasScrollBody: false, child: _buildError())
             else if (_products.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: _buildEmptyState(theme),
+                child: _buildEmptyState(),
               )
             else ...[
               SliverPadding(
@@ -749,46 +722,16 @@ class _StorefrontPageState extends State<StorefrontPage> {
     ),
   );
 
-  Widget _buildError(ThemeData theme) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.cloud_off_outlined, size: 42),
-          const SizedBox(height: 12),
-          Text(_error!, textAlign: TextAlign.center),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: _loadStore,
-            icon: const Icon(Icons.refresh),
-            label: const Text(AppStrings.tryAgain),
-          ),
-        ],
-      ),
-    ),
+  Widget _buildError() => ErrorStateView(
+    message: _error!,
+    icon: Icons.cloud_off_outlined,
+    onRetry: _loadStore,
   );
 
-  Widget _buildEmptyState(ThemeData theme) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.checkroom_outlined, size: 46),
-          const SizedBox(height: 14),
-          Text(
-            AppStrings.emptyTitle,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(AppStrings.emptySubtitle, textAlign: TextAlign.center),
-        ],
-      ),
-    ),
+  Widget _buildEmptyState() => const EmptyStateView(
+    icon: Icons.checkroom_outlined,
+    title: AppStrings.emptyTitle,
+    message: AppStrings.emptySubtitle,
   );
 
   Future<void> _showBag(BuildContext context) async {

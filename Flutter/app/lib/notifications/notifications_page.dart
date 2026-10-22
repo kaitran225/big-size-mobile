@@ -4,6 +4,8 @@ import '../models/store_product.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
+import '../shared/widgets/app_snack_bar.dart';
+import '../shared/widgets/async_content_view.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key, required this.api});
@@ -33,8 +35,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       if (mounted) setState(_reload);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(displayError(error))));
+        showAppErrorSnackBar(context, error);
       }
     }
   }
@@ -45,8 +46,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       if (mounted) setState(_reload);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(displayError(error))));
+        showAppErrorSnackBar(context, error);
       }
     }
   }
@@ -70,58 +70,46 @@ class _NotificationsPageState extends State<NotificationsPage> {
         ),
       ),
     ),
-    body: FutureBuilder<List<StoreNotification>>(
+    body: AsyncContentView<List<StoreNotification>>(
       future: _notifications,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text(displayError(snapshot.error!)));
-        }
-        final notifications = snapshot.data!;
-        if (notifications.isEmpty) {
-          return const Center(child: Text(AppStrings.notificationsEmpty));
-        }
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: notifications.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
-          itemBuilder: (context, index) {
-            final item = notifications[index];
-            return Card(
-              child: ListTile(
-                leading: Icon(
-                  item.isRead
-                      ? Icons.notifications_none
-                      : Icons.notifications_active,
-                ),
-                title: Text(
-                  item.title,
-                  style: TextStyle(
-                    fontWeight: item.isRead
-                        ? FontWeight.normal
-                        : FontWeight.w800,
-                  ),
-                ),
-                subtitle: Text(
-                  AppStrings.notificationSubtitle(
-                    item.message,
-                    formatDate(item.createdAt),
-                  ),
-                ),
-                isThreeLine: true,
-                onTap: item.isRead ? null : () => _markRead(item),
-                trailing: IconButton(
-                  tooltip: AppStrings.tooltipDeleteNotification,
-                  onPressed: () => _delete(item),
-                  icon: const Icon(Icons.delete_outline),
+      isEmpty: (items) => items.isEmpty,
+      emptyMessage: AppStrings.notificationsEmpty,
+      builder: (context, notifications) => ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: notifications.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          final item = notifications[index];
+          return Card(
+            child: ListTile(
+              leading: Icon(
+                item.isRead
+                    ? Icons.notifications_none
+                    : Icons.notifications_active,
+              ),
+              title: Text(
+                item.title,
+                style: TextStyle(
+                  fontWeight: item.isRead ? FontWeight.normal : FontWeight.w800,
                 ),
               ),
-            );
-          },
-        );
-      },
+              subtitle: Text(
+                AppStrings.notificationSubtitle(
+                  item.message,
+                  formatDate(item.createdAt),
+                ),
+              ),
+              isThreeLine: true,
+              onTap: item.isRead ? null : () => _markRead(item),
+              trailing: IconButton(
+                tooltip: AppStrings.tooltipDeleteNotification,
+                onPressed: () => _delete(item),
+                icon: const Icon(Icons.delete_outline),
+              ),
+            ),
+          );
+        },
+      ),
     ),
   );
 }
