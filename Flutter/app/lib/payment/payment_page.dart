@@ -18,7 +18,6 @@ class _PaymentPageState extends State<PaymentPage> {
   static const SandboxGateway _gateway = SandboxGateway();
 
   PaymentMethod _method = PaymentMethod.gateway;
-  bool _decline = false;
   bool _busy = false;
 
   @override
@@ -43,9 +42,9 @@ class _PaymentPageState extends State<PaymentPage> {
             child: Row(
               children: [
                 const Icon(
-                  Icons.science_outlined,
+                  Icons.lock_outline,
                   size: 20,
-                  color: AppColors.accent,
+                  color: AppColors.brand,
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -53,9 +52,9 @@ class _PaymentPageState extends State<PaymentPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppStrings.sandboxBanner,
+                        AppStrings.secureCheckoutTitle,
                         style: theme.textTheme.titleSmall?.copyWith(
-                          color: AppColors.accent,
+                          color: AppColors.brand,
                         ),
                       ),
                       Text(
@@ -97,17 +96,6 @@ class _PaymentPageState extends State<PaymentPage> {
               ],
             ),
           ),
-          SwitchListTile(
-            value: _decline,
-            onChanged: (value) => setState(() => _decline = value),
-            title: Text(
-              AppStrings.simulateFailure,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-          ),
           const SizedBox(height: AppSpacing.lg),
           SizedBox(
             width: double.infinity,
@@ -129,7 +117,6 @@ class _PaymentPageState extends State<PaymentPage> {
       method: _method,
       amount: 1499000,
       currencyCode: 'VND',
-      decline: _decline,
     );
     if (!mounted) return;
     setState(() => _busy = false);

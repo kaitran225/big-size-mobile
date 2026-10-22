@@ -6,12 +6,9 @@ The app uses the Render backend by default:
 
 `https://big-fit-pgm-store.onrender.com/api`
 
-Use the server icon in the storefront app bar to switch between Render and the
-local development backend. The selected server is saved on the device. Switching
-servers signs out the current account so its token is not sent to another server.
-
-The app appends `/api` automatically, so enter a server origin such as
-`https://big-fit-pgm-store.onrender.com` or `http://localhost:5047`.
+The app appends `/api` automatically. Set `API_BASE_URL` at launch to use a
+different server; switching between servers signs out the current account so
+its token is not sent to another server.
 
 Local backend addresses depend on where Flutter runs:
 
@@ -25,6 +22,10 @@ You can also override the initial server when launching:
 ```powershell
 flutter run --dart-define=API_BASE_URL=https://big-fit-pgm-store.onrender.com
 ```
+
+For a local backend, use `http://localhost:5047` on desktop and web,
+`http://10.0.2.2:5047` on the Android emulator, or the development computer's
+LAN address on a physical device.
 
 ## OpenAPI / Swagger
 

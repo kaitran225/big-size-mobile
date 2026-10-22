@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import '../assistant/assistant_page.dart';
 import '../auth/auth_page.dart';
 import '../cart/cart_page.dart';
-import '../features/feature_hub_page.dart';
 import '../models/store_product.dart';
-import '../notifications/notifications_page.dart';
+import '../orders/orders_page.dart';
 import '../profile/profile_page.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
@@ -38,14 +37,13 @@ class _StorefrontPageState extends State<StorefrontPage> {
   int _totalPages = 1;
   int _totalCount = 0;
   int _cartCount = 0;
+  int _selectedTab = 0;
+  int _ordersRevision = 0;
+  int _profileRevision = 0;
   bool _onSale = false;
   bool _inStock = false;
   bool _loading = true;
   bool _loadingMore = false;
-
-  bool get _isAdmin => (_session?.roles ?? const <String>[]).any(
-    (role) => role.toLowerCase().contains('admin'),
-  );
 
   @override
   void initState() {
@@ -146,69 +144,6 @@ class _StorefrontPageState extends State<StorefrontPage> {
     }
   }
 
-  Future<void> _chooseApiBaseUrl() async {
-    final selectedUrl = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppStrings.storeConnectionTitle,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              Text(AppStrings.currentApi(widget.api.baseUrl)),
-              const SizedBox(height: 12),
-              ListTile(
-                leading: const Icon(Icons.cloud_outlined),
-                title: const Text(AppStrings.renderDeployment),
-                subtitle: const Text(StoreApi.renderBaseUrl),
-                onTap: () => Navigator.pop(context, StoreApi.renderBaseUrl),
-              ),
-              ListTile(
-                leading: const Icon(Icons.computer_outlined),
-                title: const Text(AppStrings.localDevelopmentServer),
-                subtitle: Text(StoreApi.localBaseUrl),
-                onTap: () => Navigator.pop(context, StoreApi.localBaseUrl),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppStrings.apiPathNote,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (selectedUrl == null || !mounted) return;
-
-    try {
-      await widget.api.setBaseUrl(selectedUrl);
-      if (!mounted) return;
-      setState(() {
-        _session = null;
-        _cartCount = 0;
-      });
-      await _loadStore();
-      if (mounted) {
-        showAppSnackBar(context, AppStrings.connectedTo(widget.api.baseUrl));
-      }
-    } catch (error) {
-      if (!mounted) return;
-      showAppErrorSnackBar(
-        context,
-        error,
-        fallback: AppStrings.changeServerFailed(error),
-      );
-    }
-  }
-
   void _openProduct(StoreProduct product) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -221,6 +156,27 @@ class _StorefrontPageState extends State<StorefrontPage> {
     await Navigator.of(context)
         .push(MaterialPageRoute<void>(builder: (_) => page));
     await _refreshCartCount();
+  }
+
+  Future<void> _selectTab(int index) async {
+    if (index == 1 || index == 2) {
+      if (!await _ensureSignedIn()) return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _selectedTab = index;
+      if (index == 2) _ordersRevision++;
+      if (index == 3) _profileRevision++;
+    });
+  }
+
+  void _syncSession(AuthSession? session) {
+    if (!mounted) return;
+    setState(() {
+      _session = session;
+      if (session == null) _cartCount = 0;
+    });
+    if (session != null) _refreshCartCount();
   }
 
   Future<bool> _ensureSignedIn() async {
@@ -257,195 +213,187 @@ class _StorefrontPageState extends State<StorefrontPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 20,
-        title: const Text(
-          AppStrings.brandName,
-          style: TextStyle(
-            fontSize: 21,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 2.2,
-          ),
-        ),
-        actions: [
-          if (_isAdmin)
-            IconButton(
-              tooltip: AppStrings.tooltipChooseServer,
-              onPressed: _chooseApiBaseUrl,
-              icon: const Icon(Icons.dns_outlined),
-            ),
-          IconButton(
-            tooltip: AppStrings.aiStylist,
-            onPressed: () => _ensureSignedIn().then((ready) {
-              if (ready && mounted) {
-                _openFeature(AssistantPage(api: widget.api, gender: _gender));
-              }
-            }),
-            icon: const Icon(Icons.auto_awesome_outlined),
-          ),
-          if (_session != null)
-            IconButton(
-              tooltip: AppStrings.notificationsTitle,
-              onPressed: () => _openFeature(NotificationsPage(api: widget.api)),
-              icon: const Icon(Icons.notifications_outlined),
-            ),
-          IconButton(
-            tooltip: AppStrings.shoppingBagTooltip(_cartCount),
-            onPressed: () => _showBag(context),
-            icon: Badge(
-              isLabelVisible: _cartCount > 0,
-              label: Text('$_cartCount'),
-              child: const Icon(Icons.shopping_bag_outlined),
-            ),
-          ),
-          IconButton(
-            tooltip: _session == null ? AppStrings.signIn : AppStrings.account,
-            onPressed: () => _openFeature(ProfilePage(api: widget.api)),
-            icon: Icon(_session == null ? Icons.person_outline : Icons.person),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadStore,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(child: _buildHero(theme)),
-            SliverToBoxAdapter(child: _buildControls(theme)),
-            if (_loading)
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                sliver: SliverGrid.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 18,
-                  crossAxisSpacing: 14,
-                  childAspectRatio: 0.55,
-                  children: List.generate(
-                    6,
-                    (_) => const ProductSkeletonCard(),
-                  ),
-                ),
-              )
-            else if (_error != null)
-              SliverFillRemaining(hasScrollBody: false, child: _buildError())
-            else if (_products.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _buildEmptyState(),
-              )
-            else ...[
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                sliver: SliverToBoxAdapter(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _onSale
-                              ? AppStrings.onSaleHeading
-                              : AppStrings.collectionHeading,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        AppStrings.productCountLabel(
-                          _products.length,
-                          _totalCount,
-                        ),
-                      ),
-                    ],
-                  ),
+      appBar: _selectedTab == 0
+          ? AppBar(
+              titleSpacing: 20,
+              title: const Text(
+                AppStrings.brandName,
+                style: TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2.2,
                 ),
               ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                sliver: SliverGrid.builder(
-                  itemCount: _products.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 18,
-                    crossAxisSpacing: 14,
-                    childAspectRatio: 0.55,
-                  ),
-                  itemBuilder: (context, index) => ProductTile(
-                    product: _products[index],
-                    onTap: () => _openProduct(_products[index]),
+              actions: [
+                IconButton(
+                  tooltip: AppStrings.shoppingBagTooltip(_cartCount),
+                  onPressed: () => _showBag(context),
+                  icon: Badge(
+                    isLabelVisible: _cartCount > 0,
+                    label: Text('$_cartCount'),
+                    child: const Icon(Icons.shopping_bag_outlined),
                   ),
                 ),
-              ),
-              if (_page < _totalPages)
-                SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 28),
-                      child: OutlinedButton(
-                        onPressed: _loadingMore ? null : _loadMore,
-                        child: _loadingMore
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(AppStrings.loadMore),
-                      ),
-                    ),
+                IconButton(
+                  tooltip: _session == null
+                      ? AppStrings.signIn
+                      : AppStrings.account,
+                  onPressed: () => _selectTab(3),
+                  icon: Icon(
+                    _session == null ? Icons.person_outline : Icons.person,
                   ),
                 ),
-            ],
-          ],
+                const SizedBox(width: 8),
+              ],
+            )
+          : null,
+      body: switch (_selectedTab) {
+        0 => _buildShopBody(theme),
+        1 => AssistantPage(api: widget.api, gender: _gender),
+        2 => OrdersPage(key: ValueKey(_ordersRevision), api: widget.api),
+        _ => ProfilePage(
+          key: ValueKey(_profileRevision),
+          api: widget.api,
+          onSessionChanged: _syncSession,
         ),
-      ),
+      },
       bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
-        onDestinationSelected: (index) {
-          if (index == 1) {
-            setState(() => _onSale = !_onSale);
-            _loadStore();
-          } else if (index == 2) {
-            _openFeature(ProfilePage(api: widget.api));
-          } else if (index == 3) {
-            _openFeature(FeatureHubPage(api: widget.api, session: _session));
-          }
-        },
-        destinations: [
-          const NavigationDestination(
+        selectedIndex: _selectedTab,
+        onDestinationSelected: _selectTab,
+        destinations: const [
+          NavigationDestination(
             icon: Icon(Icons.storefront_outlined),
             label: AppStrings.navShop,
           ),
           NavigationDestination(
-            icon: Icon(_onSale ? Icons.sell : Icons.sell_outlined),
-            label: AppStrings.navSale,
+            icon: Icon(Icons.chat_bubble_outline),
+            label: AppStrings.stylistTab,
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.account_circle_outlined),
+          NavigationDestination(
+            icon: Icon(Icons.receipt_long_outlined),
+            label: AppStrings.ordersTitle,
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
             label: AppStrings.account,
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.grid_view_outlined),
-            label: AppStrings.navMore,
           ),
         ],
       ),
     );
   }
 
+  Widget _buildShopBody(ThemeData theme) => RefreshIndicator(
+    onRefresh: _loadStore,
+    child: CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(child: _buildHero(theme)),
+        SliverToBoxAdapter(child: _buildControls(theme)),
+        if (_loading)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            sliver: SliverGrid.count(
+              crossAxisCount: 2,
+              mainAxisSpacing: 18,
+              crossAxisSpacing: 14,
+              childAspectRatio: 0.55,
+              children: List.generate(6, (_) => const ProductSkeletonCard()),
+            ),
+          )
+        else if (_error != null)
+          SliverFillRemaining(hasScrollBody: false, child: _buildError())
+        else if (_products.isEmpty)
+          SliverFillRemaining(hasScrollBody: false, child: _buildEmptyState())
+        else ...[
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+            sliver: SliverToBoxAdapter(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _onSale
+                          ? AppStrings.onSaleHeading
+                          : AppStrings.collectionHeading,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    AppStrings.productCountLabel(_products.length, _totalCount),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            sliver: SliverGrid.builder(
+              itemCount: _products.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 18,
+                crossAxisSpacing: 14,
+                childAspectRatio: 0.55,
+              ),
+              itemBuilder: (context, index) => ProductTile(
+                product: _products[index],
+                onTap: () => _openProduct(_products[index]),
+              ),
+            ),
+          ),
+          if (_page < _totalPages)
+            SliverToBoxAdapter(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 28),
+                  child: OutlinedButton(
+                    onPressed: _loadingMore ? null : _loadMore,
+                    child: _loadingMore
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text(AppStrings.loadMore),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ],
+    ),
+  );
+
   Widget _buildHero(ThemeData theme) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+    child: Row(
       children: [
-        Text(AppStrings.heroTitle, style: theme.textTheme.headlineSmall),
-        const SizedBox(height: 4),
-        Text(AppStrings.heroSubtitle, style: theme.textTheme.bodyMedium),
-        const SizedBox(height: 16),
+        Expanded(
+          child: Text(
+            AppStrings.heroTitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
         SegmentedButton<String>(
           showSelectedIcon: false,
+          style: const ButtonStyle(
+            visualDensity: VisualDensity(horizontal: -3, vertical: -3),
+            padding: WidgetStatePropertyAll(
+              EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            textStyle: WidgetStatePropertyAll(
+              TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
+          ),
           segments: const [
             ButtonSegment(value: 'Women', label: Text(AppStrings.womenSegment)),
             ButtonSegment(value: 'Men', label: Text(AppStrings.menSegment)),
@@ -458,7 +406,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
   );
 
   Widget _buildControls(ThemeData theme) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+    padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -466,9 +414,12 @@ class _StorefrontPageState extends State<StorefrontPage> {
           controller: _searchController,
           textInputAction: TextInputAction.search,
           onSubmitted: (_) => _loadStore(),
+          style: theme.textTheme.bodyMedium,
           decoration: InputDecoration(
             hintText: AppStrings.searchHint,
             prefixIcon: const Icon(Icons.search),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
             suffixIcon: IconButton(
               tooltip: AppStrings.tooltipSearch,
               onPressed: _loadStore,
@@ -476,7 +427,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
             ),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 8),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -484,6 +435,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
               ChoiceChip(
                 label: const Text(AppStrings.filterAll),
                 selected: _categoryId == null,
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 onSelected: (_) {
                   setState(() => _categoryId = null);
                   _loadStore();
@@ -496,6 +449,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
                   child: ChoiceChip(
                     label: Text(category.name),
                     selected: _categoryId == category.id,
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     onSelected: (_) {
                       setState(
                         () => _categoryId = _categoryId == category.id
@@ -510,13 +465,14 @@ class _StorefrontPageState extends State<StorefrontPage> {
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 2),
         Row(
           children: [
             FilterChip(
-              avatar: const Icon(Icons.sell_outlined, size: 17),
               label: const Text(AppStrings.filterOnSale),
               selected: _onSale,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               onSelected: (selected) {
                 setState(() => _onSale = selected);
                 _loadStore();
@@ -526,6 +482,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
             FilterChip(
               label: const Text(AppStrings.filterInStock),
               selected: _inStock,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               onSelected: (selected) {
                 setState(() => _inStock = selected);
                 _loadStore();

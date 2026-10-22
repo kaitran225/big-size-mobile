@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../addresses/addresses_page.dart';
 import '../assistant/assistant_page.dart';
 import '../auth/auth_page.dart';
+import '../admin/store_management_page.dart';
 import '../favorites/favorites_page.dart';
-import '../features/feature_hub_page.dart';
 import '../models/store_product.dart';
 import '../notifications/notifications_page.dart';
 import '../orders/orders_page.dart';
@@ -17,9 +17,10 @@ import '../staff/shipment_board_page.dart';
 /// Dedicated account page: identity, activity counters and every account
 /// destination in one place.
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key, required this.api});
+  const ProfilePage({super.key, required this.api, this.onSessionChanged});
 
   final StoreApi api;
+  final ValueChanged<AuthSession?>? onSessionChanged;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -57,6 +58,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _addressCount = addresses;
         _loading = false;
       });
+      widget.onSessionChanged?.call(session);
     } catch (_) {
       if (!mounted) return;
       setState(() => _loading = false);
@@ -241,13 +243,14 @@ class _ProfilePageState extends State<ProfilePage> {
           onTap: () => _open(const SecurityPage()),
         ),
         const Divider(indent: AppSpacing.lg, endIndent: AppSpacing.lg),
-        _MenuRow(
-          icon: Icons.grid_view_outlined,
-          label: AppStrings.accountMore,
-          onTap: () =>
-              _open(FeatureHubPage(api: widget.api, session: _session)),
-        ),
         if (_isStaff) ...[
+          const Divider(indent: AppSpacing.lg, endIndent: AppSpacing.lg),
+          _MenuRow(
+            icon: Icons.storefront_outlined,
+            label: AppStrings.storeManagementTitle,
+            onTap: () =>
+                _open(StoreManagementPage(roles: _session?.roles ?? const [])),
+          ),
           const Divider(indent: AppSpacing.lg, endIndent: AppSpacing.lg),
           _MenuRow(
             icon: Icons.local_shipping_outlined,
@@ -274,6 +277,7 @@ class _ProfilePageState extends State<ProfilePage> {
       _favoriteCount = 0;
       _addressCount = 0;
     });
+    widget.onSessionChanged?.call(null);
   }
 
   Future<void> _openAuth() async {

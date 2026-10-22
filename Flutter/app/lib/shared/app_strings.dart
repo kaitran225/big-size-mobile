@@ -40,7 +40,6 @@ abstract final class AppStrings {
       'after you approve and import the CSV.';
   static const String navShop = 'Shop';
   static const String navSale = 'Sale';
-  static const String navMore = 'More';
 
   // Store connection ------------------------------------------------------
 
@@ -166,7 +165,7 @@ abstract final class AppStrings {
       'Transfer instructions are sent after checkout';
   static const String paymentGateway = 'VNPay / MoMo sandbox';
   static const String paymentGatewaySubtitle =
-      'Simulated provider flow, no real money is charged';
+      'Test payment flow. No real money is charged.';
 
   // Map -------------------------------------------------------------------
 
@@ -306,10 +305,10 @@ abstract final class AppStrings {
   static const String free = 'Free';
   static const String total = 'Total';
   static const String paymentStepTitle = 'Payment method';
-  static const String sandboxBanner = 'Sandbox mode';
   static const String sandboxBannerNote =
-      'Payments run against a local sandbox. No real money is charged.';
-  static const String simulateFailure = 'Simulate a declined payment';
+      'Test payment environment. You will not be charged.';
+  static const String secureCheckoutTitle = 'Secure checkout';
+  static const String stylistTab = 'Stylist';
   static const String processingPayment = 'Processing payment…';
   static const String placeOrder = 'Place order';
   static const String orderPlacedTitle = 'Order placed';
@@ -364,7 +363,6 @@ abstract final class AppStrings {
   static const String accountNotifications = 'Notifications';
   static const String accountStylist = 'AI stylist';
   static const String accountSecurity = 'Account security';
-  static const String accountMore = 'More features';
   static const String accountStaff = 'Staff tools';
   static const String accountOverview = 'Overview';
   static const String signOutAction = 'Sign out';

@@ -52,7 +52,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 380,
+            expandedHeight: 300,
             pinned: true,
             stretch: true,
             backgroundColor: AppColors.canvas,
@@ -68,7 +68,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: _HeroImage(url: product.imageUrl),
+              background: ColoredBox(
+                color: AppColors.surface,
+                child: _HeroImage(url: product.imageUrl),
+              ),
             ),
           ),
           SliverToBoxAdapter(
@@ -372,7 +375,7 @@ class _HeroImage extends StatelessWidget {
     if (url == null) return const _ImageFallback();
     return Image.network(
       url!,
-      fit: BoxFit.cover,
+      fit: BoxFit.contain,
       webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
       errorBuilder: (context, error, stackTrace) => const _ImageFallback(),
     );

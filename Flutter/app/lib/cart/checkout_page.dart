@@ -47,7 +47,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   double? _latitude;
   double? _longitude;
   PaymentMethod _method = PaymentMethod.gateway;
-  bool _decline = false;
   bool _busy = false;
   String? _error;
   CustomerOrder? _order;
@@ -187,7 +186,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
         method: _method,
         amount: cart.subtotal,
         currencyCode: cart.currencyCode,
-        decline: _decline,
       );
       if (!mounted) return;
       if (!payment.approved) {
@@ -556,20 +554,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
           ),
           child: Row(
             children: [
-              const Icon(
-                Icons.science_outlined,
-                size: 20,
-                color: AppColors.accent,
-              ),
+              const Icon(Icons.lock_outline, size: 20, color: AppColors.brand),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      AppStrings.sandboxBanner,
+                      AppStrings.secureCheckoutTitle,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        color: AppColors.accent,
+                        color: AppColors.brand,
                       ),
                     ),
                     Text(
@@ -609,17 +603,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ),
             ],
           ),
-        ),
-        SwitchListTile(
-          value: _decline,
-          onChanged: (value) => setState(() => _decline = value),
-          title: Text(
-            AppStrings.simulateFailure,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          contentPadding: EdgeInsets.zero,
         ),
         const SizedBox(height: AppSpacing.md),
         _buildSummaryCard(cart, address),
@@ -661,6 +644,36 @@ class _CheckoutPageState extends State<CheckoutPage> {
         children: [
           Text(AppStrings.orderSummary, style: theme.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.md),
+          for (final item in cart?.items ?? const <CartItem>[]) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.productName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        '${item.size} · ${item.color} · Qty ${item.quantity}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Text(formatPrice(item.lineTotal, currency)),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+          const Divider(height: AppSpacing.lg),
           _summaryRow(AppStrings.subtotal, formatPrice(subtotal, currency)),
           const SizedBox(height: AppSpacing.sm),
           _summaryRow(
