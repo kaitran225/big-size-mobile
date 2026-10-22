@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../addresses/addresses_page.dart';
 import '../assistant/assistant_page.dart';
+import '../auth/auth_page.dart';
 import '../favorites/favorites_page.dart';
 import '../features/feature_hub_page.dart';
 import '../models/store_product.dart';
@@ -99,6 +100,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     onPressed: _signOut,
                     icon: const Icon(Icons.logout),
                     label: const Text(AppStrings.signOutAction),
+                  )
+                else
+                  FilledButton.icon(
+                    onPressed: _openAuth,
+                    icon: const Icon(Icons.login),
+                    label: const Text(AppStrings.signIn),
                   ),
               ],
             ),
@@ -267,6 +274,13 @@ class _ProfilePageState extends State<ProfilePage> {
       _favoriteCount = 0;
       _addressCount = 0;
     });
+  }
+
+  Future<void> _openAuth() async {
+    final session = await Navigator.of(context).push<AuthSession>(
+      MaterialPageRoute<AuthSession>(builder: (_) => AuthPage(api: widget.api)),
+    );
+    if (session != null) await _load();
   }
 }
 

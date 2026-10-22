@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../auth/auth_sheet.dart';
+import '../auth/auth_page.dart';
 import '../cart/cart_page.dart';
 import '../cart/checkout_page.dart';
 import '../models/store_product.dart';
@@ -355,11 +355,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     final session = await widget.api.loadSession();
     if (session != null) return true;
     if (!mounted) return false;
-    final result = await showModalBottomSheet<AuthSession>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => AuthSheet(api: widget.api),
+    final result = await Navigator.of(context).push<AuthSession>(
+      MaterialPageRoute<AuthSession>(builder: (_) => AuthPage(api: widget.api)),
     );
     return result != null;
   }

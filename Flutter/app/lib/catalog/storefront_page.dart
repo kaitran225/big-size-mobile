@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../assistant/assistant_page.dart';
-import '../auth/auth_sheet.dart';
+import '../auth/auth_page.dart';
 import '../cart/cart_page.dart';
 import '../features/feature_hub_page.dart';
 import '../models/store_product.dart';
@@ -225,11 +225,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
 
   Future<bool> _ensureSignedIn() async {
     if (_session != null) return true;
-    final session = await showModalBottomSheet<AuthSession>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => AuthSheet(api: widget.api),
+    final session = await Navigator.of(context).push<AuthSession>(
+      MaterialPageRoute<AuthSession>(builder: (_) => AuthPage(api: widget.api)),
     );
     if (session == null || !mounted) return false;
     setState(() => _session = session);
