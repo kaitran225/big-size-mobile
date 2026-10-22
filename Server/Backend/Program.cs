@@ -8,6 +8,8 @@ using BigFit.Infrastructure.Persistence;
 using BigFit.Api.Realtime;
 using BigFit.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.HttpOverrides;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,8 +60,25 @@ builder.Services.AddCors(options => options.AddPolicy("FlutterClient", policy =>
         .AllowAnyHeader()
         .AllowAnyMethod()));
 
+// The public host terminates TLS and forwards to the container over HTTP. Honour the
+// forwarded scheme so requests are treated as HTTPS, which keeps the generated
+// OpenAPI document on the https origin instead of advertising a plain http server.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.Configure<HttpsRedirectionOptions>(options => options.HttpsPort = 443);
+}
+
 var app = builder.Build();
 
+app.UseForwardedHeaders();
+app.UseHttpsRedirection();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors("FlutterClient");
@@ -70,7 +89,6 @@ app.UseAuthorization();
 app.MapOpenApi();
 app.MapApiDocumentation();
 
-app.UseHttpsRedirection();
 await using (var scope = app.Services.CreateAsyncScope())
 {
     if (app.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
