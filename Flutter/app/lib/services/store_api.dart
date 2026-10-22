@@ -83,6 +83,128 @@ class StoreApi {
     return StoreProductPage.fromJson(response as Map<String, dynamic>);
   }
 
+  Future<Cart> getCart() async {
+    final response = await _send('GET', '/cart');
+    return Cart.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<Cart> addCartItem({
+    required String productVariantId,
+    int quantity = 1,
+  }) async {
+    final response = await _send(
+      'POST',
+      '/cart/items',
+      body: {'productVariantId': productVariantId, 'quantity': quantity},
+    );
+    return Cart.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<Cart> updateCartItem(String itemId, int quantity) async {
+    final response = await _send(
+      'PUT',
+      '/cart/items/$itemId',
+      body: {'quantity': quantity},
+    );
+    return Cart.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<void> removeCartItem(String itemId) async {
+    await _send('DELETE', '/cart/items/$itemId');
+  }
+
+  Future<List<FavoriteProduct>> getFavorites() async {
+    final response = await _send('GET', '/favorites');
+    return (response as List<dynamic>)
+        .map((item) => FavoriteProduct.fromJson(item as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  Future<void> addFavorite(String productId) async {
+    await _send('PUT', '/favorites/$productId');
+  }
+
+  Future<void> removeFavorite(String productId) async {
+    await _send('DELETE', '/favorites/$productId');
+  }
+
+  Future<List<CustomerAddress>> getAddresses() async {
+    final response = await _send('GET', '/addresses');
+    return (response as List<dynamic>)
+        .map((item) => CustomerAddress.fromJson(item as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  Future<CustomerAddress> saveAddress(
+    Map<String, Object?> address, {
+    String? id,
+  }) async {
+    final response = await _send(
+      id == null ? 'POST' : 'PUT',
+      id == null ? '/addresses' : '/addresses/$id',
+      body: address,
+    );
+    return CustomerAddress.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<void> deleteAddress(String id) async {
+    await _send('DELETE', '/addresses/$id');
+  }
+
+  Future<List<CustomerOrder>> getOrders({int page = 1}) async {
+    final response = await _send(
+      'GET',
+      '/orders',
+      query: {'page': '$page', 'pageSize': '50'},
+    );
+    final items = (response as Map<String, dynamic>)['items'] as List<dynamic>;
+    return items
+        .map((item) => CustomerOrder.fromJson(item as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  Future<CustomerOrder> createOrder({String? shippingAddressId}) async {
+    final response = await _send(
+      'POST',
+      '/orders',
+      body: {'shippingAddressId': shippingAddressId},
+    );
+    return CustomerOrder.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<List<StoreNotification>> getNotifications({int page = 1}) async {
+    final response = await _send(
+      'GET',
+      '/notifications',
+      query: {'page': '$page', 'pageSize': '50'},
+    );
+    final items = (response as Map<String, dynamic>)['items'] as List<dynamic>;
+    return items
+        .map((item) => StoreNotification.fromJson(item as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  Future<void> markNotificationRead(String id) async {
+    await _send('PUT', '/notifications/$id/read');
+  }
+
+  Future<void> deleteNotification(String id) async {
+    await _send('DELETE', '/notifications/$id');
+  }
+
+  Future<ChatReply> askAssistant({
+    required String message,
+    String? gender,
+    String? category,
+  }) async {
+    final response = await _send(
+      'POST',
+      '/assistant/chat',
+      body: {'message': message, 'gender': gender, 'category': category},
+    );
+    return ChatReply.fromJson(response as Map<String, dynamic>);
+  }
+
   Future<AuthSession> login(String email, String password) async {
     final response = await _send(
       'POST',
