@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import 'address_editor.dart';
 import '../models/store_product.dart';
@@ -123,10 +123,7 @@ class _AddressesPageState extends State<AddressesPage> {
                           : Icons.place_outlined,
                     ),
                     title: Text(
-                      AppStrings.addressTitle(
-                        address.label,
-                        address.isDefault,
-                      ),
+                      AppStrings.addressTitle(address.label, address.isDefault),
                     ),
                     subtitle: Text(
                       AppStrings.addressSummary(

@@ -45,7 +45,7 @@ class FeatureHubPage extends StatelessWidget {
         ),
         AppListTileCard(
           icon: Icons.security_outlined,
-          title: AppStrings.accountSecurity,
+          title: AppStrings.securityTitle,
           subtitle: AppStrings.accountSecuritySubtitle,
           onTap: () => _open(context, const SecurityPage()),
         ),

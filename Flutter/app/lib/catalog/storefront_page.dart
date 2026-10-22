@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../addresses/addresses_page.dart';
 import '../assistant/assistant_page.dart';
@@ -452,9 +452,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
             ),
           ),
           IconButton(
-            tooltip: _session == null
-                ? AppStrings.signIn
-                : AppStrings.account,
+            tooltip: _session == null ? AppStrings.signIn : AppStrings.account,
             onPressed: _openAccount,
             icon: Icon(_session == null ? Icons.person_outline : Icons.person),
           ),

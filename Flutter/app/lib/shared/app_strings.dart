@@ -20,7 +20,10 @@
 abstract final class AppStrings {
   // App -------------------------------------------------------------------
 
+  /// Platform application title, in sentence case.
   static const String appTitle = 'BigFit';
+
+  /// Storefront wordmark, in caps.
   static const String brandName = 'BIGFIT';
 
   // Actions ---------------------------------------------------------------
@@ -50,7 +53,8 @@ abstract final class AppStrings {
   static const String sortPriceDesc = 'Price ↓';
   static const String sortNewest = 'Newest';
   static const String loadMore = 'Load more';
-  static const String catalogEmptyTitle = 'Your next favourite fit is on its way.';
+  static const String catalogEmptyTitle =
+      'Your next favourite fit is on its way.';
   static const String catalogEmptySubtitle =
       'The cleaned catalogue is ready for review. Products will appear here '
       'after you approve and import the CSV.';
@@ -254,7 +258,6 @@ abstract final class AppStrings {
   static const String paymentMethods = 'Payment methods';
   static const String paymentMethodsSubtitle =
       'COD, bank transfer, and gateway preview';
-  static const String accountSecurity = 'Account security';
   static const String accountSecuritySubtitle =
       'Email verification, reset, and OTP';
   static const String storeTools = 'Store tools';

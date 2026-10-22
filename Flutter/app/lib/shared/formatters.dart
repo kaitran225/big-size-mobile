@@ -11,9 +11,8 @@ const Map<String, String> currencySymbols = {
 /// Currency displayed without decimal places.
 const String zeroDecimalCurrency = 'VND';
 
-String displayError(Object error) => error is StoreApiException
-    ? error.message
-    : AppStrings.errorRequestFailed;
+String displayError(Object error) =>
+    error is StoreApiException ? error.message : AppStrings.errorRequestFailed;
 
 String formatDate(DateTime date) =>
     '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
