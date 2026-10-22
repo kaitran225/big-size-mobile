@@ -1,5 +1,6 @@
 namespace BigFit.Domain.Entities;
 
+/// <summary>A size and colour of a product, with its own stock.</summary>
 public sealed class ProductVariant
 {
     public Guid Id { get; set; } = Guid.NewGuid();

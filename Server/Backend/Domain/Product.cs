@@ -1,5 +1,6 @@
 namespace BigFit.Domain.Entities;
 
+/// <summary>A catalogue product, priced in one currency.</summary>
 public sealed class Product
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -14,5 +15,5 @@ public sealed class Product
     public Guid CategoryId { get; set; }
     public Category Category { get; set; } = null!;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
+    public ICollection<ProductVariant> Variants { get; set; } = [];
 }
