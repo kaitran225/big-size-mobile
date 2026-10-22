@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using BigFit.Application.Abstractions;
 using BigFit.Application.Catalog;
 using BigFit.Application.Shopping;
@@ -30,7 +30,7 @@ internal sealed class ShoppingService(BigFitDbContext dbContext) : IShoppingServ
             .SingleOrDefaultAsync(item => item.Id == request.ProductVariantId, cancellationToken);
         if (variant is null || !variant.Product.IsActive)
         {
-            throw new ArgumentException("Product variant was not found or is inactive.", nameof(request));
+            throw new ArgumentException(ApiMessages.VariantNotFound, nameof(request));
         }
 
         var cart = await dbContext.ShoppingCarts.SingleOrDefaultAsync(
@@ -48,7 +48,7 @@ internal sealed class ShoppingService(BigFitDbContext dbContext) : IShoppingServ
         var requestedQuantity = request.Quantity + (cartItem?.Quantity ?? 0);
         if (requestedQuantity > variant.StockQuantity)
         {
-            throw new ArgumentException("Requested quantity exceeds available stock.", nameof(request));
+            throw new ArgumentException(ApiMessages.QuantityExceedsStock, nameof(request));
         }
 
         if (cartItem is null)
@@ -90,7 +90,7 @@ internal sealed class ShoppingService(BigFitDbContext dbContext) : IShoppingServ
 
         if (request.Quantity > item.ProductVariant.StockQuantity)
         {
-            throw new ArgumentException("Requested quantity exceeds available stock.", nameof(request));
+            throw new ArgumentException(ApiMessages.QuantityExceedsStock, nameof(request));
         }
 
         item.Quantity = request.Quantity;
@@ -180,7 +180,7 @@ internal sealed class ShoppingService(BigFitDbContext dbContext) : IShoppingServ
             .SingleOrDefaultAsync(item => item.UserId == userId, cancellationToken);
         if (cart is null || cart.Items.Count == 0)
         {
-            throw new ArgumentException("The cart is empty.", nameof(request));
+            throw new ArgumentException(ApiMessages.CartEmpty, nameof(request));
         }
 
         CustomerAddress? address = null;
@@ -191,7 +191,7 @@ internal sealed class ShoppingService(BigFitDbContext dbContext) : IShoppingServ
                 cancellationToken);
             if (address is null)
             {
-                throw new ArgumentException("Shipping address does not belong to the current user.", nameof(request));
+                throw new ArgumentException(ApiMessages.AddressNotOwned, nameof(request));
             }
         }
 
@@ -201,7 +201,7 @@ internal sealed class ShoppingService(BigFitDbContext dbContext) : IShoppingServ
             .ToArray();
         if (currencies.Length != 1)
         {
-            throw new ArgumentException("A single order cannot contain products in different currencies.", nameof(request));
+            throw new ArgumentException(ApiMessages.MixedCurrencies, nameof(request));
         }
 
         var orderItems = new List<CustomerOrderItem>(cart.Items.Count);
@@ -212,7 +212,7 @@ internal sealed class ShoppingService(BigFitDbContext dbContext) : IShoppingServ
             if (!product.IsActive || item.Quantity > variant.StockQuantity)
             {
                 throw new ArgumentException(
-                    $"The requested quantity is no longer available for {product.Name}.",
+                    ApiMessages.QuantityNoLongerAvailable(product.Name),
                     nameof(request));
             }
 
@@ -269,7 +269,7 @@ internal sealed class ShoppingService(BigFitDbContext dbContext) : IShoppingServ
         {
             await transaction.RollbackAsync(cancellationToken);
             throw new DataConflictException(
-                "Product stock changed while placing the order. Refresh the cart and try again.",
+                ApiMessages.StockChangedDuringOrder,
                 exception);
         }
 

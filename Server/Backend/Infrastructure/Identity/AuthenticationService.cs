@@ -1,3 +1,4 @@
+﻿using BigFit.Application.Abstractions;
 using BigFit.Application.Authentication;
 using Microsoft.AspNetCore.Identity;
 
@@ -83,7 +84,7 @@ internal sealed class AuthenticationService(
         if (!result.Succeeded)
         {
             throw new InvalidOperationException(
-                $"Account setup failed and its incomplete user could not be removed: {string.Join(" ", result.Errors.Select(error => error.Description))}");
+                ApiMessages.AccountRollbackFailed(string.Join(" ", result.Errors.Select(error => error.Description))));
         }
     }
 
@@ -98,7 +99,7 @@ internal sealed class AuthenticationService(
         var detail = string.Join(" ", result.Errors.Select(error => error.Description));
         throw new AuthenticationOperationException(
             isConflict ? StatusCodes.Status409Conflict : StatusCodes.Status400BadRequest,
-            isConflict ? "Account already exists" : "Account could not be created",
+            isConflict ? ApiMessages.AccountAlreadyExistsTitle : ApiMessages.AccountCreationFailedTitle,
             detail);
     }
 }

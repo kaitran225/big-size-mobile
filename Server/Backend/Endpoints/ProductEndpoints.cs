@@ -1,3 +1,4 @@
+﻿using BigFit.Application.Abstractions;
 using BigFit.Application.Catalog;
 using BigFit.Application.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -10,7 +11,7 @@ public static class ProductEndpoints
 {
     public static IEndpointRouteBuilder MapProductEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api/products").WithTags("Products");
+        var group = endpoints.MapGroup("/api/products").WithTags(ApiMessages.TagProducts);
 
         group.MapGet("/", async Task<Results<Ok<PagedResponse<ProductResponse>>, BadRequest<ProblemDetails>, ForbidHttpResult>> (
             ICatalogService catalog,
@@ -41,8 +42,8 @@ public static class ProductEndpoints
                 return TypedResults.BadRequest(new ProblemDetails
                 {
                     Status = StatusCodes.Status400BadRequest,
-                    Title = "Invalid pagination",
-                    Detail = "Page must be at least 1 and pageSize must be between 1 and 100."
+                    Title = ApiMessages.InvalidPaginationTitle,
+                    Detail = ApiMessages.InvalidPaginationDetail
                 });
             }
 
@@ -52,8 +53,8 @@ public static class ProductEndpoints
                 return TypedResults.BadRequest(new ProblemDetails
                 {
                     Status = StatusCodes.Status400BadRequest,
-                    Title = "Unsupported sort order",
-                    Detail = "sortBy must be name, price_asc, price_desc, or newest."
+                    Title = ApiMessages.UnsupportedSortOrderTitle,
+                    Detail = ApiMessages.UnsupportedSortOrderDetail
                 });
             }
 
@@ -62,8 +63,8 @@ public static class ProductEndpoints
                 return TypedResults.BadRequest(new ProblemDetails
                 {
                     Status = StatusCodes.Status400BadRequest,
-                    Title = "Unsupported gender",
-                    Detail = "gender must be Men, Women, or Unisex."
+                    Title = ApiMessages.UnsupportedGenderTitle,
+                    Detail = ApiMessages.UnsupportedGenderDetail
                 });
             }
 
@@ -82,8 +83,8 @@ public static class ProductEndpoints
                 cancellationToken));
         })
             .WithName("GetProducts")
-            .WithSummary("List and filter catalogue products")
-            .WithDescription("Supports text search, gender, category, size, color, sale, stock, sorting, and pagination.");
+            .WithSummary(ApiMessages.SummaryGetProducts)
+            .WithDescription(ApiMessages.DescriptionGetProducts);
 
         group.MapGet("/{id:guid}", async Task<Results<Ok<ProductResponse>, NotFound, ForbidHttpResult>> (
             Guid id,
@@ -102,7 +103,7 @@ public static class ProductEndpoints
             return product is null ? TypedResults.NotFound() : TypedResults.Ok(product);
         })
         .WithName("GetProduct")
-        .WithSummary("Get a product and its variants by ID");
+        .WithSummary(ApiMessages.SummaryGetProduct);
 
         group.MapPost("/", async Task<Results<Created<ProductResponse>, NotFound>> (
             CreateProductRequest request,
@@ -115,7 +116,7 @@ public static class ProductEndpoints
                 : TypedResults.Created($"/api/products/{product.Id}", product);
         })
         .WithName("CreateProduct")
-        .WithSummary("Create a product with size/color variants and optional sale price")
+        .WithSummary(ApiMessages.SummaryCreateProduct)
         .RequireAuthorization(ApplicationRoles.CatalogManagement);
 
         group.MapPut("/{id:guid}", async Task<Results<Ok<ProductResponse>, NotFound>> (
@@ -128,7 +129,7 @@ public static class ProductEndpoints
             return product is null ? TypedResults.NotFound() : TypedResults.Ok(product);
         })
         .WithName("UpdateProduct")
-        .WithSummary("Replace a product and its variants")
+        .WithSummary(ApiMessages.SummaryUpdateProduct)
         .RequireAuthorization(ApplicationRoles.CatalogManagement);
 
         group.MapDelete("/{id:guid}", async Task<Results<NoContent, NotFound>> (
@@ -139,12 +140,12 @@ public static class ProductEndpoints
                     ? TypedResults.NoContent()
                     : TypedResults.NotFound())
             .WithName("DeleteProduct")
-            .WithSummary("Delete a product")
+            .WithSummary(ApiMessages.SummaryDeleteProduct)
             .RequireAuthorization(ApplicationRoles.CatalogManagement);
 
         var variantGroup = endpoints
             .MapGroup("/api/products/{productId:guid}/variants")
-            .WithTags("Product variants");
+            .WithTags(ApiMessages.TagProductVariants);
 
         variantGroup.MapGet("/{variantId:guid}", async Task<Results<Ok<ProductVariantResponse>, NotFound>> (
             Guid productId,
@@ -156,7 +157,7 @@ public static class ProductEndpoints
             return variant is null ? TypedResults.NotFound() : TypedResults.Ok(variant);
         })
         .WithName("GetProductVariant")
-        .WithSummary("Get a product variant");
+        .WithSummary(ApiMessages.SummaryGetProductVariant);
 
         variantGroup.MapPost("/", async Task<Results<Created<ProductVariantResponse>, NotFound>> (
             Guid productId,
@@ -170,7 +171,7 @@ public static class ProductEndpoints
                 : TypedResults.Created($"/api/products/{productId}/variants/{variant.Id}", variant);
         })
         .WithName("CreateProductVariant")
-        .WithSummary("Add a size/color variant to a product")
+        .WithSummary(ApiMessages.SummaryCreateProductVariant)
         .RequireAuthorization(ApplicationRoles.CatalogManagement);
 
         variantGroup.MapPut("/{variantId:guid}", async Task<Results<Ok<ProductVariantResponse>, NotFound>> (
@@ -184,7 +185,7 @@ public static class ProductEndpoints
             return variant is null ? TypedResults.NotFound() : TypedResults.Ok(variant);
         })
         .WithName("UpdateProductVariant")
-        .WithSummary("Update variant details and stock quantity")
+        .WithSummary(ApiMessages.SummaryUpdateProductVariant)
         .RequireAuthorization(ApplicationRoles.CatalogManagement);
 
         variantGroup.MapDelete("/{variantId:guid}", async Task<Results<NoContent, NotFound>> (
@@ -196,7 +197,7 @@ public static class ProductEndpoints
                     ? TypedResults.NoContent()
                     : TypedResults.NotFound())
             .WithName("DeleteProductVariant")
-            .WithSummary("Delete a product variant")
+            .WithSummary(ApiMessages.SummaryDeleteProductVariant)
             .RequireAuthorization(ApplicationRoles.CatalogManagement);
 
         return endpoints;

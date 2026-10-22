@@ -1,4 +1,4 @@
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -30,7 +30,7 @@ internal sealed class ChatAssistantService(
             string.IsNullOrWhiteSpace(model))
         {
             throw new ChatAssistantUnavailableException(
-                "AI assistant is not configured. Set the AI provider endpoint, API key, and model.");
+                AssistantMessages.NotConfigured);
         }
 
         var categoryQuery = dbContext.Categories.AsNoTracking().AsQueryable();
@@ -116,11 +116,7 @@ internal sealed class ChatAssistantService(
             Products = products
         }, JsonOptions);
 
-        var systemMessage =
-            "You are BigFit's concise clothing shopping assistant. Answer only from the supplied BigFit catalogue data. " +
-            "Never invent prices, stock, sizes, policies, or products. Explain when requested information is absent. " +
-            "Use the product's currentPrice for today's price and mention salePrice only when isOnSale is true. " +
-            "Keep answers brief and recommend checking fit because sizes vary by garment.";
+        var systemMessage = AssistantMessages.SystemPrompt;
         var payload = JsonSerializer.Serialize(new
         {
             model,
@@ -143,8 +139,8 @@ internal sealed class ChatAssistantService(
             using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogWarning("Configured AI provider returned HTTP {StatusCode}.", (int)response.StatusCode);
-                throw new ChatAssistantUnavailableException("The AI provider could not complete the request.");
+                logger.LogWarning(AssistantMessages.ProviderErrorStatusLog, (int)response.StatusCode);
+                throw new ChatAssistantUnavailableException(AssistantMessages.ProviderRequestFailed);
             }
 
             await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
@@ -156,25 +152,25 @@ internal sealed class ChatAssistantService(
                 .GetString();
             if (string.IsNullOrWhiteSpace(answer))
             {
-                throw new ChatAssistantUnavailableException("The AI provider returned an empty response.");
+                throw new ChatAssistantUnavailableException(AssistantMessages.ProviderEmptyResponse);
             }
 
             return new ChatAssistantResponse(answer.Trim());
         }
         catch (HttpRequestException exception)
         {
-            logger.LogWarning(exception, "Could not reach the configured AI provider.");
-            throw new ChatAssistantUnavailableException("The AI provider is temporarily unavailable.");
+            logger.LogWarning(exception, AssistantMessages.ProviderUnreachableLog);
+            throw new ChatAssistantUnavailableException(AssistantMessages.ProviderUnavailable);
         }
         catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
-            logger.LogWarning(exception, "The configured AI provider timed out.");
-            throw new ChatAssistantUnavailableException("The AI provider request timed out.");
+            logger.LogWarning(exception, AssistantMessages.ProviderTimeoutLog);
+            throw new ChatAssistantUnavailableException(AssistantMessages.ProviderTimedOut);
         }
         catch (JsonException exception)
         {
-            logger.LogWarning(exception, "The AI provider returned an invalid response.");
-            throw new ChatAssistantUnavailableException("The AI provider returned an invalid response.");
+            logger.LogWarning(exception, AssistantMessages.ProviderInvalidResponse);
+            throw new ChatAssistantUnavailableException(AssistantMessages.ProviderInvalidResponse);
         }
     }
 

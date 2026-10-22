@@ -1,3 +1,4 @@
+﻿using BigFit.Application.Abstractions;
 using BigFit.Application.Catalog;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +10,7 @@ public static class CategoryEndpoints
 {
     public static IEndpointRouteBuilder MapCategoryEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api/categories").WithTags("Categories");
+        var group = endpoints.MapGroup("/api/categories").WithTags(ApiMessages.TagCategories);
 
         group.MapGet("/", async Task<Ok<IReadOnlyList<CategoryResponse>>> (
             ICatalogService catalog,
@@ -17,7 +18,7 @@ public static class CategoryEndpoints
             CancellationToken cancellationToken) =>
                 TypedResults.Ok(await catalog.GetCategoriesAsync(gender, cancellationToken)))
             .WithName("GetCategories")
-            .WithSummary("List product categories");
+            .WithSummary(ApiMessages.SummaryGetCategories);
 
         group.MapGet("/{id:guid}", async Task<Results<Ok<CategoryResponse>, NotFound>> (
             Guid id,
@@ -28,7 +29,7 @@ public static class CategoryEndpoints
             return category is null ? TypedResults.NotFound() : TypedResults.Ok(category);
         })
         .WithName("GetCategory")
-        .WithSummary("Get a category by ID");
+        .WithSummary(ApiMessages.SummaryGetCategory);
 
         group.MapPost("/", async Task<Created<CategoryResponse>> (
             CreateCategoryRequest request,
@@ -39,7 +40,7 @@ public static class CategoryEndpoints
             return TypedResults.Created($"/api/categories/{category.Id}", category);
         })
         .WithName("CreateCategory")
-        .WithSummary("Create a category")
+        .WithSummary(ApiMessages.SummaryCreateCategory)
         .RequireAuthorization(ApplicationRoles.CatalogManagement);
 
         group.MapPut("/{id:guid}", async Task<Results<Ok<CategoryResponse>, NotFound>> (
@@ -52,7 +53,7 @@ public static class CategoryEndpoints
             return category is null ? TypedResults.NotFound() : TypedResults.Ok(category);
         })
         .WithName("UpdateCategory")
-        .WithSummary("Replace a category")
+        .WithSummary(ApiMessages.SummaryUpdateCategory)
         .RequireAuthorization(ApplicationRoles.CatalogManagement);
 
         group.MapDelete("/{id:guid}", async Task<Results<NoContent, NotFound, Conflict<ProblemDetails>>> (
@@ -68,13 +69,13 @@ public static class CategoryEndpoints
                 _ => TypedResults.Conflict(new ProblemDetails
                 {
                     Status = StatusCodes.Status409Conflict,
-                    Title = "Category contains products",
-                    Detail = "Move or delete the category's products before deleting this category."
+                    Title = ApiMessages.CategoryContainsProductsTitle,
+                    Detail = ApiMessages.CategoryContainsProductsDetail
                 })
             };
         })
         .WithName("DeleteCategory")
-        .WithSummary("Delete a category that has no products")
+        .WithSummary(ApiMessages.SummaryDeleteCategory)
         .RequireAuthorization(ApplicationRoles.CatalogManagement);
 
         return endpoints;

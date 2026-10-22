@@ -1,4 +1,4 @@
-using BigFit.Application.Addresses;
+﻿using BigFit.Application.Addresses;
 using BigFit.Application.Abstractions;
 using BigFit.Domain.Entities;
 using BigFit.Infrastructure.Persistence;
@@ -104,7 +104,7 @@ internal sealed class AddressService(BigFitDbContext dbContext) : IAddressServic
     {
         if (request.Latitude.HasValue != request.Longitude.HasValue)
         {
-            throw new ArgumentException("Latitude and longitude must be provided together.", nameof(request));
+            throw new ArgumentException(ApiMessages.CoordinatesRequiredTogether, nameof(request));
         }
     }
 

@@ -1,4 +1,4 @@
-using BigFit.Application.Abstractions;
+﻿using BigFit.Application.Abstractions;
 using BigFit.Application.Catalog;
 using BigFit.Application.Notifications;
 using BigFit.Domain.Entities;
@@ -46,7 +46,7 @@ internal sealed class NotificationService(
             }
             catch (System.Text.Json.JsonException exception)
             {
-                throw new ArgumentException("DataJson must contain valid JSON.", nameof(request), exception);
+                throw new ArgumentException(ApiMessages.InvalidNotificationData, nameof(request), exception);
             }
         }
 

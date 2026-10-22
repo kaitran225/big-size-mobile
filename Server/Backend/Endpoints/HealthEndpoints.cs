@@ -1,4 +1,4 @@
-using BigFit.Application.Abstractions;
+﻿using BigFit.Application.Abstractions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Npgsql;
 
@@ -19,19 +19,19 @@ public static class HealthEndpoints
             try
             {
                 await healthCheck.CheckAsync(cancellationToken);
-                return TypedResults.Ok(new DatabaseHealthResponse("healthy"));
+                return TypedResults.Ok(new DatabaseHealthResponse(ApiMessages.DatabaseHealthy));
             }
             catch (NpgsqlException exception)
             {
-                logger.LogWarning(exception, "PostgreSQL health check failed.");
+                logger.LogWarning(exception, ApiMessages.DatabaseHealthCheckFailedLog);
                 return TypedResults.Problem(
                     statusCode: StatusCodes.Status503ServiceUnavailable,
-                    title: "Database unavailable",
-                    detail: "The database health check could not connect to PostgreSQL.");
+                    title: ApiMessages.DatabaseUnavailableTitle,
+                    detail: ApiMessages.DatabaseUnavailableDetail);
             }
         })
         .WithName("GetDatabaseHealth")
-        .WithSummary("Check PostgreSQL connectivity")
+        .WithSummary(ApiMessages.SummaryGetDatabaseHealth)
         .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         return endpoints;

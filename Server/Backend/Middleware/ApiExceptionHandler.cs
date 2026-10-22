@@ -1,4 +1,4 @@
-using BigFit.Application.Abstractions;
+﻿using BigFit.Application.Abstractions;
 using BigFit.Application.Authentication;
 using BigFit.Application.Assistant;
 using Microsoft.AspNetCore.Diagnostics;
@@ -19,11 +19,11 @@ internal sealed class ApiExceptionHandler(
         {
             BadHttpRequestException => (
                 StatusCodes.Status400BadRequest,
-                "Invalid request",
-                "The request body is missing or contains invalid JSON."),
+                ApiMessages.InvalidRequestTitle,
+                ApiMessages.InvalidRequestBodyDetail),
             DataConflictException => (
                 StatusCodes.Status409Conflict,
-                "Data conflict",
+                ApiMessages.DataConflictTitle,
                 exception.Message),
             AuthenticationOperationException authException => (
                 authException.StatusCode,
@@ -31,19 +31,19 @@ internal sealed class ApiExceptionHandler(
                 authException.Message),
             ChatAssistantUnavailableException assistantException => (
                 StatusCodes.Status503ServiceUnavailable,
-                "AI assistant unavailable",
+                AssistantMessages.UnavailableTitle,
                 assistantException.Message),
             ArgumentException => (
                 StatusCodes.Status400BadRequest,
-                "Invalid request",
+                ApiMessages.InvalidRequestTitle,
                 exception.Message),
             _ => (
                 StatusCodes.Status500InternalServerError,
-                "An unexpected error occurred",
-                "The server could not complete the request.")
+                ApiMessages.UnexpectedErrorTitle,
+                ApiMessages.UnexpectedErrorDetail)
         };
 
-        logger.LogError(exception, "API request failed with status {StatusCode}.", status);
+        logger.LogError(exception, ApiMessages.ApiRequestFailedLog, status);
         httpContext.Response.StatusCode = status;
         await problemDetailsService.WriteAsync(new ProblemDetailsContext
         {

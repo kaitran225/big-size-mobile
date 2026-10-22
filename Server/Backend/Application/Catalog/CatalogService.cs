@@ -1,4 +1,4 @@
-using BigFit.Application.Abstractions;
+﻿using BigFit.Application.Abstractions;
 using BigFit.Domain.Entities;
 
 namespace BigFit.Application.Catalog;
@@ -267,7 +267,7 @@ public sealed class CatalogService(ICatalogRepository repository) : ICatalogServ
     {
         if (salePrice is not null && (salePrice <= 0 || salePrice >= price))
         {
-            throw new ArgumentException("SalePrice must be greater than zero and lower than Price.");
+            throw new ArgumentException(ApiMessages.SalePriceOutOfRange);
         }
     }
 

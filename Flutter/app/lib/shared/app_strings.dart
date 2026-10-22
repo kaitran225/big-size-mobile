@@ -1,22 +1,3 @@
-/// Every user-facing string in the BigFit app.
-///
-/// How to read this file:
-///
-///   * One constant per **distinct** string. Two constants never hold the
-///     same value, so the value is always a reliable way to find the name.
-///   * The name predicts the role of the string:
-///     - `error...` / `...Failed`  failure messages
-///     - `...Title`                screen or card titles
-///     - `...Empty`                "nothing here yet" messages
-///     - `...Hint`                 input hints
-///     - `...Label`                field and option labels
-///     - `...Subtitle` / `...Description` / `...Message` / `...Note`
-///                                supporting copy
-///     - `tooltip...`              icon button tooltips
-///   * Constants are grouped by the screen that shows them, so a string is
-///     found by going to its feature and scanning the group.
-///   * The last group holds the builders for strings that depend on runtime
-///     data. They read as sentences and are named after what they produce.
 abstract final class AppStrings {
   // App -------------------------------------------------------------------
 

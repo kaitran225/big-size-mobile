@@ -1,3 +1,4 @@
+﻿using BigFit.Application.Abstractions;
 using BigFit.Application.Authentication;
 using Microsoft.AspNetCore.Identity;
 
@@ -25,7 +26,7 @@ internal sealed class DatabaseInitializer(
                 if (!result.Succeeded)
                 {
                     throw new InvalidOperationException(
-                        $"Could not initialize the {role} role: {string.Join(" ", result.Errors.Select(error => error.Description))}");
+                        ApiMessages.RoleInitializationFailed(role, string.Join(" ", result.Errors.Select(error => error.Description))));
                 }
             }
         }
@@ -40,14 +41,14 @@ internal sealed class DatabaseInitializer(
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
             throw new InvalidOperationException(
-                "Both Auth:BootstrapAdmin:Email and Auth:BootstrapAdmin:Password must be configured together.");
+                ApiMessages.BootstrapCredentialsMustBePaired);
         }
 
         var admin = await userManager.FindByEmailAsync(email);
         if (admin is not null && !await userManager.IsInRoleAsync(admin, ApplicationRoles.Admin))
         {
             throw new InvalidOperationException(
-                "The configured bootstrap administrator email already belongs to a non-admin user. Choose a dedicated bootstrap email.");
+                ApiMessages.BootstrapEmailBelongsToNonAdmin);
         }
 
         if (admin is null)
@@ -57,16 +58,16 @@ internal sealed class DatabaseInitializer(
                 Id = Guid.NewGuid(),
                 UserName = email,
                 Email = email,
-                DisplayName = "BigFit Administrator"
+                DisplayName = ApiMessages.BootstrapAdminDisplayName
             };
             var createResult = await userManager.CreateAsync(admin, password);
             if (!createResult.Succeeded)
             {
                 throw new InvalidOperationException(
-                    $"Could not create the configured bootstrap administrator: {string.Join(" ", createResult.Errors.Select(error => error.Description))}");
+                    ApiMessages.BootstrapAdminCreationFailed(string.Join(" ", createResult.Errors.Select(error => error.Description))));
             }
 
-            logger.LogInformation("Created configured bootstrap administrator {Email}.", email);
+            logger.LogInformation(ApiMessages.BootstrapAdminCreatedLog, email);
             var roleResult = await userManager.AddToRoleAsync(admin, ApplicationRoles.Admin);
             if (!roleResult.Succeeded)
             {
@@ -74,11 +75,11 @@ internal sealed class DatabaseInitializer(
                 if (!deleteResult.Succeeded)
                 {
                     throw new InvalidOperationException(
-                        $"Could not assign the Admin role and could not remove the incomplete bootstrap user: {string.Join(" ", deleteResult.Errors.Select(error => error.Description))}");
+                        ApiMessages.BootstrapRoleAssignmentAndCleanupFailed(string.Join(" ", deleteResult.Errors.Select(error => error.Description))));
                 }
 
                 throw new InvalidOperationException(
-                    $"Could not assign the Admin role to the configured bootstrap account: {string.Join(" ", roleResult.Errors.Select(error => error.Description))}");
+                    ApiMessages.BootstrapRoleAssignmentFailed(string.Join(" ", roleResult.Errors.Select(error => error.Description))));
             }
         }
     }

@@ -1,4 +1,4 @@
-using BigFit.Application.Abstractions;
+﻿using BigFit.Application.Abstractions;
 using BigFit.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -147,7 +147,7 @@ internal sealed class CatalogRepository(BigFitDbContext dbContext) : ICatalogRep
         })
         {
             throw new DataConflictException(
-                "The category name or variant SKU/size/color combination already exists.",
+                ApiMessages.DuplicateCategoryOrVariant,
                 exception);
         }
     }

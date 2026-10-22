@@ -1,4 +1,4 @@
-using BigFit.Application.Abstractions;
+﻿using BigFit.Application.Abstractions;
 using BigFit.Application.Authentication;
 using BigFit.Infrastructure.Identity;
 using BigFit.Infrastructure.Assistant;
@@ -27,7 +27,7 @@ public static class DependencyInjection
         if (string.IsNullOrWhiteSpace(configuredConnection))
         {
             throw new InvalidOperationException(
-                "Database connection is not configured. Set ConnectionStrings:Default using .NET user-secrets or an environment variable.");
+                ApiMessages.DatabaseConnectionNotConfigured);
         }
 
         var signingKey = configuration["Auth:Jwt:SigningKey"];
@@ -36,12 +36,12 @@ public static class DependencyInjection
         if (string.IsNullOrWhiteSpace(signingKey) || Encoding.UTF8.GetByteCount(signingKey) < 32)
         {
             throw new InvalidOperationException(
-                "Auth:Jwt:SigningKey must be configured as a secret of at least 32 UTF-8 bytes.");
+                ApiMessages.JwtSigningKeyNotConfigured);
         }
 
         if (string.IsNullOrWhiteSpace(issuer) || string.IsNullOrWhiteSpace(audience))
         {
-            throw new InvalidOperationException("Auth:Jwt:Issuer and Auth:Jwt:Audience must be configured.");
+            throw new InvalidOperationException(ApiMessages.JwtIssuerAudienceNotConfigured);
         }
 
         services.AddDbContext<BigFitDbContext>(options =>
@@ -118,7 +118,7 @@ public static class DependencyInjection
         if (credentials.Length != 2 || string.IsNullOrWhiteSpace(database))
         {
             throw new InvalidOperationException(
-                "The PostgreSQL URL must include a username, password, and database name.");
+                ApiMessages.PostgresUrlMissingCredentials);
         }
 
         var sslMode = uri.Query.TrimStart('?')
@@ -130,7 +130,7 @@ public static class DependencyInjection
 
         if (!string.Equals(sslMode, "require", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("The PostgreSQL URL must use sslmode=require.");
+            throw new InvalidOperationException(ApiMessages.PostgresUrlRequiresSsl);
         }
 
         return new NpgsqlConnectionStringBuilder

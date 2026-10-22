@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using BigFit.Application.Abstractions;
 using BigFit.Application.Catalog;
 using BigFit.Application.Notifications;
@@ -11,7 +11,7 @@ public static class NotificationEndpoints
     public static IEndpointRouteBuilder MapNotificationEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/notifications")
-            .WithTags("Notifications")
+            .WithTags(ApiMessages.TagNotifications)
             .RequireAuthorization();
 
         group.MapGet("/", async Task<Results<Ok<PagedResponse<UserNotificationResponse>>, BadRequest>> (
@@ -37,7 +37,7 @@ public static class NotificationEndpoints
                 userId, requestedPage, requestedPageSize, cancellationToken));
         })
         .WithName("GetMyNotifications")
-        .WithSummary("List notifications belonging to the current user");
+        .WithSummary(ApiMessages.SummaryGetMyNotifications);
 
         group.MapPost("/", async Task<Results<Created<UserNotificationResponse>, BadRequest>> (
             CreateNotificationRequest request,
@@ -54,7 +54,7 @@ public static class NotificationEndpoints
             return TypedResults.Created($"/api/notifications/{created.Id}", created);
         })
         .WithName("CreateMyNotification")
-        .WithSummary("Create a notification for the current user");
+        .WithSummary(ApiMessages.SummaryCreateMyNotification);
 
         group.MapPut("/{id:guid}/read", async Task<Results<NoContent, NotFound>> (
             Guid id,
@@ -71,7 +71,7 @@ public static class NotificationEndpoints
             return TypedResults.NoContent();
         })
         .WithName("MarkMyNotificationRead")
-        .WithSummary("Mark one of the current user's notifications as read");
+        .WithSummary(ApiMessages.SummaryMarkMyNotificationRead);
 
         group.MapDelete("/{id:guid}", async Task<Results<NoContent, NotFound>> (
             Guid id,
@@ -88,7 +88,7 @@ public static class NotificationEndpoints
             return TypedResults.NoContent();
         })
         .WithName("DeleteMyNotification")
-        .WithSummary("Delete one of the current user's notifications");
+        .WithSummary(ApiMessages.SummaryDeleteMyNotification);
 
         return endpoints;
     }

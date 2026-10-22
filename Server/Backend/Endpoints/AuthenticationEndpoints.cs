@@ -1,3 +1,4 @@
+﻿using BigFit.Application.Abstractions;
 using BigFit.Application.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -7,7 +8,7 @@ public static class AuthenticationEndpoints
 {
     public static IEndpointRouteBuilder MapAuthenticationEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api/auth").WithTags("Authentication");
+        var group = endpoints.MapGroup("/api/auth").WithTags(ApiMessages.TagAuthentication);
 
         group.MapPost("/register", async Task<Ok<AuthResponse>> (
             RegisterCustomerRequest request,
@@ -15,7 +16,7 @@ public static class AuthenticationEndpoints
             CancellationToken cancellationToken) =>
                 TypedResults.Ok(await authentication.RegisterCustomerAsync(request, cancellationToken)))
             .WithName("RegisterCustomer")
-            .WithSummary("Register a customer account")
+            .WithSummary(ApiMessages.SummaryRegisterCustomer)
             .RequireRateLimiting("authentication");
 
         group.MapPost("/login", async Task<Results<Ok<AuthResponse>, UnauthorizedHttpResult>> (
@@ -27,7 +28,7 @@ public static class AuthenticationEndpoints
             return response is null ? TypedResults.Unauthorized() : TypedResults.Ok(response);
         })
         .WithName("Login")
-        .WithSummary("Sign in and receive a JWT access token")
+        .WithSummary(ApiMessages.SummaryLogin)
         .RequireRateLimiting("authentication");
 
         endpoints.MapPost("/api/admin/staff", async Task<Created<UserResponse>> (
@@ -38,9 +39,9 @@ public static class AuthenticationEndpoints
             var user = await authentication.CreateStoreStaffAsync(request, cancellationToken);
             return TypedResults.Created($"/api/admin/staff/{user.Id}", user);
         })
-        .WithTags("Administration")
+        .WithTags(ApiMessages.TagAdministration)
         .WithName("CreateStoreStaff")
-        .WithSummary("Create a store staff account")
+        .WithSummary(ApiMessages.SummaryCreateStoreStaff)
         .RequireAuthorization(ApplicationRoles.Admin)
         .RequireRateLimiting("authentication");
 
