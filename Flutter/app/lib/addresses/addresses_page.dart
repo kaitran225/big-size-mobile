@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
 import '../services/store_api.dart';
+import '../shared/app_strings.dart';
 import '../shared/widgets/skeleton_box.dart';
 
 class AddressesPage extends StatefulWidget {
@@ -42,7 +43,7 @@ class _AddressesPageState extends State<AddressesPage> {
         setState(() {
           _error = error is StoreApiException
               ? error.message
-              : 'Could not load addresses.';
+              : AppStrings.errorLoadAddresses;
           _loading = false;
         });
       }
@@ -65,7 +66,7 @@ class _AddressesPageState extends State<AddressesPage> {
             content: Text(
               error is StoreApiException
                   ? error.message
-                  : 'Could not save the address.',
+                  : AppStrings.errorSaveAddress,
             ),
           ),
         );
@@ -84,7 +85,7 @@ class _AddressesPageState extends State<AddressesPage> {
             content: Text(
               error is StoreApiException
                   ? error.message
-                  : 'Could not delete the address.',
+                  : AppStrings.errorDeleteAddress,
             ),
           ),
         );
@@ -95,10 +96,10 @@ class _AddressesPageState extends State<AddressesPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Delivery addresses'),
+      title: const Text(AppStrings.deliveryAddressesTitle),
       actions: [
         IconButton(
-          tooltip: 'Add address',
+          tooltip: AppStrings.tooltipAddAddress,
           onPressed: () => _editAddress(),
           icon: const Icon(Icons.add),
         ),
@@ -128,16 +129,14 @@ class _AddressesPageState extends State<AddressesPage> {
         : _error != null
         ? Center(child: Text(_error!, textAlign: TextAlign.center))
         : _addresses.isEmpty
-        ? const Center(child: Text('No delivery addresses saved yet.'))
+        ? const Center(child: Text(AppStrings.addressesEmpty))
         : ListView(
             padding: const EdgeInsets.all(16),
             children: [
               const Card(
                 child: Padding(
                   padding: EdgeInsets.all(14),
-                  child: Text(
-                    'Map SDK is not configured. You can save optional coordinates manually; saved locations are sent to the backend.',
-                  ),
+                  child: Text(AppStrings.mapSdkNotice),
                 ),
               ),
               ..._addresses.map(
@@ -149,15 +148,22 @@ class _AddressesPageState extends State<AddressesPage> {
                           : Icons.place_outlined,
                     ),
                     title: Text(
-                      '${address.label}${address.isDefault ? ' · Default' : ''}',
+                      AppStrings.addressWithDefault(
+                        address.label,
+                        address.isDefault,
+                      ),
                     ),
                     subtitle: Text(
-                      '${address.recipientName} · ${address.phoneNumber}\n${address.fullAddress}',
+                      AppStrings.addressSummary(
+                        address.recipientName,
+                        address.phoneNumber,
+                        address.fullAddress,
+                      ),
                     ),
                     isThreeLine: true,
                     onTap: () => _editAddress(address),
                     trailing: IconButton(
-                      tooltip: 'Delete address',
+                      tooltip: AppStrings.tooltipDeleteAddress,
                       onPressed: () => _deleteAddress(address.id),
                       icon: const Icon(Icons.delete_outline),
                     ),
@@ -192,7 +198,9 @@ class _AddressEditorState extends State<AddressEditor> {
     super.initState();
     final address = widget.address;
     _fields = {
-      'label': TextEditingController(text: address?.label ?? 'Home'),
+      'label': TextEditingController(
+        text: address?.label ?? AppStrings.defaultAddressLabel,
+      ),
       'recipientName': TextEditingController(
         text: address?.recipientName ?? '',
       ),
@@ -201,7 +209,9 @@ class _AddressEditorState extends State<AddressEditor> {
       'city': TextEditingController(text: address?.city ?? ''),
       'province': TextEditingController(text: address?.province ?? ''),
       'postalCode': TextEditingController(text: address?.postalCode ?? ''),
-      'countryCode': TextEditingController(text: address?.countryCode ?? 'VN'),
+      'countryCode': TextEditingController(
+        text: address?.countryCode ?? AppStrings.defaultCountryCode,
+      ),
       'latitude': TextEditingController(
         text: address?.latitude?.toString() ?? '',
       ),
@@ -222,7 +232,11 @@ class _AddressEditorState extends State<AddressEditor> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text(widget.address == null ? 'Add address' : 'Edit address'),
+    title: Text(
+      widget.address == null
+          ? AppStrings.addAddressTitle
+          : AppStrings.editAddressTitle,
+    ),
     content: SizedBox(
       width: 420,
       child: Form(
@@ -255,13 +269,13 @@ class _AddressEditorState extends State<AddressEditor> {
                               'countryCode',
                             }.contains(entry.key) &&
                             entry.value.text.trim().isEmpty
-                        ? (_) => 'Required'
+                        ? (_) => AppStrings.required
                         : null,
                   ),
                 ),
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Set as default'),
+                title: const Text(AppStrings.setAsDefault),
                 value: _isDefault,
                 onChanged: (value) =>
                     setState(() => _isDefault = value ?? false),
@@ -274,7 +288,7 @@ class _AddressEditorState extends State<AddressEditor> {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: const Text(AppStrings.cancel),
       ),
       FilledButton(
         onPressed: () {
@@ -292,22 +306,22 @@ class _AddressEditorState extends State<AddressEditor> {
             'isDefault': _isDefault,
           });
         },
-        child: const Text('Save'),
+        child: const Text(AppStrings.save),
       ),
     ],
   );
 
   String _addressFieldLabel(String key) => switch (key) {
-    'label' => 'Address label',
-    'recipientName' => 'Recipient name',
-    'phoneNumber' => 'Phone number',
-    'addressLine' => 'Street address',
-    'city' => 'City',
-    'province' => 'Province / state',
-    'postalCode' => 'Postal code',
-    'countryCode' => 'Country code (2 letters)',
-    'latitude' => 'Latitude (optional)',
-    'longitude' => 'Longitude (optional)',
+    'label' => AppStrings.fieldAddressLabel,
+    'recipientName' => AppStrings.fieldRecipientName,
+    'phoneNumber' => AppStrings.fieldPhoneNumber,
+    'addressLine' => AppStrings.fieldAddressLine,
+    'city' => AppStrings.fieldCity,
+    'province' => AppStrings.fieldProvince,
+    'postalCode' => AppStrings.fieldPostalCode,
+    'countryCode' => AppStrings.fieldCountryCode,
+    'latitude' => AppStrings.fieldLatitude,
+    'longitude' => AppStrings.fieldLongitude,
     _ => key,
   };
 }

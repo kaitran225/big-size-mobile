@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../shared/app_strings.dart';
+
 class PaymentPage extends StatefulWidget {
   const PaymentPage({super.key});
 
@@ -12,49 +14,43 @@ class _PaymentPageState extends State<PaymentPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Payment')),
+    appBar: AppBar(title: const Text(AppStrings.paymentTitle)),
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'Choose a payment method',
+          AppStrings.choosePaymentMethod,
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 4),
-        const Text('Your order total will appear here at checkout.'),
+        const Text(AppStrings.paymentTotalNote),
         const SizedBox(height: 16),
         _methodTile(
           value: 'cod',
           icon: Icons.local_shipping_outlined,
-          title: 'Cash on delivery',
-          subtitle: 'Pay when your order arrives',
+          title: AppStrings.paymentCod,
+          subtitle: AppStrings.paymentCodSubtitle,
         ),
         _methodTile(
           value: 'bank',
           icon: Icons.account_balance_outlined,
-          title: 'Bank transfer',
-          subtitle: 'Transfer instructions will be shown at checkout',
+          title: AppStrings.paymentBank,
+          subtitle: AppStrings.paymentBankSubtitle,
         ),
         _methodTile(
           value: 'gateway',
           icon: Icons.credit_card_outlined,
-          title: 'VNPay / MoMo',
-          subtitle: 'Sandbox integration is not configured',
+          title: AppStrings.paymentGateway,
+          subtitle: AppStrings.paymentGatewaySubtitle,
         ),
         const SizedBox(height: 12),
-        const _IntegrationNote(
-          text: 'This is a UI frame. No payment is created or charged until a backend payment API and provider sandbox are connected.',
-        ),
+        const _IntegrationNote(text: AppStrings.paymentFrameNotice),
         const SizedBox(height: 20),
         FilledButton(
           onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Preview only: payment processing is not connected.',
-              ),
-            ),
+            const SnackBar(content: Text(AppStrings.paymentPreviewSnack)),
           ),
-          child: const Text('Continue'),
+          child: const Text(AppStrings.continueAction),
         ),
       ],
     ),

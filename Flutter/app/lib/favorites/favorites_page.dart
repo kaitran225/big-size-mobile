@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
 import '../services/store_api.dart';
+import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
 
 class FavoritesPage extends StatefulWidget {
@@ -41,7 +42,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Favorites'),
+      title: const Text(AppStrings.favoritesTitle),
       actions: [
         IconButton(
           onPressed: () => setState(_load),
@@ -60,7 +61,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
         }
         final products = snapshot.data!;
         if (products.isEmpty) {
-          return const Center(child: Text('No favorites saved yet.'));
+          return const Center(child: Text(AppStrings.favoritesEmpty));
         }
         return ListView(
           padding: const EdgeInsets.all(16),

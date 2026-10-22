@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/store_api.dart';
+import '../shared/app_strings.dart';
 
 class AuthSheet extends StatefulWidget {
   const AuthSheet({super.key, required this.api});
@@ -51,7 +52,7 @@ class _AuthSheetState extends State<AuthSheet> {
       setState(() {
         _error = error is StoreApiException
             ? error.message
-            : 'Could not sign in. Check your connection and try again.';
+            : AppStrings.errorSignIn;
         _busy = false;
       });
     }
@@ -73,24 +74,26 @@ class _AuthSheetState extends State<AuthSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _register ? 'Join BigFit' : 'Welcome back',
+                _register ? AppStrings.joinBigFit : AppStrings.welcomeBack,
                 style: Theme.of(context).textTheme.headlineSmall
                     ?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 6),
               Text(
                 _register
-                    ? 'Create a customer account to get started.'
-                    : 'Sign in with your BigFit account.',
+                    ? AppStrings.registerSubtitle
+                    : AppStrings.loginSubtitle,
               ),
               const SizedBox(height: 20),
               if (_register) ...[
                 TextFormField(
                   controller: _nameController,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(labelText: 'Display name'),
+                  decoration: const InputDecoration(
+                    labelText: AppStrings.displayName,
+                  ),
                   validator: (value) => value == null || value.trim().length < 2
-                      ? 'Enter at least 2 characters.'
+                      ? AppStrings.validationDisplayName
                       : null,
                 ),
                 const SizedBox(height: 12),
@@ -98,29 +101,31 @@ class _AuthSheetState extends State<AuthSheet> {
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: const InputDecoration(labelText: AppStrings.email),
                 validator: (value) =>
                     value == null ||
                         !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)
-                    ? 'Enter a valid email address.'
+                    ? AppStrings.validationEmail
                     : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password'),
+                decoration: const InputDecoration(
+                  labelText: AppStrings.password,
+                ),
                 validator: (value) =>
                     value == null || value.length < (_register ? 12 : 1)
                     ? _register
-                          ? 'Use at least 12 characters.'
-                          : 'Enter your password.'
+                          ? AppStrings.validationPasswordLength
+                          : AppStrings.validationPasswordRequired
                     : null,
               ),
               if (_register) ...[
                 const SizedBox(height: 8),
                 const Text(
-                  'Use 12+ characters with uppercase, lowercase, number, and symbol.',
+                  AppStrings.passwordPolicyHint,
                   style: TextStyle(color: Colors.black54, fontSize: 12),
                 ),
               ],
@@ -139,7 +144,11 @@ class _AuthSheetState extends State<AuthSheet> {
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(_register ? 'Create customer account' : 'Sign in'),
+                      : Text(
+                          _register
+                              ? AppStrings.createAccount
+                              : AppStrings.signIn,
+                        ),
                 ),
               ),
               TextButton(
@@ -151,8 +160,8 @@ class _AuthSheetState extends State<AuthSheet> {
                       }),
                 child: Text(
                   _register
-                      ? 'Already have an account? Sign in'
-                      : 'New to BigFit? Create an account',
+                      ? AppStrings.switchToSignIn
+                      : AppStrings.switchToRegister,
                 ),
               ),
             ],

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../shared/app_strings.dart';
+
 class DeliveryMapPage extends StatefulWidget {
   const DeliveryMapPage({super.key});
 
@@ -9,7 +11,7 @@ class DeliveryMapPage extends StatefulWidget {
 
 class _DeliveryMapPageState extends State<DeliveryMapPage> {
   final _searchController = TextEditingController();
-  String _selectedLocation = 'BigFit demo location';
+  String _selectedLocation = AppStrings.demoLocation;
 
   @override
   void dispose() {
@@ -19,7 +21,7 @@ class _DeliveryMapPageState extends State<DeliveryMapPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Choose delivery location')),
+    appBar: AppBar(title: const Text(AppStrings.mapTitle)),
     body: Column(
       children: [
         Padding(
@@ -28,12 +30,12 @@ class _DeliveryMapPageState extends State<DeliveryMapPage> {
             controller: _searchController,
             onChanged: (value) => setState(
               () => _selectedLocation = value.trim().isEmpty
-                  ? 'BigFit demo location'
+                  ? AppStrings.demoLocation
                   : value.trim(),
             ),
             decoration: const InputDecoration(
               prefixIcon: Icon(Icons.search),
-              hintText: 'Search for an address',
+              hintText: AppStrings.mapSearchHint,
             ),
           ),
         ),
@@ -64,7 +66,7 @@ class _DeliveryMapPageState extends State<DeliveryMapPage> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Map preview only. Add a Maps SDK key to enable live maps and device location.',
+                            AppStrings.mapPreviewNotice,
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ),
@@ -85,7 +87,7 @@ class _DeliveryMapPageState extends State<DeliveryMapPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Selected location',
+                          AppStrings.selectedLocation,
                           style: Theme.of(context).textTheme.labelLarge,
                         ),
                         const SizedBox(height: 4),
@@ -98,7 +100,7 @@ class _DeliveryMapPageState extends State<DeliveryMapPage> {
                           width: double.infinity,
                           child: FilledButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text('Use this location'),
+                            child: const Text(AppStrings.useThisLocation),
                           ),
                         ),
                       ],

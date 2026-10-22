@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
+import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
 import '../shared/widgets/skeleton_box.dart';
 
@@ -68,7 +69,7 @@ class ProductTile extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        '${product.discountPercent}% OFF',
+                        AppStrings.discountOff(product.discountPercent),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
@@ -91,7 +92,7 @@ class ProductTile extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(
-                        'SOLD OUT',
+                        AppStrings.soldOut,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 9,
@@ -229,7 +230,7 @@ class _ProductDetailsSheetState extends State<ProductDetailsSheet> {
               if (sizes.isNotEmpty) ...[
                 const SizedBox(height: 18),
                 Text(
-                  'Size & colour',
+                  AppStrings.sizeAndColour,
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
@@ -239,7 +240,9 @@ class _ProductDetailsSheetState extends State<ProductDetailsSheet> {
                   children: product.variants.map((variant) {
                     final selected = _selectedVariant?.id == variant.id;
                     return ChoiceChip(
-                      label: Text('${variant.size} · ${variant.color}'),
+                      label: Text(
+                        AppStrings.variantSummary(variant.size, variant.color),
+                      ),
                       selected: selected,
                       onSelected: variant.stockQuantity == 0
                           ? null
@@ -264,8 +267,8 @@ class _ProductDetailsSheetState extends State<ProductDetailsSheet> {
                   icon: const Icon(Icons.shopping_bag_outlined),
                   label: Text(
                     _selectedVariant == null
-                        ? 'Currently unavailable'
-                        : 'Add to bag',
+                        ? AppStrings.currentlyUnavailable
+                        : AppStrings.addToBag,
                   ),
                 ),
               ),
@@ -275,7 +278,7 @@ class _ProductDetailsSheetState extends State<ProductDetailsSheet> {
                 child: OutlinedButton.icon(
                   onPressed: widget.onToggleFavorite,
                   icon: const Icon(Icons.favorite_border),
-                  label: const Text('Add to favorites'),
+                  label: const Text(AppStrings.addToFavorites),
                 ),
               ),
             ],
@@ -313,7 +316,7 @@ class _PriceLine extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          '${product.discountPercent}% off',
+          AppStrings.discountOffLower(product.discountPercent),
           style: const TextStyle(
             color: Color(0xFFB43B31),
             fontWeight: FontWeight.w700,

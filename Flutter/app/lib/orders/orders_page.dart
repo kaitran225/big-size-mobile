@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
 import '../services/store_api.dart';
+import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
 
 class OrdersPage extends StatefulWidget {
@@ -24,7 +25,7 @@ class _OrdersPageState extends State<OrdersPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Order history')),
+    appBar: AppBar(title: const Text(AppStrings.orderHistoryTitle)),
     body: FutureBuilder<List<CustomerOrder>>(
       future: _orders,
       builder: (context, snapshot) {
@@ -35,7 +36,9 @@ class _OrdersPageState extends State<OrdersPage> {
           return Center(child: Text(displayError(snapshot.error!)));
         }
         final orders = snapshot.data!;
-        if (orders.isEmpty) return const Center(child: Text('No orders yet.'));
+        if (orders.isEmpty) {
+          return const Center(child: Text(AppStrings.ordersEmpty));
+        }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: orders.length,
@@ -45,7 +48,10 @@ class _OrdersPageState extends State<OrdersPage> {
               child: ExpansionTile(
                 title: Text(order.orderNumber),
                 subtitle: Text(
-                  '${order.status} · ${formatDate(order.createdAt)}',
+                  AppStrings.orderStatusLine(
+                    order.status,
+                    formatDate(order.createdAt),
+                  ),
                 ),
                 trailing: Text(
                   formatPrice(order.totalAmount, order.currencyCode),
@@ -56,7 +62,11 @@ class _OrdersPageState extends State<OrdersPage> {
                       (item) => ListTile(
                         title: Text(item.productName),
                         subtitle: Text(
-                          '${item.size} · ${item.color} × ${item.quantity}',
+                          AppStrings.orderItemSummary(
+                            item.size,
+                            item.color,
+                            item.quantity,
+                          ),
                         ),
                         trailing: Text(
                           formatPrice(item.lineTotal, order.currencyCode),

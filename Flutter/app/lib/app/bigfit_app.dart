@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../catalog/storefront_page.dart';
 import '../services/store_api.dart';
+import '../shared/app_strings.dart';
 
 class BigFitApp extends StatelessWidget {
   const BigFitApp({super.key, required this.api});
@@ -10,7 +11,7 @@ class BigFitApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'BigFit',
+    title: AppStrings.appTitle,
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
       useMaterial3: true,

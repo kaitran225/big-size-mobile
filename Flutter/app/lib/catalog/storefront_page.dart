@@ -11,6 +11,7 @@ import '../models/store_product.dart';
 import '../notifications/notifications_page.dart';
 import '../orders/orders_page.dart';
 import '../services/store_api.dart';
+import '../shared/app_strings.dart';
 
 class StorefrontPage extends StatefulWidget {
   const StorefrontPage({super.key, required this.api});
@@ -60,7 +61,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
       if (session != null) await _refreshCartCount();
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Could not read the saved sign-in session.');
+        setState(() => _error = AppStrings.errorSession);
       }
     }
   }
@@ -98,7 +99,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = error is StoreApiException ? error.message : 'Could not reach the BigFit store API. Check the server and API_BASE_URL.';
+        _error = error is StoreApiException
+            ? error.message
+            : AppStrings.errorStoreApi;
         _loading = false;
       });
     }
@@ -130,7 +133,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
       setState(() {
         _error = error is StoreApiException
             ? error.message
-            : 'Could not load more products.';
+            : AppStrings.errorLoadMore;
         _loadingMore = false;
       });
     }
@@ -155,7 +158,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
                 const SizedBox(height: 4),
                 Text(_session!.email),
                 const SizedBox(height: 6),
-                Text('Role: ${_session!.roles.join(', ')}'),
+                Text(AppStrings.roleLabel(_session!.roles.join(', '))),
                 const SizedBox(height: 20),
                 Wrap(
                   spacing: 8,
@@ -163,31 +166,31 @@ class _StorefrontPageState extends State<StorefrontPage> {
                   children: [
                     _accountAction(
                       context,
-                      'Orders',
+                      AppStrings.ordersTitle,
                       Icons.receipt_long_outlined,
                       () => _openFeature(OrdersPage(api: widget.api)),
                     ),
                     _accountAction(
                       context,
-                      'Favorites',
+                      AppStrings.favoritesTitle,
                       Icons.favorite_border,
                       () => _openFeature(FavoritesPage(api: widget.api)),
                     ),
                     _accountAction(
                       context,
-                      'Addresses',
+                      AppStrings.addressesTitle,
                       Icons.location_on_outlined,
                       () => _openFeature(AddressesPage(api: widget.api)),
                     ),
                     _accountAction(
                       context,
-                      'Notifications',
+                      AppStrings.notificationsTitle,
                       Icons.notifications_outlined,
                       () => _openFeature(NotificationsPage(api: widget.api)),
                     ),
                     _accountAction(
                       context,
-                      'AI stylist',
+                      AppStrings.aiStylist,
                       Icons.auto_awesome_outlined,
                       () => _openFeature(
                         AssistantPage(api: widget.api, gender: _gender),
@@ -195,7 +198,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
                     ),
                     _accountAction(
                       context,
-                      'More features',
+                      AppStrings.moreFeatures,
                       Icons.grid_view_outlined,
                       () => _openFeature(FeatureHubPage(session: _session!)),
                     ),
@@ -205,7 +208,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
                 OutlinedButton.icon(
                   onPressed: () => Navigator.pop(context, true),
                   icon: const Icon(Icons.logout),
-                  label: const Text('Sign out'),
+                  label: const Text(AppStrings.signOut),
                 ),
               ],
             ),
@@ -248,27 +251,27 @@ class _StorefrontPageState extends State<StorefrontPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Store connection',
+                AppStrings.storeConnectionTitle,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
-              Text('Current API: ${widget.api.baseUrl}'),
+              Text(AppStrings.currentApi(widget.api.baseUrl)),
               const SizedBox(height: 12),
               ListTile(
                 leading: const Icon(Icons.cloud_outlined),
-                title: const Text('Render deployment'),
+                title: const Text(AppStrings.renderDeployment),
                 subtitle: const Text(StoreApi.renderBaseUrl),
                 onTap: () => Navigator.pop(context, StoreApi.renderBaseUrl),
               ),
               ListTile(
                 leading: const Icon(Icons.computer_outlined),
-                title: const Text('Local development server'),
+                title: const Text(AppStrings.localDevelopmentServer),
                 subtitle: Text(StoreApi.localBaseUrl),
                 onTap: () => Navigator.pop(context, StoreApi.localBaseUrl),
               ),
               const SizedBox(height: 4),
               Text(
-                'The API path is added automatically. Changing servers signs you out so credentials are not reused on another server.',
+                AppStrings.apiPathNote,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -288,7 +291,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
       await _loadStore();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Connected to ${widget.api.baseUrl}')),
+          SnackBar(content: Text(AppStrings.connectedTo(widget.api.baseUrl))),
         );
       }
     } catch (error) {
@@ -298,7 +301,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
           content: Text(
             error is StoreApiException
                 ? error.message
-                : 'Could not change the API server: $error',
+                : AppStrings.errorChangeServer(error),
           ),
         ),
       );
@@ -363,7 +366,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
           content: Text(
             error is StoreApiException
                 ? error.message
-                : 'Could not load your bag.',
+                : AppStrings.errorLoadBag,
           ),
         ),
       );
@@ -378,7 +381,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
       setState(() => _cartCount = cart.itemCount);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${product.name} · ${variant.size} added to bag'),
+          content: Text(AppStrings.addedToBag(product.name, variant.size)),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -389,7 +392,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
           content: Text(
             error is StoreApiException
                 ? error.message
-                : 'Could not add this item to your bag.',
+                : AppStrings.errorAddToBag,
           ),
         ),
       );
@@ -402,7 +405,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
       await widget.api.addFavorite(product.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Added to your favorites.')),
+          const SnackBar(content: Text(AppStrings.addedToFavorites)),
         );
       }
     } catch (error) {
@@ -412,7 +415,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
           content: Text(
             error is StoreApiException
                 ? error.message
-                : 'Could not save this favorite.',
+                : AppStrings.errorSaveFavorite,
           ),
         ),
       );
@@ -435,7 +438,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
       appBar: AppBar(
         titleSpacing: 20,
         title: const Text(
-          'BIGFIT',
+          AppStrings.brandName,
           style: TextStyle(
             fontSize: 21,
             fontWeight: FontWeight.w900,
@@ -444,12 +447,12 @@ class _StorefrontPageState extends State<StorefrontPage> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Choose API server',
+            tooltip: AppStrings.tooltipChooseServer,
             onPressed: _chooseApiBaseUrl,
             icon: const Icon(Icons.dns_outlined),
           ),
           IconButton(
-            tooltip: 'AI stylist',
+            tooltip: AppStrings.tooltipAiStylist,
             onPressed: () => _ensureSignedIn().then((ready) {
               if (ready && mounted) {
                 _openFeature(AssistantPage(api: widget.api, gender: _gender));
@@ -459,12 +462,12 @@ class _StorefrontPageState extends State<StorefrontPage> {
           ),
           if (_session != null)
             IconButton(
-              tooltip: 'Notifications',
+              tooltip: AppStrings.tooltipNotifications,
               onPressed: () => _openFeature(NotificationsPage(api: widget.api)),
               icon: const Icon(Icons.notifications_outlined),
             ),
           IconButton(
-            tooltip: 'Shopping bag ($_cartCount)',
+            tooltip: AppStrings.shoppingBagTooltip(_cartCount),
             onPressed: () => _showBag(context),
             icon: Badge(
               isLabelVisible: _cartCount > 0,
@@ -473,7 +476,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
             ),
           ),
           IconButton(
-            tooltip: _session == null ? 'Sign in' : 'Account',
+            tooltip: _session == null
+                ? AppStrings.tooltipSignIn
+                : AppStrings.tooltipAccount,
             onPressed: _openAccount,
             icon: Icon(_session == null ? Icons.person_outline : Icons.person),
           ),
@@ -519,14 +524,21 @@ class _StorefrontPageState extends State<StorefrontPage> {
                     children: [
                       Expanded(
                         child: Text(
-                          _onSale ? 'ON SALE' : 'THE COLLECTION',
+                          _onSale
+                              ? AppStrings.onSaleHeading
+                              : AppStrings.collectionHeading,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.2,
                           ),
                         ),
                       ),
-                      Text('${_products.length} of ${_totalCountLabel()}'),
+                      Text(
+                        AppStrings.productCountLabel(
+                          _products.length,
+                          _totalCount,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -562,7 +574,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text('Load more'),
+                            : const Text(AppStrings.loadMore),
                       ),
                     ),
                   ),
@@ -586,44 +598,39 @@ class _StorefrontPageState extends State<StorefrontPage> {
         destinations: [
           const NavigationDestination(
             icon: Icon(Icons.storefront_outlined),
-            label: 'Shop',
+            label: AppStrings.navShop,
           ),
           NavigationDestination(
             icon: Icon(_onSale ? Icons.sell : Icons.sell_outlined),
-            label: 'Sale',
+            label: AppStrings.navSale,
           ),
           const NavigationDestination(
             icon: Icon(Icons.account_circle_outlined),
-            label: 'Account',
+            label: AppStrings.navAccount,
           ),
           const NavigationDestination(
             icon: Icon(Icons.grid_view_outlined),
-            label: 'More',
+            label: AppStrings.navMore,
           ),
         ],
       ),
     );
   }
 
-  String _totalCountLabel() => '$_totalCount products';
-
   Widget _buildHero(ThemeData theme) => Padding(
     padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Clothing that fits', style: theme.textTheme.headlineSmall),
+        Text(AppStrings.heroTitle, style: theme.textTheme.headlineSmall),
         const SizedBox(height: 4),
-        Text(
-          'Explore the BigFit collection',
-          style: theme.textTheme.bodyMedium,
-        ),
+        Text(AppStrings.heroSubtitle, style: theme.textTheme.bodyMedium),
         const SizedBox(height: 16),
         SegmentedButton<String>(
           showSelectedIcon: false,
           segments: const [
-            ButtonSegment(value: 'Women', label: Text('WOMEN')),
-            ButtonSegment(value: 'Men', label: Text('MEN')),
+            ButtonSegment(value: 'Women', label: Text(AppStrings.womenSegment)),
+            ButtonSegment(value: 'Men', label: Text(AppStrings.menSegment)),
           ],
           selected: {_gender},
           onSelectionChanged: (selection) => _selectDepartment(selection.first),
@@ -642,10 +649,10 @@ class _StorefrontPageState extends State<StorefrontPage> {
           textInputAction: TextInputAction.search,
           onSubmitted: (_) => _loadStore(),
           decoration: InputDecoration(
-            hintText: 'Search clothes, styles, and sizes',
+            hintText: AppStrings.searchHint,
             prefixIcon: const Icon(Icons.search),
             suffixIcon: IconButton(
-              tooltip: 'Search',
+              tooltip: AppStrings.tooltipSearch,
               onPressed: _loadStore,
               icon: const Icon(Icons.arrow_forward),
             ),
@@ -657,7 +664,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
           child: Row(
             children: [
               ChoiceChip(
-                label: const Text('All'),
+                label: const Text(AppStrings.filterAll),
                 selected: _categoryId == null,
                 onSelected: (_) {
                   setState(() => _categoryId = null);
@@ -690,7 +697,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
           children: [
             FilterChip(
               avatar: const Icon(Icons.sell_outlined, size: 17),
-              label: const Text('On sale'),
+              label: const Text(AppStrings.filterOnSale),
               selected: _onSale,
               onSelected: (selected) {
                 setState(() => _onSale = selected);
@@ -699,7 +706,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
             ),
             const SizedBox(width: 8),
             FilterChip(
-              label: const Text('In stock'),
+              label: const Text(AppStrings.filterInStock),
               selected: _inStock,
               onSelected: (selected) {
                 setState(() => _inStock = selected);
@@ -712,10 +719,22 @@ class _StorefrontPageState extends State<StorefrontPage> {
                 value: _sortBy,
                 icon: const Icon(Icons.sort, size: 20),
                 items: const [
-                  DropdownMenuItem(value: 'name', child: Text('Name')),
-                  DropdownMenuItem(value: 'price_asc', child: Text('Price ↑')),
-                  DropdownMenuItem(value: 'price_desc', child: Text('Price ↓')),
-                  DropdownMenuItem(value: 'newest', child: Text('Newest')),
+                  DropdownMenuItem(
+                    value: 'name',
+                    child: Text(AppStrings.sortName),
+                  ),
+                  DropdownMenuItem(
+                    value: 'price_asc',
+                    child: Text(AppStrings.sortPriceAsc),
+                  ),
+                  DropdownMenuItem(
+                    value: 'price_desc',
+                    child: Text(AppStrings.sortPriceDesc),
+                  ),
+                  DropdownMenuItem(
+                    value: 'newest',
+                    child: Text(AppStrings.sortNewest),
+                  ),
                 ],
                 onChanged: (value) {
                   if (value == null) return;
@@ -743,7 +762,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
           FilledButton.icon(
             onPressed: _loadStore,
             icon: const Icon(Icons.refresh),
-            label: const Text('Try again'),
+            label: const Text(AppStrings.tryAgain),
           ),
         ],
       ),
@@ -759,17 +778,14 @@ class _StorefrontPageState extends State<StorefrontPage> {
           const Icon(Icons.checkroom_outlined, size: 46),
           const SizedBox(height: 14),
           Text(
-            'Your next favourite fit is on its way.',
+            AppStrings.emptyTitle,
             textAlign: TextAlign.center,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'The cleaned catalogue is ready for review. Products will appear here after you approve and import the CSV.',
-            textAlign: TextAlign.center,
-          ),
+          const Text(AppStrings.emptySubtitle, textAlign: TextAlign.center),
         ],
       ),
     ),

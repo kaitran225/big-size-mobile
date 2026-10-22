@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
+import '../shared/app_strings.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key, required this.session});
@@ -9,7 +10,7 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('My profile')),
+    appBar: AppBar(title: const Text(AppStrings.profileTitle)),
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -17,7 +18,7 @@ class ProfilePage extends StatelessWidget {
           radius: 36,
           child: Text(
             session?.displayName.isNotEmpty != true
-                ? 'B'
+                ? AppStrings.avatarFallback
                 : session!.displayName.substring(0, 1).toUpperCase(),
             style: Theme.of(context).textTheme.headlineMedium,
           ),
@@ -25,31 +26,29 @@ class ProfilePage extends StatelessWidget {
         const SizedBox(height: 16),
         Center(
           child: Text(
-            session?.displayName ?? 'Guest',
+            session?.displayName ?? AppStrings.guest,
             style: Theme.of(context).textTheme.titleLarge,
           ),
         ),
-        Center(child: Text(session?.email ?? 'Sign in to save your profile')),
+        Center(child: Text(session?.email ?? AppStrings.signInToSaveProfile)),
         const SizedBox(height: 20),
         const _ProfileRow(
           icon: Icons.badge_outlined,
-          title: 'Account type',
-          subtitle: 'Customer profile',
+          title: AppStrings.accountType,
+          subtitle: AppStrings.customerProfile,
         ),
         const _ProfileRow(
           icon: Icons.straighten_outlined,
-          title: 'Fit preferences',
-          subtitle: 'Sizes M–XXL · Not set',
+          title: AppStrings.fitPreferences,
+          subtitle: AppStrings.fitPreferencesValue,
         ),
         const _ProfileRow(
           icon: Icons.rate_review_outlined,
-          title: 'My reviews',
-          subtitle: 'Review management API is not connected',
+          title: AppStrings.myReviews,
+          subtitle: AppStrings.reviewsNotConnected,
         ),
         const SizedBox(height: 12),
-        const _ProfileNote(
-          text: 'Profile editing and size preferences are shown as a frame. The current backend does not expose profile update or review endpoints.',
-        ),
+        const _ProfileNote(text: AppStrings.profileFrameNote),
       ],
     ),
   );

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../addresses/addresses_page.dart';
 import '../models/store_product.dart';
 import '../services/store_api.dart';
+import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
 import '../shared/widgets/skeleton_box.dart';
 
@@ -46,7 +47,7 @@ class _CartPageState extends State<CartPage> {
         setState(() {
           _error = error is StoreApiException
               ? error.message
-              : 'Could not load the shopping bag.';
+              : AppStrings.errorLoadCart;
           _loading = false;
         });
       }
@@ -85,18 +86,16 @@ class _CartPageState extends State<CartPage> {
         final openAddresses = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Delivery address needed'),
-            content: const Text(
-              'Add a delivery address before creating your order.',
-            ),
+            title: const Text(AppStrings.addressNeededTitle),
+            content: const Text(AppStrings.addressNeededMessage),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Later'),
+                child: const Text(AppStrings.later),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Add address'),
+                child: const Text(AppStrings.addAddress),
               ),
             ],
           ),
@@ -119,12 +118,12 @@ class _CartPageState extends State<CartPage> {
         context: context,
         builder: (context) => StatefulBuilder(
           builder: (context, setDialogState) => AlertDialog(
-            title: const Text('Review your order'),
+            title: const Text(AppStrings.reviewOrderTitle),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Delivery address'),
+                const Text(AppStrings.deliveryAddress),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   initialValue: selectedId,
@@ -134,7 +133,10 @@ class _CartPageState extends State<CartPage> {
                         (address) => DropdownMenuItem(
                           value: address.id,
                           child: Text(
-                            '${address.label} · ${address.fullAddress}',
+                            AppStrings.addressOptionLabel(
+                              address.label,
+                              address.fullAddress,
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -147,7 +149,7 @@ class _CartPageState extends State<CartPage> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'This creates an order only. Online payment is not connected to the backend yet.',
+                  AppStrings.orderOnlyNotice,
                   style: TextStyle(color: Colors.black54),
                 ),
               ],
@@ -155,11 +157,11 @@ class _CartPageState extends State<CartPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+                child: const Text(AppStrings.cancel),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Create order'),
+                child: const Text(AppStrings.createOrder),
               ),
             ],
           ),
@@ -171,11 +173,7 @@ class _CartPageState extends State<CartPage> {
       await _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Order ${order.orderNumber} created. Payment is pending integration.',
-            ),
-          ),
+          SnackBar(content: Text(AppStrings.orderCreated(order.orderNumber))),
         );
       }
     } catch (error) {
@@ -191,7 +189,7 @@ class _CartPageState extends State<CartPage> {
         content: Text(
           error is StoreApiException
               ? error.message
-              : 'The request failed. Please try again.',
+              : AppStrings.errorRequestFailed,
         ),
       ),
     );
@@ -199,7 +197,7 @@ class _CartPageState extends State<CartPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Shopping bag')),
+    appBar: AppBar(title: const Text(AppStrings.shoppingBagTitle)),
     body: _loading
         ? ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -228,7 +226,7 @@ class _CartPageState extends State<CartPage> {
         : _error != null
         ? Center(child: Text(_error!, textAlign: TextAlign.center))
         : _cart!.items.isEmpty
-        ? const Center(child: Text('Your bag is empty.'))
+        ? const Center(child: Text(AppStrings.bagEmpty))
         : Column(
             children: [
               Expanded(
@@ -274,7 +272,12 @@ class _CartPageState extends State<CartPage> {
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              Text('${item.size} · ${item.color}'),
+                              Text(
+                                AppStrings.variantSummary(
+                                  item.size,
+                                  item.color,
+                                ),
+                              ),
                               Text(
                                 formatPrice(item.lineTotal, item.currencyCode),
                               ),
@@ -305,7 +308,7 @@ class _CartPageState extends State<CartPage> {
                                   ),
                                   const Spacer(),
                                   IconButton(
-                                    tooltip: 'Remove item',
+                                    tooltip: AppStrings.tooltipRemoveItem,
                                     onPressed: _busy
                                         ? null
                                         : () => _changeQuantity(item, 0),
@@ -329,7 +332,7 @@ class _CartPageState extends State<CartPage> {
                     children: [
                       Row(
                         children: [
-                          const Expanded(child: Text('Subtotal')),
+                          const Expanded(child: Text(AppStrings.subtotal)),
                           Text(
                             formatPrice(_cart!.subtotal, _cart!.currencyCode),
                             style: const TextStyle(fontWeight: FontWeight.w800),
@@ -342,7 +345,9 @@ class _CartPageState extends State<CartPage> {
                         child: FilledButton(
                           onPressed: _busy ? null : _checkout,
                           child: Text(
-                            _busy ? 'Please wait…' : 'Continue to order',
+                            _busy
+                                ? AppStrings.pleaseWait
+                                : AppStrings.continueToOrder,
                           ),
                         ),
                       ),

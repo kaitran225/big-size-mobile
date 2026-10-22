@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/store_product.dart';
+import '../shared/app_strings.dart';
 
 class StoreApiException implements Exception {
   const StoreApiException(this.message);
@@ -47,7 +48,7 @@ class StoreApi {
     final parsed = Uri.parse(value.trim());
     if ((parsed.scheme != 'http' && parsed.scheme != 'https') ||
         parsed.host.isEmpty) {
-      throw FormatException('Enter a valid HTTP or HTTPS API base URL.');
+      throw FormatException(AppStrings.invalidBaseUrl);
     }
     var path = parsed.path.replaceFirst(RegExp(r'/+$'), '');
     if (!path.endsWith('/api')) path = '$path/api';
@@ -339,9 +340,9 @@ class StoreApi {
         if (detail is String && detail.isNotEmpty) return detail;
       }
     } on FormatException {
-      return 'Request failed (${response.statusCode}).';
+      return AppStrings.requestFailed(response.statusCode);
     }
-    return 'Request failed (${response.statusCode}).';
+    return AppStrings.requestFailed(response.statusCode);
   }
 
   void close() => _client.close();

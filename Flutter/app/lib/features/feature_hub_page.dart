@@ -6,6 +6,7 @@ import '../models/store_product.dart';
 import '../payment/payment_page.dart';
 import '../profile/profile_page.dart';
 import '../security/security_page.dart';
+import '../shared/app_strings.dart';
 
 class FeatureHubPage extends StatelessWidget {
   const FeatureHubPage({super.key, required this.session});
@@ -14,46 +15,52 @@ class FeatureHubPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('More from BigFit')),
+    appBar: AppBar(title: const Text(AppStrings.featureHubTitle)),
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Your account', style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          AppStrings.yourAccount,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         const SizedBox(height: 10),
         _FeatureTile(
           icon: Icons.person_outline,
-          title: 'Profile & fit preferences',
+          title: AppStrings.profileAndFit,
           subtitle: session == null
-              ? 'Preview account details and fit preferences'
-              : 'Personal details, sizes, and reviews',
+              ? AppStrings.profileAndFitPreview
+              : AppStrings.profileAndFitSignedIn,
           onTap: () => _open(context, ProfilePage(session: session)),
         ),
         _FeatureTile(
           icon: Icons.map_outlined,
-          title: 'Delivery map',
-          subtitle: 'Choose a delivery location',
+          title: AppStrings.deliveryMap,
+          subtitle: AppStrings.chooseDeliveryLocation,
           onTap: () => _open(context, const DeliveryMapPage()),
         ),
         _FeatureTile(
           icon: Icons.payments_outlined,
-          title: 'Payment methods',
-          subtitle: 'COD, bank transfer, and gateway preview',
+          title: AppStrings.paymentMethods,
+          subtitle: AppStrings.paymentMethodsSubtitle,
           onTap: () => _open(context, const PaymentPage()),
         ),
         _FeatureTile(
           icon: Icons.security_outlined,
-          title: 'Account security',
-          subtitle: 'Email verification, reset, and OTP',
+          title: AppStrings.accountSecurity,
+          subtitle: AppStrings.accountSecuritySubtitle,
           onTap: () => _open(context, const SecurityPage()),
         ),
         if (_isStaffOrAdmin(session?.roles ?? const [])) ...[
           const SizedBox(height: 20),
-          Text('Store tools', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            AppStrings.storeTools,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 10),
           _FeatureTile(
             icon: Icons.store_mall_directory_outlined,
-            title: 'Store management',
-            subtitle: 'Products, inventory, orders, and reviews',
+            title: AppStrings.storeManagementTitle,
+            subtitle: AppStrings.storeToolsSubtitle,
             onTap: () => _open(
               context,
               StoreManagementPage(roles: session?.roles ?? const []),

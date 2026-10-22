@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
 import '../services/store_api.dart';
+import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
 
 class NotificationsPage extends StatefulWidget {
@@ -53,10 +54,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Notifications'),
+      title: const Text(AppStrings.notificationsTitle),
       actions: [
         IconButton(
-          tooltip: 'Refresh',
+          tooltip: AppStrings.tooltipRefresh,
           onPressed: () => setState(_reload),
           icon: const Icon(Icons.refresh),
         ),
@@ -65,7 +66,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         preferredSize: Size.fromHeight(34),
         child: Padding(
           padding: EdgeInsets.only(bottom: 10),
-          child: Text('Live push updates are not connected yet'),
+          child: Text(AppStrings.pushNotConnectedNotice),
         ),
       ),
     ),
@@ -80,7 +81,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         }
         final notifications = snapshot.data!;
         if (notifications.isEmpty) {
-          return const Center(child: Text('You are all caught up.'));
+          return const Center(child: Text(AppStrings.notificationsEmpty));
         }
         return ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -104,12 +105,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   ),
                 ),
                 subtitle: Text(
-                  '${item.message}\n${formatDate(item.createdAt)}',
+                  AppStrings.notificationSubtitle(
+                    item.message,
+                    formatDate(item.createdAt),
+                  ),
                 ),
                 isThreeLine: true,
                 onTap: item.isRead ? null : () => _markRead(item),
                 trailing: IconButton(
-                  tooltip: 'Delete notification',
+                  tooltip: AppStrings.tooltipDeleteNotification,
                   onPressed: () => _delete(item),
                   icon: const Icon(Icons.delete_outline),
                 ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/store_api.dart';
+import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
 
 class AssistantPage extends StatefulWidget {
@@ -57,18 +58,16 @@ class _AssistantPageState extends State<AssistantPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('BigFit AI stylist')),
+    appBar: AppBar(title: const Text(AppStrings.assistantTitle)),
     body: Column(
       children: [
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Text(
-            'Ask about catalogue items, prices, availability, or size guidance.',
-          ),
+          child: Text(AppStrings.assistantSubtitle),
         ),
         Expanded(
           child: _messages.isEmpty
-              ? const Center(child: Text('How can I help you find your fit?'))
+              ? const Center(child: Text(AppStrings.assistantEmpty))
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: _messages.length,
@@ -116,7 +115,7 @@ class _AssistantPageState extends State<AssistantPage> {
                     minLines: 1,
                     maxLines: 4,
                     decoration: const InputDecoration(
-                      hintText: 'Ask your stylist…',
+                      hintText: AppStrings.assistantInputHint,
                     ),
                     onSubmitted: (_) => _send(),
                   ),

@@ -1,38 +1,40 @@
 import 'package:flutter/material.dart';
 
+import '../shared/app_strings.dart';
+
 class SecurityPage extends StatelessWidget {
   const SecurityPage({super.key});
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Account security')),
+    appBar: AppBar(title: const Text(AppStrings.securityTitle)),
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'Protect your BigFit account',
+          AppStrings.securityHeadline,
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 6),
-        const Text('These flows are ready for email and OTP service wiring.'),
+        const Text(AppStrings.securityIntro),
         const SizedBox(height: 16),
         const _SecurityStep(
           icon: Icons.mark_email_unread_outlined,
-          title: 'Verify your email',
-          description: 'Confirm your email address with a one-time link.',
-          status: 'Email service pending',
+          title: AppStrings.verifyEmail,
+          description: AppStrings.verifyEmailDescription,
+          status: AppStrings.emailServicePending,
         ),
         const _SecurityStep(
           icon: Icons.password_outlined,
-          title: 'Reset password',
-          description: 'Request a secure password reset email.',
-          status: 'Reset API pending',
+          title: AppStrings.resetPassword,
+          description: AppStrings.resetPasswordDescription,
+          status: AppStrings.resetApiPending,
         ),
         const _SecurityStep(
           icon: Icons.pin_outlined,
-          title: 'One-time passcode',
-          description: 'Enter a time-limited code sent to your email.',
-          status: 'OTP API pending',
+          title: AppStrings.otpTitle,
+          description: AppStrings.otpDescription,
+          status: AppStrings.otpApiPending,
         ),
         const SizedBox(height: 12),
         Container(
@@ -41,9 +43,7 @@ class SecurityPage extends StatelessWidget {
             color: Theme.of(context).colorScheme.secondaryContainer,
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Text(
-            'UI preview only. Email delivery, OTP verification, retry limits, and password reset are not active.',
-          ),
+          child: const Text(AppStrings.securityPreviewNotice),
         ),
       ],
     ),

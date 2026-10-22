@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../shared/app_strings.dart';
+
 class StoreManagementPage extends StatelessWidget {
   const StoreManagementPage({super.key, required this.roles});
 
@@ -13,34 +15,34 @@ class StoreManagementPage extends StatelessWidget {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Store management')),
+      appBar: AppBar(title: const Text(AppStrings.storeManagementTitle)),
       body: canManage
           ? ListView(
               padding: const EdgeInsets.all(16),
               children: [
                 Text(
-                  'Management overview',
+                  AppStrings.managementOverview,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 12),
                 const _ManagementCard(
                   icon: Icons.inventory_2_outlined,
-                  title: 'Products & inventory',
-                  detail: 'Manage catalogue items, variants, and stock.',
+                  title: AppStrings.productsAndInventory,
+                  detail: AppStrings.productsAndInventoryDetail,
                 ),
                 const _ManagementCard(
                   icon: Icons.receipt_long_outlined,
-                  title: 'Orders',
-                  detail: 'Review orders and update fulfilment status.',
+                  title: AppStrings.ordersTitle,
+                  detail: AppStrings.ordersDetail,
                 ),
                 const _ManagementCard(
                   icon: Icons.rate_review_outlined,
-                  title: 'Customer reviews',
-                  detail: 'Moderate product feedback.',
+                  title: AppStrings.customerReviews,
+                  detail: AppStrings.customerReviewsDetail,
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Management endpoints are not connected. This screen does not change store data.',
+                  AppStrings.managementNotConnected,
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -49,7 +51,7 @@ class StoreManagementPage extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.all(32),
                 child: Text(
-                  'Store management is available to Admin and Store Staff accounts.',
+                  AppStrings.storeManagementRestricted,
                   textAlign: TextAlign.center,
                 ),
               ),
