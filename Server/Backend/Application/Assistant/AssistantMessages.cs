@@ -5,11 +5,6 @@ namespace BigFit.Application.Assistant;
 /// the provider, the messages returned to the client when the assistant
 /// cannot answer, and the OpenAPI documentation for the endpoint.
 /// </summary>
-/// <remarks>
-/// The assistant text lives apart from <see cref="ApiMessages"/> so the
-/// provider prompt can be tuned, or the assistant re-pointed at a different
-/// model, without touching the messages the rest of the API returns.
-/// </remarks>
 public static class AssistantMessages
 {
     // ---------------------------------------------------------------------
@@ -54,9 +49,6 @@ public static class AssistantMessages
         "Could not reach the configured AI provider.";
     public const string ProviderTimeoutLog =
         "The configured AI provider timed out.";
-
-    // The invalid-response log reuses <see cref="ProviderInvalidResponse"/>,
-    // because the operator and the client read the same sentence.
 
     // ---------------------------------------------------------------------
     // OpenAPI text

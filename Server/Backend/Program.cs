@@ -1,5 +1,6 @@
 using BigFit.Api.Endpoints;
 using BigFit.Api.Middleware;
+using BigFit.Api.OpenApi;
 using BigFit.Application;
 using BigFit.Application.Authentication;
 using BigFit.Infrastructure;
@@ -19,7 +20,11 @@ if (int.TryParse(renderPort, out var port) && port is > 0 and <= 65535)
     builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 }
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+    options.AddOperationTransformer<BearerSecurityRequirementTransformer>();
+});
 builder.Services.AddValidation();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();

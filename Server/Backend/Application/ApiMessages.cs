@@ -239,6 +239,8 @@ public static class ApiMessages
         "Supports text search, gender, category, size, color, sale, stock, sorting, and pagination.";
     public const string DescriptionCreateMyOrder =
         "Uses current sale prices, snapshots item details, and decrements stock transactionally.";
+    public const string DescriptionBearerSecurityScheme =
+        "Paste the access token returned by /api/auth/login. Swagger UI sends it as a Bearer header.";
 
     // ---------------------------------------------------------------------
     // Swagger UI document
