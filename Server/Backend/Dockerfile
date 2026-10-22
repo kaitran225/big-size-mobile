@@ -4,16 +4,17 @@ WORKDIR /src
 # Copy dependency manifests first to preserve restore cache
 COPY Backend.csproj ./
 
-# Cache NuGet packages across builds
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet restore Backend.csproj
+# Restore into a folder that lives in the image layer. The restored packages must
+# be part of the layer itself, otherwise the publish step below can fail with
+# NETSDK1064 when the shared NuGet cache mount is empty or was pruned between
+# the two build steps.
+RUN dotnet restore Backend.csproj --packages /src/packages
 
 # Copy the remaining source code
 COPY . .
 
 # Publish a production build
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet publish Backend.csproj \
+RUN dotnet publish Backend.csproj \
     --configuration Release \
     --output /app/publish \
     --no-restore \
