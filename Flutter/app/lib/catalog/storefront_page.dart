@@ -236,6 +236,75 @@ class _StorefrontPageState extends State<StorefrontPage> {
     }
   }
 
+  Future<void> _chooseApiBaseUrl() async {
+    final selectedUrl = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Store connection',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text('Current API: ${widget.api.baseUrl}'),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.cloud_outlined),
+                title: const Text('Render deployment'),
+                subtitle: const Text(StoreApi.renderBaseUrl),
+                onTap: () => Navigator.pop(context, StoreApi.renderBaseUrl),
+              ),
+              ListTile(
+                leading: const Icon(Icons.computer_outlined),
+                title: const Text('Local development server'),
+                subtitle: Text(StoreApi.localBaseUrl),
+                onTap: () => Navigator.pop(context, StoreApi.localBaseUrl),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'The API path is added automatically. Changing servers signs you out so credentials are not reused on another server.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (selectedUrl == null || !mounted) return;
+
+    try {
+      await widget.api.setBaseUrl(selectedUrl);
+      if (!mounted) return;
+      setState(() {
+        _session = null;
+        _cartCount = 0;
+      });
+      await _loadStore();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Connected to ${widget.api.baseUrl}')),
+        );
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error is StoreApiException
+                ? error.message
+                : 'Could not change the API server: $error',
+          ),
+        ),
+      );
+    }
+  }
+
   void _openProduct(StoreProduct product) {
     showModalBottomSheet<void>(
       context: context,
@@ -374,6 +443,11 @@ class _StorefrontPageState extends State<StorefrontPage> {
           ),
         ),
         actions: [
+          IconButton(
+            tooltip: 'Choose API server',
+            onPressed: _chooseApiBaseUrl,
+            icon: const Icon(Icons.dns_outlined),
+          ),
           IconButton(
             tooltip: 'AI stylist',
             onPressed: () => _ensureSignedIn().then((ready) {

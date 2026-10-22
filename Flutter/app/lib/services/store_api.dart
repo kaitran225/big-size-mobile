@@ -26,24 +26,54 @@ class StoreApi {
          baseUrl ??
              (const String.fromEnvironment('API_BASE_URL').isNotEmpty
                  ? const String.fromEnvironment('API_BASE_URL')
-                 : kIsWeb
-                 ? 'http://localhost:5047/api'
-                 : 'http://10.0.2.2:5047/api'),
+                 : 'https://big-fit-pgm-store.onrender.com'),
        );
 
   static const _tokenKey = 'bigfit.accessToken';
   static const _emailKey = 'bigfit.email';
   static const _nameKey = 'bigfit.displayName';
   static const _rolesKey = 'bigfit.roles';
+  static const _baseUrlKey = 'bigfit.apiBaseUrl';
+  static const renderBaseUrl = 'https://big-fit-pgm-store.onrender.com';
 
   final http.Client _client;
   final FlutterSecureStorage _secureStorage;
-  final Uri _baseUri;
+  Uri _baseUri;
   String? _accessToken;
 
+  String get baseUrl => _baseUri.toString().replaceFirst(RegExp(r'/$'), '');
+
   static Uri _normalizeBaseUri(String value) {
-    final base = Uri.parse(value);
-    return base.path.endsWith('/') ? base : base.replace(path: '${base.path}/');
+    final parsed = Uri.parse(value.trim());
+    if ((parsed.scheme != 'http' && parsed.scheme != 'https') ||
+        parsed.host.isEmpty) {
+      throw FormatException('Enter a valid HTTP or HTTPS API base URL.');
+    }
+    var path = parsed.path.replaceFirst(RegExp(r'/+$'), '');
+    if (!path.endsWith('/api')) path = '$path/api';
+    return parsed.replace(path: '$path/', query: null, fragment: null);
+  }
+
+  static String get localBaseUrl {
+    final host = kIsWeb || defaultTargetPlatform != TargetPlatform.android
+        ? 'localhost'
+        : '10.0.2.2';
+    return 'http://$host:5047';
+  }
+
+  Future<void> loadSavedBaseUrl() async {
+    final saved = await _secureStorage.read(key: _baseUrlKey);
+    if (saved != null && saved.isNotEmpty) {
+      _baseUri = _normalizeBaseUri(saved);
+    }
+  }
+
+  Future<void> setBaseUrl(String value) async {
+    final normalized = _normalizeBaseUri(value);
+    if (normalized == _baseUri) return;
+    await _secureStorage.write(key: _baseUrlKey, value: value.trim());
+    await signOut();
+    _baseUri = normalized;
   }
 
   Future<List<StoreCategory>> getCategories(String gender) async {

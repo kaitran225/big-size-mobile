@@ -1,17 +1,34 @@
-# app
+# BigFit Flutter app
 
-A new Flutter project.
+## API connection
 
-## Getting Started
+The app uses the Render backend by default:
 
-This project is a starting point for a Flutter application.
+`https://big-fit-pgm-store.onrender.com/api`
 
-A few resources to get you started if this is your first Flutter project:
+Use the server icon in the storefront app bar to switch between Render and the
+local development backend. The selected server is saved on the device. Switching
+servers signs out the current account so its token is not sent to another server.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+The app appends `/api` automatically, so enter a server origin such as
+`https://big-fit-pgm-store.onrender.com` or `http://localhost:5047`.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Local backend addresses depend on where Flutter runs:
+
+- Flutter web and desktop: `http://localhost:5047`
+- Android emulator: `http://10.0.2.2:5047`
+- Physical device: use the development computer's LAN IP, for example
+  `http://192.168.1.20:5047`, and make sure the device can reach that port.
+
+You can also override the initial server when launching:
+
+```powershell
+flutter run --dart-define=API_BASE_URL=https://big-fit-pgm-store.onrender.com
+```
+
+## OpenAPI / Swagger
+
+The deployed API does not map a homepage or a Swagger UI at `/swagger`, so those
+URLs return 404. Its OpenAPI document is available at
+<https://big-fit-pgm-store.onrender.com/openapi/v1.json>. The Flutter app uses
+the API base URL above, not the OpenAPI document URL.
