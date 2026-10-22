@@ -45,6 +45,10 @@ class _StorefrontPageState extends State<StorefrontPage> {
   bool _loading = true;
   bool _loadingMore = false;
 
+  bool get _isAdmin => (_session?.roles ?? const <String>[]).any(
+        (role) => role.toLowerCase().contains('admin'),
+      );
+
   @override
   void initState() {
     super.initState();
@@ -422,11 +426,12 @@ class _StorefrontPageState extends State<StorefrontPage> {
           ),
         ),
         actions: [
-          IconButton(
-            tooltip: AppStrings.tooltipChooseServer,
-            onPressed: _chooseApiBaseUrl,
-            icon: const Icon(Icons.dns_outlined),
-          ),
+          if (_isAdmin)
+            IconButton(
+              tooltip: AppStrings.tooltipChooseServer,
+              onPressed: _chooseApiBaseUrl,
+              icon: const Icon(Icons.dns_outlined),
+            ),
           IconButton(
             tooltip: AppStrings.aiStylist,
             onPressed: () => _ensureSignedIn().then((ready) {
