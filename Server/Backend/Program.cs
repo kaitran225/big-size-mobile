@@ -68,6 +68,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapOpenApi();
+app.MapApiDocumentation();
 
 app.UseHttpsRedirection();
 await using (var scope = app.Services.CreateAsyncScope())

@@ -43,8 +43,9 @@ dotnet run --project Backend\Backend.csproj
 ```
 
 The API listens on `http://localhost:5047` in the `http` launch profile.
-The OpenAPI document is available at `/openapi/v1.json` in every environment,
-and PostgreSQL readiness is checked at `/api/health/database`.
+The Swagger UI is available at `/swagger`; `/` redirects to it. The OpenAPI
+document is available at `/openapi/v1.json` in every environment, and PostgreSQL
+readiness is checked at `/api/health/database`.
 
 CORS currently allows requests from any origin, with any header and method, to
 support development and demos. This is intentionally permissive; restrict the
@@ -228,7 +229,8 @@ and `http://localhost:8080/openapi/v1.json`.
    `Ai__OpenAiCompatible__ApiKey`, and `Ai__OpenAiCompatible__Model` as
    Render environment variables. Never put the provider key in Flutter.
 6. Deploy and confirm Render's `/api/health/database` health check succeeds.
-   OpenAPI is available at `/openapi/v1.json`.
+   Swagger UI is available at `/swagger` (and `/` redirects there). The raw
+   OpenAPI document is available at `/openapi/v1.json`.
 
 Render injects `PORT`; the backend binds to it. TLS terminates at Render's
 proxy. CORS is currently open to every origin for development/demo use and
