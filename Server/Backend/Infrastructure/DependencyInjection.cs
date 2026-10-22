@@ -1,6 +1,10 @@
 using BigFit.Application.Abstractions;
 using BigFit.Application.Authentication;
 using BigFit.Infrastructure.Identity;
+using BigFit.Infrastructure.Assistant;
+using BigFit.Infrastructure.Notifications;
+using BigFit.Infrastructure.Shopping;
+using BigFit.Infrastructure.Addresses;
 using BigFit.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -73,12 +77,31 @@ public static class DependencyInjection
                     NameClaimType = System.Security.Claims.ClaimTypes.Name,
                     RoleClaimType = System.Security.Claims.ClaimTypes.Role
                 };
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            context.Request.Path.StartsWithSegments("/hubs/notifications"))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddSingleton<JwtTokenIssuer>();
         services.AddScoped<DatabaseInitializer>();
         services.AddScoped<ICatalogRepository, CatalogRepository>();
         services.AddScoped<IDatabaseHealthCheck, DatabaseHealthCheck>();
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IShoppingService, ShoppingService>();
+        services.AddScoped<IAddressService, AddressService>();
+        services.AddHttpClient<IChatAssistantService, ChatAssistantService>(client =>
+            client.Timeout = TimeSpan.FromSeconds(25));
         return services;
     }
 

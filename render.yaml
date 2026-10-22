@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: bigfit-backend
+    runtime: docker
+    dockerfilePath: ./Server/Backend/Dockerfile
+    dockerContext: ./Server/Backend
+    healthCheckPath: /api/health/database
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Database__ApplyMigrationsOnStartup
+        value: "true"
+      - key: ConnectionStrings__Default
+        sync: false
+      - key: Auth__Jwt__SigningKey
+        sync: false
+      - key: Auth__Jwt__Issuer
+        value: BigFit.Backend
+      - key: Auth__Jwt__Audience
+        value: BigFit.Mobile

@@ -1,7 +1,8 @@
 $ErrorActionPreference = "Stop"
 
-$sourcePath = Join-Path $PSScriptRoot "Uniqlo Products.csv"
-$outputPath = Join-Path $PSScriptRoot "BigFitProducts.review.csv"
+$mockRoot = Split-Path -Parent $PSScriptRoot
+$sourcePath = Join-Path $mockRoot "Uniqlo Products.csv"
+$outputPath = Join-Path $mockRoot "BigFitProducts.review.csv"
 $invariantCulture = [System.Globalization.CultureInfo]::InvariantCulture
 
 function ConvertTo-Price {
@@ -61,15 +62,43 @@ function Get-CleanCategory {
 function Get-VariantAttribute {
     param(
         [object[]]$Attributes,
-        [string]$Name
+        [string]$AttributeName
     )
 
-    $attribute = $Attributes | Where-Object { $_.name -eq $Name } | Select-Object -First 1
+    $attribute = $Attributes | Where-Object { $_.name -eq $AttributeName } | Select-Object -First 1
     if ($null -eq $attribute) {
         return ""
     }
 
     return [string]$attribute.value
+}
+
+function Get-BigFitSize {
+    param([string]$SourceSize)
+
+    $normalizedSize = $SourceSize.Trim().ToUpperInvariant()
+    switch -Regex ($normalizedSize) {
+        "^(XXS|XS|S)$" { return "M" }
+        "^S/M$" { return "L" }
+        "^M$" { return "L" }
+        "^L$" { return "XL" }
+        "^XL$" { return "XXL" }
+        "^XXL$" { return "3XL" }
+        "^3XL$" { return "4XL" }
+        "^ONE SIZE$" { return "L" }
+        "^(\d+)INCH$" {
+            $waist = [int]$Matches[1]
+            if ($waist -le 26) { return "M" }
+            if ($waist -le 30) { return "L" }
+            if ($waist -le 34) { return "XL" }
+            if ($waist -le 38) { return "XXL" }
+            return "3XL"
+        }
+        "^(65/70 B C|65/70 D E|B90|C85)$" { return "M" }
+        "^(75/80 B C|C90|D85)$" { return "L" }
+        "^(75/80 D E|90 B C|90 D E)$" { return "XL" }
+        default { throw "Unsupported source size '$SourceSize'; map it before generating the review CSV." }
+    }
 }
 
 if (-not (Test-Path -LiteralPath $sourcePath)) {
@@ -89,6 +118,10 @@ $cleanRows = foreach ($row in $sourceRows) {
         continue
     }
 
+    if ($row.title -match "(?i)\bsocks?\b") {
+        continue
+    }
+
     $price = ConvertTo-Price -Value $row.price
     if ($null -eq $price -or $price -le 0) {
         continue
@@ -101,11 +134,16 @@ $cleanRows = foreach ($row in $sourceRows) {
 
     $attributes = @()
     if (-not [string]::IsNullOrWhiteSpace($row.variant_attributes)) {
-        $attributes = @($row.variant_attributes | ConvertFrom-Json)
+        $attributes = ConvertFrom-Json -InputObject ([string]$row.variant_attributes)
     }
 
     $sku = if ([string]::IsNullOrWhiteSpace($row.variant_id)) { $row.item_id } else { $row.variant_id }
     $stockQuantity = if ($row.availability -eq "in_stock") { 8 } else { 0 }
+    $sourceSize = Get-VariantAttribute -Attributes $attributes -AttributeName "Size"
+    $color = Get-VariantAttribute -Attributes $attributes -AttributeName "Color"
+    if ([string]::IsNullOrWhiteSpace($sourceSize) -or [string]::IsNullOrWhiteSpace($color)) {
+        throw "Variant '$sku' is missing its source size or color."
+    }
     $description = [string]$row.description
     if ($description.Length -gt 4000) {
         $description = $description.Substring(0, 4000)
@@ -121,11 +159,17 @@ $cleanRows = foreach ($row in $sourceRows) {
         CurrencyCode = "EUR"
         ImageUrl     = ([string]$row.image_url).Trim()
         SKU          = ([string]$sku).Trim()
-        Size         = Get-VariantAttribute -Attributes $attributes -Name "Size"
-        Color        = Get-VariantAttribute -Attributes $attributes -Name "Color"
+        Size         = Get-BigFitSize -SourceSize $sourceSize
+        Color        = $color.Trim()
         StockQuantity = $stockQuantity
     }
 }
+
+$cleanRows = @($cleanRows |
+    Group-Object Gender, Category, ProductName, Size, Color |
+    ForEach-Object {
+        $_.Group | Sort-Object SKU | Select-Object -First 1
+    })
 
 $requiredColumns = @(
     "Gender", "Category", "ProductName", "Description", "Price", "SalePrice",

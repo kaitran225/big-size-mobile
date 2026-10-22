@@ -239,6 +239,7 @@ public sealed class CatalogService(ICatalogRepository repository) : ICatalogServ
             product.Price,
             product.SalePrice,
             product.SalePrice ?? product.Price,
+            product.IsOnSale,
             product.CurrencyCode,
             product.ImageUrl,
             product.IsActive,

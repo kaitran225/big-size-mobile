@@ -86,6 +86,7 @@ public sealed record ProductResponse(
     decimal Price,
     decimal? SalePrice,
     decimal CurrentPrice,
+    bool IsOnSale,
     string CurrencyCode,
     string? ImageUrl,
     bool IsActive,

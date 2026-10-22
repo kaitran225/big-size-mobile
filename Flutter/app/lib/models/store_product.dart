@@ -50,6 +50,7 @@ class StoreProduct {
     required this.description,
     required this.price,
     required this.currentPrice,
+    required this.isOnSale,
     required this.currencyCode,
     required this.imageUrl,
     required this.categoryId,
@@ -61,12 +62,11 @@ class StoreProduct {
   final String? description;
   final double price;
   final double currentPrice;
+  final bool isOnSale;
   final String currencyCode;
   final String? imageUrl;
   final String categoryId;
   final List<StoreVariant> variants;
-
-  bool get isOnSale => currentPrice < price;
 
   int? get discountPercent =>
       isOnSale ? ((1 - currentPrice / price) * 100).round() : null;
@@ -77,6 +77,9 @@ class StoreProduct {
     description: json['description'] as String?,
     price: (json['price'] as num).toDouble(),
     currentPrice: (json['currentPrice'] as num).toDouble(),
+    isOnSale:
+        json['isOnSale'] as bool? ??
+        (json['currentPrice'] as num) < (json['price'] as num),
     currencyCode: json['currencyCode'] as String? ?? 'EUR',
     imageUrl: json['imageUrl'] as String?,
     categoryId: json['categoryId'] as String,

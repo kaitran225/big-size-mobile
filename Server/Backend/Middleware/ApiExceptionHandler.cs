@@ -1,5 +1,6 @@
 using BigFit.Application.Abstractions;
 using BigFit.Application.Authentication;
+using BigFit.Application.Assistant;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,6 +29,10 @@ internal sealed class ApiExceptionHandler(
                 authException.StatusCode,
                 authException.Title,
                 authException.Message),
+            ChatAssistantUnavailableException assistantException => (
+                StatusCodes.Status503ServiceUnavailable,
+                "AI assistant unavailable",
+                assistantException.Message),
             ArgumentException => (
                 StatusCodes.Status400BadRequest,
                 "Invalid request",

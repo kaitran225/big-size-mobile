@@ -1,4 +1,5 @@
 @app_HostAddress = http://localhost:5047
+@customerToken = replace-with-customer-jwt
 
 ### Check PostgreSQL connectivity
 GET {{app_HostAddress}}/api/health/database
@@ -38,7 +39,7 @@ Content-Type: application/json
 }
 
 ### List products with catalogue filters
-GET {{app_HostAddress}}/api/products?search=shirt&size=3XL&color=Black&gender=Women&inStock=true&sortBy=price_asc&page=1&pageSize=24
+GET {{app_HostAddress}}/api/products?search=shirt&size=3XL&color=Black&gender=Women&onSale=true&inStock=true&sortBy=price_asc&page=1&pageSize=24
 Accept: application/json
 
 ### Create staff (Admin JWT required)
@@ -87,3 +88,96 @@ Content-Type: application/json
   "color": "Navy",
   "stockQuantity": 8
 }
+
+### Ask the catalogue-grounded assistant (Customer JWT required)
+POST {{app_HostAddress}}/api/assistant/chat
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "message": "Which black shirts are on sale and available in 3XL?",
+  "gender": "Women",
+  "category": "Shirts"
+}
+
+### Create a notification for the signed-in user
+POST {{app_HostAddress}}/api/notifications
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "type": "order",
+  "title": "Order update",
+  "message": "Your order is being prepared.",
+  "dataJson": "{\"orderId\":\"replace-with-order-id\"}"
+}
+
+### List notifications for the signed-in user
+GET {{app_HostAddress}}/api/notifications?page=1&pageSize=30
+Authorization: Bearer {{customerToken}}
+
+### Mark a notification read (replace ID)
+PUT {{app_HostAddress}}/api/notifications/00000000-0000-0000-0000-000000000000/read
+Authorization: Bearer {{customerToken}}
+
+### Delete a notification (replace ID)
+DELETE {{app_HostAddress}}/api/notifications/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{customerToken}}
+
+### Negotiate a realtime SignalR connection (Customer JWT required)
+POST {{app_HostAddress}}/hubs/notifications/negotiate?negotiateVersion=1
+Authorization: Bearer {{customerToken}}
+
+### Get the current user's cart
+GET {{app_HostAddress}}/api/cart
+Authorization: Bearer {{customerToken}}
+
+### Add a variant to the cart
+POST {{app_HostAddress}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productVariantId": "replace-with-product-variant-id",
+  "quantity": 1
+}
+
+### List favorites
+GET {{app_HostAddress}}/api/favorites
+Authorization: Bearer {{customerToken}}
+
+### Create an order from the cart (optionally include a saved shipping address)
+POST {{app_HostAddress}}/api/orders
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "shippingAddressId": null
+}
+
+### List order history
+GET {{app_HostAddress}}/api/orders?page=1&pageSize=20
+Authorization: Bearer {{customerToken}}
+
+### Save a delivery address with a map coordinate
+POST {{app_HostAddress}}/api/addresses
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "label": "Home",
+  "recipientName": "BigFit Customer",
+  "phoneNumber": "+84000000000",
+  "addressLine": "1 Demo Street",
+  "city": "Ho Chi Minh City",
+  "province": "Ho Chi Minh",
+  "postalCode": "700000",
+  "countryCode": "VN",
+  "latitude": 10.7769,
+  "longitude": 106.7009,
+  "isDefault": true
+}
+
+### List delivery addresses
+GET {{app_HostAddress}}/api/addresses
+Authorization: Bearer {{customerToken}}

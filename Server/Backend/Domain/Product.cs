@@ -7,6 +7,7 @@ public sealed class Product
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public decimal? SalePrice { get; set; }
+    public bool IsOnSale { get; private set; }
     public string CurrencyCode { get; set; } = "EUR";
     public string? ImageUrl { get; set; }
     public bool IsActive { get; set; } = true;
