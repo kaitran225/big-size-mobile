@@ -11,7 +11,7 @@ public static class HealthEndpoints
 {
     public static IEndpointRouteBuilder MapHealthEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/api/health/database", async Task<Results<Ok<DatabaseHealthResponse>, ProblemHttpResult>> (
+        endpoints.MapGet("/api/database/health", async Task<Results<Ok<DatabaseHealthResponse>, ProblemHttpResult>> (
             IDatabaseHealthCheck healthCheck,
             ILogger<DatabaseHealthResponse> logger,
             CancellationToken cancellationToken) =>
