@@ -119,17 +119,18 @@ internal sealed class ShoppingService(BigFitDbContext dbContext) : IShoppingServ
                 dbContext.Products.AsNoTracking(),
                 favorite => favorite.ProductId,
                 product => product.Id,
-                (favorite, product) => new FavoriteProductResponse(
-                    product.Id,
-                    product.Name,
-                    product.Price,
-                    product.SalePrice,
-                    product.SalePrice ?? product.Price,
-                    product.IsOnSale,
-                    product.CurrencyCode,
-                    product.ImageUrl,
-                    product.CategoryId))
+                (favorite, product) => product)
             .OrderBy(product => product.Name)
+            .Select(product => new FavoriteProductResponse(
+                product.Id,
+                product.Name,
+                product.Price,
+                product.SalePrice,
+                product.SalePrice ?? product.Price,
+                product.IsOnSale,
+                product.CurrencyCode,
+                product.ImageUrl,
+                product.CategoryId))
             .ToListAsync(cancellationToken);
 
     public async Task<bool> AddFavoriteAsync(
