@@ -293,8 +293,16 @@ class _StorefrontPageState extends State<StorefrontPage> {
               foregroundColor: Colors.black,
               elevation: 0,
               scrolledUnderElevation: 0,
-              centerTitle: true,
-              title: const _BigfitAnimatedLogo(),
+
+              // Logo chuyển sang bên trái giống header HADES.
+              centerTitle: false,
+              titleSpacing: 16,
+
+              title: const Align(
+                alignment: Alignment.centerLeft,
+                child: _BigfitAnimatedLogo(),
+              ),
+
               actions: [
                 IconButton(
                   tooltip: AppStrings.shoppingBagTooltip(_cartCount),
@@ -371,12 +379,19 @@ class _StorefrontPageState extends State<StorefrontPage> {
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
+          // Hàng danh mục được đưa lên ngay dưới AppBar.
+          SliverToBoxAdapter(
+            child: _buildTopCategoryBar(),
+          ),
+
           SliverToBoxAdapter(
             child: _buildHero(theme),
           ),
+
           SliverToBoxAdapter(
             child: _buildControls(theme),
           ),
+
           if (_loading)
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -428,6 +443,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
                 ),
               ),
             ),
+
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               sliver: SliverGrid.builder(
@@ -455,6 +471,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
                 ),
               ),
             ),
+
             if (_page < _totalPages)
               SliverToBoxAdapter(
                 child: Center(
@@ -475,12 +492,22 @@ class _StorefrontPageState extends State<StorefrontPage> {
                   ),
                 ),
               ),
+
             SliverToBoxAdapter(
               child: _buildFooter(),
             ),
           ],
         ],
       ),
+    );
+  }
+
+  // Thanh ALL, BOTTOM, CASUALWEAR... nằm trên cùng.
+  Widget _buildTopCategoryBar() {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      child: _buildCategoryNavigation(),
     );
   }
 
@@ -516,6 +543,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
                 );
               },
             ),
+
             const DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -529,6 +557,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
                 ),
               ),
             ),
+
             Padding(
               padding: const EdgeInsets.all(18),
               child: Column(
@@ -543,7 +572,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
                       letterSpacing: 1.5,
                     ),
                   ),
+
                   const Spacer(),
+
                   const Text(
                     'FIND\nYOUR FIT.',
                     style: TextStyle(
@@ -554,7 +585,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
                       letterSpacing: -1,
                     ),
                   ),
+
                   const SizedBox(height: 10),
+
                   const Text(
                     'EVERYDAY STREETWEAR.\nMADE TO BE YOURS.',
                     style: TextStyle(
@@ -565,7 +598,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
                       letterSpacing: 1,
                     ),
                   ),
+
                   const SizedBox(height: 14),
+
                   Row(
                     children: [
                       SegmentedButton<String>(
@@ -663,9 +698,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
               ),
             ),
           ),
-          const SizedBox(height: 14),
-          _buildCategoryNavigation(),
+
           const SizedBox(height: 12),
+
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -681,7 +716,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
                     _loadStore();
                   },
                 ),
+
                 const SizedBox(width: 8),
+
                 FilterChip(
                   label: const Text(AppStrings.filterInStock),
                   selected: _inStock,
@@ -693,7 +730,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
                     _loadStore();
                   },
                 ),
+
                 const SizedBox(width: 12),
+
                 DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _sortBy,
@@ -779,7 +818,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
 
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: Row(children: children),
+          child: Row(
+            children: children,
+          ),
         );
       },
     );
@@ -819,7 +860,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
               letterSpacing: 3,
             ),
           ),
+
           const SizedBox(height: 5),
+
           const Text(
             'EVERYDAY STREETWEAR.',
             style: TextStyle(
@@ -829,7 +872,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
               letterSpacing: 1,
             ),
           ),
+
           const SizedBox(height: 20),
+
           LayoutBuilder(
             builder: (context, constraints) {
               final isMobile = constraints.maxWidth < 600;
@@ -854,7 +899,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
                     'VỀ BIGFIT',
                     style: headingStyle,
                   ),
+
                   SizedBox(height: 10),
+
                   Text(
                     'BIGFIT là cửa hàng thời trang streetwear '
                     'hướng đến sự thoải mái, tự tin và phong cách riêng.\n\n'
@@ -872,7 +919,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
                     'CHÍNH SÁCH ĐỔI HÀNG',
                     style: headingStyle,
                   ),
+
                   SizedBox(height: 10),
+
                   Text(
                     'ĐIỀU KIỆN ĐỔI HÀNG',
                     style: TextStyle(
@@ -881,7 +930,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+
                   SizedBox(height: 6),
+
                   Text(
                     '• Sản phẩm còn nguyên tem, nhãn.\n'
                     '• Sản phẩm chưa qua sử dụng.\n'
@@ -889,7 +940,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
                     '• Cung cấp thông tin đơn hàng khi yêu cầu đổi.',
                     style: bodyStyle,
                   ),
+
                   SizedBox(height: 12),
+
                   Text(
                     'CÁCH ĐỔI HÀNG',
                     style: TextStyle(
@@ -898,13 +951,17 @@ class _StorefrontPageState extends State<StorefrontPage> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+
                   SizedBox(height: 6),
+
                   Text(
                     'Liên hệ BIGFIT và cung cấp mã đơn hàng, '
                     'sản phẩm cần đổi cùng lý do đổi hàng.',
                     style: bodyStyle,
                   ),
+
                   SizedBox(height: 10),
+
                   Text(
                     'Thời hạn đổi hàng và chi phí vận chuyển '
                     'được xác nhận theo chính sách thực tế của cửa hàng.',
@@ -939,11 +996,13 @@ class _StorefrontPageState extends State<StorefrontPage> {
                       child: aboutSection,
                     ),
                   ),
+
                   Container(
                     width: 1,
                     height: 220,
                     color: Colors.white24,
                   ),
+
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.only(left: 18),
@@ -954,9 +1013,13 @@ class _StorefrontPageState extends State<StorefrontPage> {
               );
             },
           ),
+
           const SizedBox(height: 20),
+
           const Divider(color: Colors.white24),
+
           const SizedBox(height: 12),
+
           const Center(
             child: Text(
               '© BIGFIT. All rights reserved.',
@@ -1015,7 +1078,9 @@ class _CategoryNavigationItem extends StatelessWidget {
                 letterSpacing: 0.8,
               ),
             ),
+
             const SizedBox(height: 7),
+
             AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               height: 2,
