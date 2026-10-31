@@ -16,9 +16,10 @@ class ProductTile extends StatelessWidget {
     final available = product.variants.any(
       (variant) => variant.stockQuantity > 0,
     );
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -27,7 +28,7 @@ class ProductTile extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                   child: product.imageUrl == null
                       ? _imagePlaceholder()
                       : Image.network(
@@ -39,48 +40,48 @@ class ProductTile extends StatelessWidget {
                               _imagePlaceholder(),
                         ),
                 ),
+
+                // Product discount badge.
                 if (product.isOnSale)
                   Positioned(
-                    top: 10,
-                    left: 10,
+                    top: 9,
+                    left: 9,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 9,
-                        vertical: 5,
+                        vertical: 6,
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFB43B31),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                      color: Colors.black,
                       child: Text(
                         AppStrings.discountBadge(product.discountPercent),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
                   ),
+
+                // Sold-out badge.
                 if (!available)
                   Positioned(
                     right: 8,
                     bottom: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 9,
+                        vertical: 6,
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.72),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      color: Colors.black,
                       child: const Text(
                         AppStrings.soldOut,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.4,
                         ),
                       ),
                     ),
@@ -88,35 +89,47 @@ class ProductTile extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 9),
+
+          const SizedBox(height: 10),
+
+          // Product name.
           Text(
-            product.name,
+            product.name.toUpperCase(),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w600, height: 1.2),
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              height: 1.25,
+              letterSpacing: 0.2,
+            ),
           ),
-          const SizedBox(height: 5),
+
+          const SizedBox(height: 7),
+
+          // Product price.
           Row(
             children: [
               Text(
                 formatPrice(product.currentPrice, product.currencyCode),
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: product.isOnSale
-                      ? const Color(0xFFB43B31)
-                      : Colors.black87,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.1,
                 ),
               ),
               if (product.isOnSale) ...[
-                const SizedBox(width: 6),
+                const SizedBox(width: 7),
                 Flexible(
                   child: Text(
                     formatPrice(product.price, product.currencyCode),
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: Colors.black54,
+                      color: Colors.black45,
                       fontSize: 11,
+                      fontWeight: FontWeight.w500,
                       decoration: TextDecoration.lineThrough,
                     ),
                   ),
@@ -130,9 +143,13 @@ class ProductTile extends StatelessWidget {
   }
 
   Widget _imagePlaceholder() => Container(
-    color: const Color(0xFFE8E7E2),
-    child: const Center(
-      child: Icon(Icons.checkroom_outlined, size: 38, color: Colors.black38),
-    ),
-  );
+        color: const Color(0xFFF0F0F0),
+        child: const Center(
+          child: Icon(
+            Icons.checkroom_outlined,
+            size: 38,
+            color: Colors.black38,
+          ),
+        ),
+      );
 }
