@@ -4,152 +4,255 @@ import '../models/store_product.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
 
-/// Grid tile that shows one product in the storefront.
-class ProductTile extends StatelessWidget {
-  const ProductTile({super.key, required this.product, required this.onTap});
+class ProductTile extends StatefulWidget {
+  const ProductTile({
+    super.key,
+    required this.product,
+    required this.onTap,
+  });
 
   final StoreProduct product;
   final VoidCallback onTap;
 
   @override
+  State<ProductTile> createState() => _ProductTileState();
+}
+
+class _ProductTileState extends State<ProductTile> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
+    final product = widget.product;
+
     final available = product.variants.any(
       (variant) => variant.stockQuantity > 0,
     );
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: product.imageUrl == null
-                      ? _imagePlaceholder()
-                      : Image.network(
-                          product.imageUrl!,
-                          fit: BoxFit.cover,
-                          webHtmlElementStrategy:
-                              WebHtmlElementStrategy.fallback,
-                          errorBuilder: (context, error, stackTrace) =>
-                              _imagePlaceholder(),
-                        ),
-                ),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Product image.
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(
+                    color: const Color(0xFFF3F3F3),
+                    child: product.imageUrl == null ||
+                            product.imageUrl!.trim().isEmpty
+                        ? _imagePlaceholder()
+                        : Image.network(
+                            product.imageUrl!,
+                            fit: BoxFit.contain,
+                            alignment: Alignment.center,
+                            webHtmlElementStrategy:
+                                WebHtmlElementStrategy.fallback,
+                            errorBuilder: (
+                              context,
+                              error,
+                              stackTrace,
+                            ) {
+                              return _imagePlaceholder();
+                            },
+                            loadingBuilder: (
+                              context,
+                              child,
+                              loadingProgress,
+                            ) {
+                              if (loadingProgress == null) {
+                                return child;
+                              }
 
-                // Product discount badge.
-                if (product.isOnSale)
-                  Positioned(
-                    top: 9,
-                    left: 9,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 6,
-                      ),
-                      color: Colors.black,
-                      child: Text(
-                        AppStrings.discountBadge(product.discountPercent),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
+                              return const Center(
+                                child: SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1.5,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+
+                  // Discount badge.
+                  if (product.isOnSale)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 5,
+                        ),
+                        color: Colors.black,
+                        child: Text(
+                          AppStrings.discountBadge(
+                            product.discountPercent,
+                          ),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.4,
+                          ),
                         ),
                       ),
                     ),
-                  ),
 
-                // Sold-out badge.
-                if (!available)
-                  Positioned(
-                    right: 8,
-                    bottom: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 6,
-                      ),
-                      color: Colors.black,
-                      child: const Text(
-                        AppStrings.soldOut,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.4,
+                  // Sold-out label.
+                  if (!available)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                        ),
+                        color: Colors.black.withValues(alpha: 0.85),
+                        child: const Text(
+                          AppStrings.soldOut,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.2,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+
+                  // Desktop hover action.
+                  if (available && _isHovered)
+                    Positioned(
+                      left: 8,
+                      right: 8,
+                      bottom: 8,
+                      child: SizedBox(
+                        height: 38,
+                        child: ElevatedButton(
+                          onPressed: widget.onTap,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.zero,
+                            ),
+                          ),
+                          child: const Text(
+                            'XEM SẢN PHẨM',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
 
-          const SizedBox(height: 10),
+            const SizedBox(height: 10),
 
-          // Product name.
-          Text(
-            product.name.toUpperCase(),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              height: 1.25,
-              letterSpacing: 0.2,
-            ),
-          ),
-
-          const SizedBox(height: 7),
-
-          // Product price.
-          Row(
-            children: [
-              Text(
-                formatPrice(product.currentPrice, product.currencyCode),
+            // Product name.
+            SizedBox(
+              height: 32,
+              child: Text(
+                product.name.toUpperCase(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.1,
+                  color: Color(0xFF171717),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  height: 1.35,
+                  letterSpacing: 0.25,
                 ),
               ),
-              if (product.isOnSale) ...[
-                const SizedBox(width: 7),
-                Flexible(
-                  child: Text(
-                    formatPrice(product.price, product.currencyCode),
-                    overflow: TextOverflow.ellipsis,
+            ),
+
+            const SizedBox(height: 5),
+
+            // Product price.
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6,
+              children: [
+                Text(
+                  formatPrice(
+                    product.currentPrice,
+                    product.currencyCode,
+                  ),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF171717),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                if (product.isOnSale)
+                  Text(
+                    formatPrice(
+                      product.price,
+                      product.currencyCode,
+                    ),
+                    textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Colors.black45,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 10,
                       decoration: TextDecoration.lineThrough,
                     ),
                   ),
-                ),
               ],
-            ],
+            ),
+
+            const SizedBox(height: 7),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _imagePlaceholder() {
+    return Container(
+      color: const Color(0xFFF0F0F0),
+      alignment: Alignment.center,
+      child: const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.checkroom_outlined,
+            size: 36,
+            color: Colors.black26,
+          ),
+          SizedBox(height: 8),
+          Text(
+            'BIGFIT',
+            style: TextStyle(
+              color: Colors.black38,
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2,
+            ),
           ),
         ],
       ),
     );
   }
-
-  Widget _imagePlaceholder() => Container(
-        color: const Color(0xFFF0F0F0),
-        child: const Center(
-          child: Icon(
-            Icons.checkroom_outlined,
-            size: 38,
-            color: Colors.black38,
-          ),
-        ),
-      );
 }
