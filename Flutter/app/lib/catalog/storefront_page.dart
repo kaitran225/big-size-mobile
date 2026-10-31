@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../assistant/assistant_page.dart';
@@ -78,7 +79,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
       if (session != null) {
         await _refreshCartCount();
       }
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
         setState(() => _error = AppStrings.errorSession);
       }
@@ -294,15 +295,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
               elevation: 0,
               scrolledUnderElevation: 0,
               centerTitle: true,
-              title: const Text(
-                AppStrings.brandName,
-                style: TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 3,
-                  color: Colors.black,
-                ),
-              ),
+              title: const _BigfitAnimatedLogo(),
               actions: [
                 IconButton(
                   tooltip: AppStrings.shoppingBagTooltip(_cartCount),
@@ -440,7 +433,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               sliver: SliverGrid.builder(
                 itemCount: _products.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate:
+                    SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount:
                       MediaQuery.sizeOf(context).width >= 1200
                           ? 4
@@ -488,7 +482,6 @@ class _StorefrontPageState extends State<StorefrontPage> {
     );
   }
 
-  // Banner: ảnh phủ kín khung, ưu tiên giữ phần đầu người mẫu.
   Widget _buildHero(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
@@ -507,10 +500,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
               width: double.infinity,
               height: double.infinity,
               fit: BoxFit.cover,
-
-              // Đẩy ảnh lên trên để giảm khả năng cắt đầu người mẫu.
               alignment: const Alignment(0, -0.85),
-
               errorBuilder: (context, error, stackTrace) {
                 return const ColoredBox(
                   color: Color(0xFF111111),
@@ -524,7 +514,6 @@ class _StorefrontPageState extends State<StorefrontPage> {
                 );
               },
             ),
-
             const DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -538,7 +527,6 @@ class _StorefrontPageState extends State<StorefrontPage> {
                 ),
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(18),
               child: Column(
@@ -584,7 +572,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
                           backgroundColor:
                               WidgetStateProperty.resolveWith<Color>(
                             (states) {
-                              return states.contains(WidgetState.selected)
+                              return states.contains(
+                                WidgetState.selected,
+                              )
                                   ? Colors.white
                                   : Colors.transparent;
                             },
@@ -592,7 +582,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
                           foregroundColor:
                               WidgetStateProperty.resolveWith<Color>(
                             (states) {
-                              return states.contains(WidgetState.selected)
+                              return states.contains(
+                                WidgetState.selected,
+                              )
                                   ? Colors.black
                                   : Colors.white;
                             },
@@ -726,7 +718,6 @@ class _StorefrontPageState extends State<StorefrontPage> {
                       if (value == null) return;
 
                       setState(() => _sortBy = value);
-
                       _loadStore();
                     },
                   ),
@@ -861,6 +852,101 @@ class _CategoryNavigationItem extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _BigfitAnimatedLogo extends StatefulWidget {
+  const _BigfitAnimatedLogo({super.key});
+
+  @override
+  State<_BigfitAnimatedLogo> createState() => _BigfitAnimatedLogoState();
+}
+
+class _BigfitAnimatedLogoState extends State<_BigfitAnimatedLogo>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+  late final Animation<double> _glow;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    _scale = Tween<double>(
+      begin: 1.0,
+      end: 1.08,
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _glow = Tween<double>(
+      begin: 0,
+      end: 16,
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _startAnimation();
+  }
+
+  Future<void> _startAnimation() async {
+    while (mounted) {
+      await Future.delayed(const Duration(seconds: 4));
+
+      if (!mounted) return;
+
+      await _controller.forward();
+
+      if (!mounted) return;
+
+      await _controller.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scale.value,
+          child: Text(
+            AppStrings.brandName,
+            style: TextStyle(
+              fontSize: 23,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 3,
+              color: Colors.black,
+              shadows: [
+                Shadow(
+                  color: const Color(0xFF14432F).withOpacity(
+                    _controller.value * 0.5,
+                  ),
+                  blurRadius: _glow.value,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
