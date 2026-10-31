@@ -1,4 +1,4 @@
-﻿using BigFit.Application.Abstractions;
+using BigFit.Application.Abstractions;
 using BigFit.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -52,10 +52,21 @@ internal sealed class CatalogRepository(BigFitDbContext dbContext) : ICatalogRep
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var pattern = $"%{EscapeLikePattern(search.Trim())}%";
-            query = query.Where(product =>
-                EF.Functions.ILike(product.Name, pattern) ||
-                (product.Description != null && EF.Functions.ILike(product.Description, pattern)));
+            var isPostgres = dbContext.Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true;
+            if (isPostgres)
+            {
+                var pattern = $"%{EscapeLikePattern(search.Trim())}%";
+                query = query.Where(product =>
+                    EF.Functions.ILike(product.Name, pattern) ||
+                    (product.Description != null && EF.Functions.ILike(product.Description, pattern)));
+            }
+            else
+            {
+                var s = search.Trim().ToLower();
+                query = query.Where(product =>
+                    product.Name.ToLower().Contains(s) ||
+                    (product.Description != null && product.Description.ToLower().Contains(s)));
+            }
         }
 
         if (categoryId.HasValue)

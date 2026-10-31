@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.OpenApi;
-using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 
 namespace BigFit.Api.OpenApi;
 
@@ -28,9 +28,14 @@ public sealed class BearerSecurityRequirementTransformer : IOpenApiOperationTran
         operation.Security ??= [];
         operation.Security.Add(new OpenApiSecurityRequirement
         {
-            [new OpenApiSecuritySchemeReference(
-                BearerSecuritySchemeTransformer.SchemeName,
-                context.Document)] = []
+            [new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = BearerSecuritySchemeTransformer.SchemeName
+                }
+            }] = []
         });
 
         return Task.CompletedTask;

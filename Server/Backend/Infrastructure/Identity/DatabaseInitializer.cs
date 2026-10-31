@@ -1,4 +1,4 @@
-﻿using BigFit.Application.Abstractions;
+using BigFit.Application.Abstractions;
 using BigFit.Application.Authentication;
 using Microsoft.AspNetCore.Identity;
 
@@ -28,6 +28,26 @@ internal sealed class DatabaseInitializer(
                     throw new InvalidOperationException(
                         ApiMessages.RoleInitializationFailed(role, string.Join(" ", result.Errors.Select(error => error.Description))));
                 }
+            }
+        }
+
+        // Seed default demo customer for easy local testing
+        const string demoEmail = "test@gmail.com";
+        var demoUser = await userManager.FindByEmailAsync(demoEmail);
+        if (demoUser is null)
+        {
+            demoUser = new ApplicationUser
+            {
+                Id = Guid.NewGuid(),
+                UserName = demoEmail,
+                Email = demoEmail,
+                DisplayName = "Anh Duy"
+            };
+            var createRes = await userManager.CreateAsync(demoUser, "Anhduy180520@");
+            if (createRes.Succeeded)
+            {
+                await userManager.AddToRoleAsync(demoUser, ApplicationRoles.Customer);
+                logger.LogInformation("Seeded demo customer {Email}", demoEmail);
             }
         }
 

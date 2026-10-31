@@ -1,6 +1,6 @@
 using BigFit.Application.Abstractions;
 using Microsoft.AspNetCore.OpenApi;
-using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 
 namespace BigFit.Api.OpenApi;
 
@@ -15,7 +15,7 @@ public sealed class BearerSecuritySchemeTransformer : IOpenApiDocumentTransforme
         CancellationToken cancellationToken)
     {
         document.Components ??= new OpenApiComponents();
-        document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
+        document.Components.SecuritySchemes = new Dictionary<string, OpenApiSecurityScheme>
         {
             [SchemeName] = new OpenApiSecurityScheme
             {
