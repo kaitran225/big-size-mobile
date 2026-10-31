@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../assistant/assistant_page.dart';
@@ -476,6 +475,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
                   ),
                 ),
               ),
+            SliverToBoxAdapter(
+              child: _buildFooter(),
+            ),
           ],
         ],
       ),
@@ -796,6 +798,177 @@ class _StorefrontPageState extends State<StorefrontPage> {
       icon: Icons.checkroom_outlined,
       title: AppStrings.catalogEmptyTitle,
       message: AppStrings.catalogEmptySubtitle,
+    );
+  }
+
+  Widget _buildFooter() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.fromLTRB(18, 24, 18, 18),
+      color: const Color(0xFF111111),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'BIGFIT',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 25,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 3,
+            ),
+          ),
+          const SizedBox(height: 5),
+          const Text(
+            'EVERYDAY STREETWEAR.',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 20),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 600;
+
+              const headingStyle = TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+              );
+
+              const bodyStyle = TextStyle(
+                color: Colors.white70,
+                fontSize: 11,
+                height: 1.6,
+              );
+
+              final aboutSection = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'VỀ BIGFIT',
+                    style: headingStyle,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'BIGFIT là cửa hàng thời trang streetwear '
+                    'hướng đến sự thoải mái, tự tin và phong cách riêng.\n\n'
+                    'Chúng tôi mong muốn mang đến những sản phẩm '
+                    'phù hợp với nhiều vóc dáng và cá tính khác nhau.',
+                    style: bodyStyle,
+                  ),
+                ],
+              );
+
+              final exchangeSection = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'CHÍNH SÁCH ĐỔI HÀNG',
+                    style: headingStyle,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'ĐIỀU KIỆN ĐỔI HÀNG',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    '• Sản phẩm còn nguyên tem, nhãn.\n'
+                    '• Sản phẩm chưa qua sử dụng.\n'
+                    '• Sản phẩm không bị hư hỏng.\n'
+                    '• Cung cấp thông tin đơn hàng khi yêu cầu đổi.',
+                    style: bodyStyle,
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'CÁCH ĐỔI HÀNG',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    'Liên hệ BIGFIT và cung cấp mã đơn hàng, '
+                    'sản phẩm cần đổi cùng lý do đổi hàng.',
+                    style: bodyStyle,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'Thời hạn đổi hàng và chi phí vận chuyển '
+                    'được xác nhận theo chính sách thực tế của cửa hàng.',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 10,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              );
+
+              if (isMobile) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    aboutSection,
+                    const SizedBox(height: 20),
+                    const Divider(color: Colors.white24),
+                    const SizedBox(height: 16),
+                    exchangeSection,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 18),
+                      child: aboutSection,
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 220,
+                    color: Colors.white24,
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 18),
+                      child: exchangeSection,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+          const Divider(color: Colors.white24),
+          const SizedBox(height: 12),
+          const Center(
+            child: Text(
+              '© BIGFIT. All rights reserved.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white38,
+                fontSize: 10,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
