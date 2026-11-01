@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -38,11 +39,15 @@ class StoreApi {
   static const _nameKey = 'bigfit.displayName';
   static const _rolesKey = 'bigfit.roles';
   static const _baseUrlKey = 'bigfit.apiBaseUrl';
+  static const _sessionBaseUrlKey = 'bigfit.sessionBaseUrl';
   static const renderBaseUrl = 'https://big-fit-pgm-store.onrender.com';
+  static const _localRequestTimeout = Duration(seconds: 5);
+  static const _cloudRequestTimeout = Duration(seconds: 90);
 
   final http.Client _client;
   final FlutterSecureStorage _secureStorage;
   Uri _baseUri;
+  Uri? _sessionBaseUri;
   String? _accessToken;
 
   String get baseUrl => _baseUri.toString().replaceFirst(RegExp(r'/$'), '');
@@ -249,13 +254,15 @@ class StoreApi {
   }
 
   Future<AuthSession> login(String email, String password) async {
+    var sessionBaseUri = _sessionBaseUri ?? _baseUri;
     final response = await _send(
       'POST',
       '/auth/login',
       body: {'email': email.trim(), 'password': password},
+      onSuccessBaseUri: (uri) => sessionBaseUri = uri,
     );
     final session = AuthSession.fromJson(response as Map<String, dynamic>);
-    await _saveSession(session);
+    await _saveSession(session, sessionBaseUri);
     return session;
   }
 
@@ -264,6 +271,7 @@ class StoreApi {
     required String displayName,
     required String password,
   }) async {
+    var sessionBaseUri = _sessionBaseUri ?? _baseUri;
     final response = await _send(
       'POST',
       '/auth/register',
@@ -272,9 +280,10 @@ class StoreApi {
         'displayName': displayName.trim(),
         'password': password,
       },
+      onSuccessBaseUri: (uri) => sessionBaseUri = uri,
     );
     final session = AuthSession.fromJson(response as Map<String, dynamic>);
-    await _saveSession(session);
+    await _saveSession(session, sessionBaseUri);
     return session;
   }
 
@@ -290,6 +299,10 @@ class StoreApi {
       return null;
     }
 
+    final sessionBaseUrl = await _secureStorage.read(key: _sessionBaseUrlKey);
+    _sessionBaseUri = sessionBaseUrl == null
+        ? _baseUri
+        : _normalizeBaseUri(sessionBaseUrl);
     _accessToken = token;
     return AuthSession(
       accessToken: token,
@@ -301,20 +314,27 @@ class StoreApi {
 
   Future<void> signOut() async {
     _accessToken = null;
+    _sessionBaseUri = null;
     await _secureStorage.delete(key: _tokenKey);
     await _secureStorage.delete(key: _emailKey);
     await _secureStorage.delete(key: _nameKey);
     await _secureStorage.delete(key: _rolesKey);
+    await _secureStorage.delete(key: _sessionBaseUrlKey);
   }
 
-  Future<void> _saveSession(AuthSession session) async {
+  Future<void> _saveSession(AuthSession session, Uri sessionBaseUri) async {
     _accessToken = session.accessToken;
+    _sessionBaseUri = sessionBaseUri;
     await _secureStorage.write(key: _tokenKey, value: session.accessToken);
     await _secureStorage.write(key: _emailKey, value: session.email);
     await _secureStorage.write(key: _nameKey, value: session.displayName);
     await _secureStorage.write(
       key: _rolesKey,
       value: jsonEncode(session.roles),
+    );
+    await _secureStorage.write(
+      key: _sessionBaseUrlKey,
+      value: sessionBaseUri.toString(),
     );
   }
 
@@ -323,8 +343,86 @@ class StoreApi {
     String path, {
     Map<String, String>? query,
     Map<String, Object?>? body,
+    void Function(Uri)? onSuccessBaseUri,
   }) async {
-    final uri = _baseUri.resolve(path.replaceFirst(RegExp(r'^/'), ''));
+    final primaryBaseUri = _sessionBaseUri ?? _baseUri;
+    final fallbackBaseUri = _sessionBaseUri == null
+        ? _fallbackBaseUriFor(primaryBaseUri)
+        : null;
+    var successfulBaseUri = primaryBaseUri;
+    late http.Response response;
+
+    try {
+      response = await _sendToBaseUri(
+        primaryBaseUri,
+        method,
+        path,
+        timeout: fallbackBaseUri == null
+            ? _cloudRequestTimeout
+            : _localRequestTimeout,
+        query: query,
+        body: body,
+      );
+    } on http.ClientException {
+      if (fallbackBaseUri == null) rethrow;
+      successfulBaseUri = fallbackBaseUri;
+      response = await _sendToBaseUri(
+        fallbackBaseUri,
+        method,
+        path,
+        timeout: _cloudRequestTimeout,
+        query: query,
+        body: body,
+      );
+    } on TimeoutException {
+      if (fallbackBaseUri == null) rethrow;
+      successfulBaseUri = fallbackBaseUri;
+      response = await _sendToBaseUri(
+        fallbackBaseUri,
+        method,
+        path,
+        timeout: _cloudRequestTimeout,
+        query: query,
+        body: body,
+      );
+    }
+
+    if (response.statusCode >= 500 &&
+        fallbackBaseUri != null &&
+        successfulBaseUri == primaryBaseUri) {
+      successfulBaseUri = fallbackBaseUri;
+      response = await _sendToBaseUri(
+        fallbackBaseUri,
+        method,
+        path,
+        timeout: _cloudRequestTimeout,
+        query: query,
+        body: body,
+      );
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw StoreApiException(_errorMessage(response));
+    }
+    onSuccessBaseUri?.call(successfulBaseUri);
+    if (response.body.isEmpty) return null;
+    return jsonDecode(response.body);
+  }
+
+  Uri? _fallbackBaseUriFor(Uri primaryBaseUri) {
+    final cloudBaseUri = _normalizeBaseUri(renderBaseUrl);
+    return primaryBaseUri.origin == cloudBaseUri.origin ? null : cloudBaseUri;
+  }
+
+  Future<http.Response> _sendToBaseUri(
+    Uri baseUri,
+    String method,
+    String path, {
+    required Duration timeout,
+    Map<String, String>? query,
+    Map<String, Object?>? body,
+  }) async {
+    final uri = baseUri.resolve(path.replaceFirst(RegExp(r'^/'), ''));
     final request = http.Request(method, uri.replace(queryParameters: query));
     request.headers['Accept'] = 'application/json';
     if (body != null) {
@@ -335,13 +433,8 @@ class StoreApi {
       request.headers['Authorization'] = 'Bearer $_accessToken';
     }
 
-    final streamedResponse = await _client.send(request);
-    final response = await http.Response.fromStream(streamedResponse);
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw StoreApiException(_errorMessage(response));
-    }
-    if (response.body.isEmpty) return null;
-    return jsonDecode(response.body);
+    final streamedResponse = await _client.send(request).timeout(timeout);
+    return http.Response.fromStream(streamedResponse).timeout(timeout);
   }
 
   String _errorMessage(http.Response response) {
