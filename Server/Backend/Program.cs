@@ -14,6 +14,13 @@ using Microsoft.AspNetCore.HttpOverrides;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+    builder.Configuration.AddEnvironmentVariables();
+    builder.Configuration.AddCommandLine(args);
+}
+
 var renderPort = Environment.GetEnvironmentVariable("PORT");
 if (int.TryParse(renderPort, out var port) && port is > 0 and <= 65535)
 {
@@ -83,7 +90,11 @@ if (!builder.Environment.IsDevelopment())
 var app = builder.Build();
 
 app.UseForwardedHeaders();
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors("FlutterClient");
@@ -98,12 +109,26 @@ await using (var scope = app.Services.CreateAsyncScope())
 {
     if (app.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
     {
+        if (app.Environment.IsDevelopment())
+        {
+            await LocalDevelopmentDatabase.EnsureCreatedAsync(
+                app.Configuration.GetConnectionString("Default")
+                    ?? throw new InvalidOperationException("ConnectionStrings:Default is required."),
+                app.Lifetime.ApplicationStopping);
+        }
+
         await scope.ServiceProvider.GetRequiredService<BigFitDbContext>()
             .Database.MigrateAsync(app.Lifetime.ApplicationStopping);
     }
 
     await scope.ServiceProvider.GetRequiredService<DatabaseInitializer>()
         .InitializeAsync(app.Lifetime.ApplicationStopping);
+
+    if (app.Environment.IsDevelopment())
+    {
+        await scope.ServiceProvider.GetRequiredService<DevelopmentCatalogSeeder>()
+            .SeedAsync(app.Environment.ContentRootPath, app.Lifetime.ApplicationStopping);
+    }
 }
 
 app.MapHealthEndpoints();
