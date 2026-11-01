@@ -31,7 +31,7 @@ internal sealed class ApiExceptionHandler(
                 authException.Message),
             ChatAssistantUnavailableException assistantException => (
                 StatusCodes.Status503ServiceUnavailable,
-                AssistantMessages.UnavailableTitle,
+                assistantException.Title,
                 assistantException.Message),
             ArgumentException => (
                 StatusCodes.Status400BadRequest,

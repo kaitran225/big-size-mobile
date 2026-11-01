@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../auth/auth_page.dart';
+import 'assistant_chat_strings.dart';
+import '../models/store_product.dart';
 import '../services/store_api.dart';
-import '../shared/formatters.dart';
 
 class _ChatMessage {
-  _ChatMessage({
-    required this.isUser,
-    required this.text,
-    required this.time,
-  });
+  _ChatMessage({required this.isUser, required this.text, required this.time});
 
   final bool isUser;
   final String text;
@@ -32,29 +29,15 @@ class _AssistantPageState extends State<AssistantPage> {
   final List<_ChatMessage> _messages = [];
   bool _sending = false;
   String? _error;
-
-  final List<String> _quickPrompts = const [
-    '📏 Tư vấn chọn size áo nam (1m78, 92kg)',
-    '🔥 Cho mình xem các mẫu áo sơ mi 3XL đang giảm giá',
-    '🔄 Mặc không vừa size có được đổi trả không?',
-    '🚚 Đơn hàng bao nhiêu thì được miễn phí ship?',
-  ];
+  AssistantLanguage _language = AssistantLanguage.english;
+  AssistantChatStrings get _strings =>
+      AssistantChatStringCatalog.forLanguage(_language);
 
   @override
   void initState() {
     super.initState();
-    // Khởi tạo lời chào mở đầu từ AI Stylist
     _messages.add(
-      _ChatMessage(
-        isUser: false,
-        text: 'Xin chào! Em là **AI Stylist** của BigFit ✨\n\n'
-            'Em có thể hỗ trợ bạn:\n'
-            '• **Tư vấn size chuẩn** theo chiều cao & cân nặng\n'
-            '• **Gợi ý trang phục Big Size** phù hợp vóc dáng\n'
-            '• **Giải đáp chính sách** đổi size 7 ngày & freeship\n\n'
-            'Bạn đang cần tư vấn gì hôm nay ạ?',
-        time: DateTime.now(),
-      ),
+      _ChatMessage(isUser: false, text: _strings.welcome, time: DateTime.now()),
     );
   }
 
@@ -80,6 +63,7 @@ class _AssistantPageState extends State<AssistantPage> {
   Future<void> _send([String? customMessage]) async {
     final text = (customMessage ?? _controller.text).trim();
     if (text.length < 2 || _sending) return;
+    final language = _language;
 
     if (!widget.api.isAuthenticated) {
       _showSignInPrompt();
@@ -88,11 +72,7 @@ class _AssistantPageState extends State<AssistantPage> {
 
     setState(() {
       _messages.add(
-        _ChatMessage(
-          isUser: true,
-          text: text,
-          time: DateTime.now(),
-        ),
+        _ChatMessage(isUser: true, text: text, time: DateTime.now()),
       );
       _sending = true;
       _error = null;
@@ -106,16 +86,21 @@ class _AssistantPageState extends State<AssistantPage> {
       // Build history for multi-turn conversation
       final history = _messages
           .take(_messages.length - 1)
-          .map((m) => {
-                'role': m.isUser ? 'user' : 'assistant',
-                'content': m.text,
-              })
+          .toList()
+          .reversed
+          .take(6)
+          .toList()
+          .reversed
+          .map(
+            (m) => {'role': m.isUser ? 'user' : 'assistant', 'content': m.text},
+          )
           .toList(growable: false);
 
       final response = await widget.api.askAssistant(
         message: text,
         gender: widget.gender,
         history: history,
+        language: language,
       );
 
       if (mounted) {
@@ -134,7 +119,9 @@ class _AssistantPageState extends State<AssistantPage> {
     } catch (error) {
       if (mounted) {
         setState(() {
-          _error = displayError(error);
+          _error = error is StoreApiException
+              ? error.message
+              : _strings.errorRequestFailed;
           _sending = false;
         });
         _scrollToBottom();
@@ -143,24 +130,23 @@ class _AssistantPageState extends State<AssistantPage> {
   }
 
   void _resetChat() {
+    final strings = _strings;
     showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Bắt đầu cuộc trò chuyện mới'),
-        content: const Text(
-          'Bạn có muốn xóa toàn bộ lịch sử trò chuyện hiện tại để bắt đầu hội thoại mới không?',
-        ),
+        title: Text(strings.resetChatTitle),
+        content: Text(strings.resetChatConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
+            child: Text(strings.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF174C3C),
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Xác nhận'),
+            child: Text(strings.confirm),
           ),
         ],
       ),
@@ -171,7 +157,7 @@ class _AssistantPageState extends State<AssistantPage> {
           _messages.add(
             _ChatMessage(
               isUser: false,
-              text: 'Cuộc trò chuyện đã được làm mới! Bạn muốn em tư vấn trang phục hay chọn size gì cho bạn ạ?',
+              text: _strings.chatRefreshed,
               time: DateTime.now(),
             ),
           );
@@ -182,13 +168,11 @@ class _AssistantPageState extends State<AssistantPage> {
   }
 
   Future<void> _showSignInPrompt() async {
-    final result = await Navigator.push<bool>(
+    final result = await Navigator.push<AuthSession>(
       context,
-      MaterialPageRoute(
-        builder: (_) => AuthPage(api: widget.api),
-      ),
+      MaterialPageRoute(builder: (_) => AuthPage(api: widget.api)),
     );
-    if (result == true || widget.api.isAuthenticated) {
+    if (result != null || widget.api.isAuthenticated) {
       if (mounted) setState(() {});
     }
   }
@@ -196,6 +180,7 @@ class _AssistantPageState extends State<AssistantPage> {
   @override
   Widget build(BuildContext context) {
     final isAuthenticated = widget.api.isAuthenticated;
+    final strings = _strings;
 
     return Scaffold(
       appBar: AppBar(
@@ -214,16 +199,16 @@ class _AssistantPageState extends State<AssistantPage> {
               ),
             ),
             const SizedBox(width: 10),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'BigFit AI Stylist',
+                  _strings.title,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'Trực tuyến • Tư vấn thời trang Big Size',
+                  strings.online,
                   style: TextStyle(fontSize: 11, color: Colors.green),
                 ),
               ],
@@ -231,8 +216,34 @@ class _AssistantPageState extends State<AssistantPage> {
           ],
         ),
         actions: [
+          PopupMenuButton<AssistantLanguage>(
+            tooltip: strings.languageLabel,
+            initialValue: _language,
+            onSelected: (language) => setState(() {
+              _language = language;
+              _error = null;
+              if (_messages.length == 1) {
+                _messages[0] = _ChatMessage(
+                  isUser: false,
+                  text: _strings.welcome,
+                  time: _messages[0].time,
+                );
+              }
+            }),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: AssistantLanguage.english,
+                child: Text(strings.englishLanguage),
+              ),
+              PopupMenuItem(
+                value: AssistantLanguage.vietnamese,
+                child: Text(strings.vietnameseLanguage),
+              ),
+            ],
+            icon: const Icon(Icons.translate),
+          ),
           IconButton(
-            tooltip: 'Làm mới cuộc trò chuyện',
+            tooltip: strings.refreshChat,
             icon: const Icon(Icons.refresh),
             onPressed: _messages.length > 1 ? _resetChat : null,
           ),
@@ -267,7 +278,10 @@ class _AssistantPageState extends State<AssistantPage> {
                 // Error alert
                 if (_error != null)
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: Colors.red.shade50,
@@ -276,12 +290,19 @@ class _AssistantPageState extends State<AssistantPage> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _error!,
-                            style: const TextStyle(color: Colors.red, fontSize: 13),
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ],
@@ -296,64 +317,66 @@ class _AssistantPageState extends State<AssistantPage> {
   }
 
   Widget _buildUnauthenticatedView() => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(28.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF174C3C).withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.auto_awesome,
-                  size: 54,
-                  color: Color(0xFF174C3C),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'BigFit AI Stylist',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Vui lòng đăng nhập tài khoản BigFit để nhận tư vấn chọn size chuẩn xác, gợi ý phối đồ và giải đáp chính sách bán hàng từ chuyên viên AI.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.4),
-              ),
-              const SizedBox(height: 24),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF174C3C),
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: _showSignInPrompt,
-                icon: const Icon(Icons.login),
-                label: const Text(
-                  'Đăng nhập để trò chuyện',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
+    child: Padding(
+      padding: const EdgeInsets.all(28.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF174C3C).withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.auto_awesome,
+              size: 54,
+              color: Color(0xFF174C3C),
+            ),
           ),
-        ),
-      );
+          const SizedBox(height: 20),
+          Text(
+            _strings.title,
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _strings.loginDescription,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.4),
+          ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF174C3C),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: _showSignInPrompt,
+            icon: const Icon(Icons.login),
+            label: Text(
+              _strings.loginAction,
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _buildQuickPromptsBar() => SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: _quickPrompts.map((prompt) {
+    scrollDirection: Axis.horizontal,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    child: Row(
+      children: _strings.quickPrompts
+          .map((prompt) {
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: ActionChip(
-                backgroundColor: const Color(0xFF174C3C).withValues(alpha: 0.08),
+                backgroundColor: const Color(0xFF174C3C)
+                    .withValues(alpha: 0.08),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                   side: BorderSide(
@@ -371,9 +394,10 @@ class _AssistantPageState extends State<AssistantPage> {
                 onPressed: _sending ? null : () => _send(prompt),
               ),
             );
-          }).toList(growable: false),
-        ),
-      );
+          })
+          .toList(growable: false),
+    ),
+  );
 
   Widget _buildMessageItem(_ChatMessage msg) {
     final isUser = msg.isUser;
@@ -383,8 +407,9 @@ class _AssistantPageState extends State<AssistantPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
@@ -427,9 +452,7 @@ class _AssistantPageState extends State<AssistantPage> {
                 ],
                 border: isUser
                     ? null
-                    : Border.all(
-                        color: Colors.grey.withValues(alpha: 0.2),
-                      ),
+                    : Border.all(color: Colors.grey.withValues(alpha: 0.2)),
               ),
               child: Column(
                 crossAxisAlignment: isUser
@@ -459,11 +482,7 @@ class _AssistantPageState extends State<AssistantPage> {
                 color: Color(0xFF174C3C),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.person,
-                size: 16,
-                color: Colors.white,
-              ),
+              child: const Icon(Icons.person, size: 16, color: Colors.white),
             ),
           ],
         ],
@@ -517,118 +536,115 @@ class _AssistantPageState extends State<AssistantPage> {
       );
     }
 
-    return RichText(
-      text: TextSpan(children: spans),
-    );
+    return RichText(text: TextSpan(children: spans));
   }
 
   Widget _buildTypingIndicator() => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF174C3C).withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.smart_toy_outlined,
-                size: 16,
-                color: Color(0xFF174C3C),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.grey.withValues(alpha: 0.2),
-                ),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Color(0xFF174C3C),
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Text(
-                    'AI Stylist đang soạn câu trả lời…',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(right: 8),
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: const Color(0xFF174C3C).withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.smart_toy_outlined,
+            size: 16,
+            color: Color(0xFF174C3C),
+          ),
         ),
-      );
-
-  Widget _buildInputBar() => SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 4,
-                offset: const Offset(0, -2),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  minLines: 1,
-                  maxLines: 4,
-                  textInputAction: TextInputAction.send,
-                  decoration: InputDecoration(
-                    hintText: 'Hỏi về size, áo quần, chính sách…',
-                    hintStyle: const TextStyle(fontSize: 14, color: Colors.black38),
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  onSubmitted: (_) => _send(),
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xFF174C3C),
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                decoration: const BoxDecoration(
-                  color: Color(0xFF174C3C),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  onPressed: _sending ? null : () => _send(),
-                  icon: const Icon(Icons.send, color: Colors.white, size: 20),
+              SizedBox(width: 10),
+              Text(
+                _strings.typing,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.black54,
                 ),
               ),
             ],
           ),
         ),
-      );
+      ],
+    ),
+  );
+
+  Widget _buildInputBar() => SafeArea(
+    top: false,
+    child: Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              minLines: 1,
+              maxLines: 4,
+              maxLength: 1000,
+              textInputAction: TextInputAction.send,
+              decoration: InputDecoration(
+                hintText: _strings.inputHint,
+                hintStyle: const TextStyle(fontSize: 14, color: Colors.black38),
+                filled: true,
+                fillColor: Colors.grey.shade100,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onSubmitted: (_) => _send(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF174C3C),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              onPressed: _sending ? null : () => _send(),
+              icon: const Icon(Icons.send, color: Colors.white, size: 20),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

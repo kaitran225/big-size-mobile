@@ -13,10 +13,10 @@ public static class ChatAssistantEndpoints
             IChatAssistantService assistant,
             CancellationToken cancellationToken) =>
                 TypedResults.Ok(await assistant.AskAsync(request, cancellationToken)))
-        .WithTags(ApiMessages.TagAssistant)
+        .WithTags(AssistantMessages.Tag)
         .WithName("AskBigFitAssistant")
-        .WithSummary(ApiMessages.SummaryAskAssistant)
-        .WithDescription(ApiMessages.DescriptionAskAssistant)
+        .WithSummary(AssistantMessages.Summary)
+        .WithDescription(AssistantMessages.Description)
         .RequireAuthorization()
         .RequireRateLimiting("assistant");
 

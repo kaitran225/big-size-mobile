@@ -120,7 +120,7 @@ internal sealed class ChatAssistantService(
 
         if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri))
         {
-            throw new ChatAssistantUnavailableException(ApiMessages.AssistantNotConfigured);
+            throw CreateUnavailableException(request, AssistantMessages.NotConfigured(request.Language));
         }
 
         var contextJson = JsonSerializer.Serialize(new
@@ -131,7 +131,9 @@ internal sealed class ChatAssistantService(
             AvailableProducts = products
         }, JsonOptions);
 
-        var systemPrompt = $"{ApiMessages.AssistantSystemPrompt}\n\n=== DỮ LIỆU SẢN PHẨM HIỆN CÓ CỦA CỬA HÀNG ===\n{contextJson}";
+        var systemPrompt =
+            $"{ChatAssistantPrompts.System(request.Language)}\n\n"
+            + $"{ChatAssistantPrompts.ProductDataHeading(request.Language)}\n{contextJson}";
 
         // Build messages list including multi-turn history
         var messagesList = new List<object>
@@ -170,8 +172,8 @@ internal sealed class ChatAssistantService(
             if (!response.IsSuccessStatusCode)
             {
                 var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                logger.LogWarning(ApiMessages.AssistantProviderErrorStatusLog, (int)response.StatusCode, errorBody);
-                throw new ChatAssistantUnavailableException(ApiMessages.AssistantProviderRequestFailed);
+                logger.LogWarning(AssistantMessages.ProviderErrorStatusLog, (int)response.StatusCode, errorBody);
+                throw CreateUnavailableException(request, AssistantMessages.ProviderRequestFailed(request.Language));
             }
 
             await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
@@ -184,25 +186,25 @@ internal sealed class ChatAssistantService(
 
             if (string.IsNullOrWhiteSpace(answer))
             {
-                throw new ChatAssistantUnavailableException(ApiMessages.AssistantProviderEmptyResponse);
+                throw CreateUnavailableException(request, AssistantMessages.ProviderEmptyResponse(request.Language));
             }
 
             return new ChatAssistantResponse(answer.Trim());
         }
         catch (HttpRequestException exception)
         {
-            logger.LogWarning(exception, ApiMessages.AssistantProviderUnreachableLog);
-            throw new ChatAssistantUnavailableException(ApiMessages.AssistantProviderUnavailable);
+            logger.LogWarning(exception, AssistantMessages.ProviderUnreachableLog);
+            throw CreateUnavailableException(request, AssistantMessages.ProviderUnavailable(request.Language));
         }
         catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
-            logger.LogWarning(exception, ApiMessages.AssistantProviderTimeoutLog);
-            throw new ChatAssistantUnavailableException(ApiMessages.AssistantProviderTimedOut);
+            logger.LogWarning(exception, AssistantMessages.ProviderTimeoutLog);
+            throw CreateUnavailableException(request, AssistantMessages.ProviderTimedOut(request.Language));
         }
         catch (JsonException exception)
         {
-            logger.LogWarning(exception, ApiMessages.AssistantProviderInvalidResponse);
-            throw new ChatAssistantUnavailableException(ApiMessages.AssistantProviderInvalidResponse);
+            logger.LogWarning(exception, AssistantMessages.ProviderInvalidResponseLog);
+            throw CreateUnavailableException(request, AssistantMessages.ProviderInvalidResponse(request.Language));
         }
     }
 
@@ -212,25 +214,39 @@ internal sealed class ChatAssistantService(
     private static ChatAssistantResponse GenerateFallbackResponse(ChatAssistantRequest request)
     {
         var msg = request.Message.ToLowerInvariant();
+        var isEnglish = request.Language == "en";
 
-        var outOfScopeWords = new[] { "code", "python", "java", "lập trình", "toán", "thời tiết", "chính trị", "game", "phim", "bài tập" };
+        var outOfScopeWords = isEnglish
+            ? new[] { "code", "python", "java", "programming", "math", "weather", "politics", "game", "movie", "homework" }
+            : new[] { "code", "python", "java", "lập trình", "toán", "thời tiết", "chính trị", "game", "phim", "bài tập" };
         if (outOfScopeWords.Any(w => msg.Contains(w)))
         {
-            return new ChatAssistantResponse(ApiMessages.AssistantOutOfScopeFallback);
+            return new ChatAssistantResponse(
+                AssistantMessages.OutOfScopeFallback(request.Language));
         }
 
-        if (msg.Contains("size") || msg.Contains("nặng") || msg.Contains("cao") || msg.Contains("kg"))
+        if (msg.Contains("size") || msg.Contains("nặng") || msg.Contains("cao") || msg.Contains("kg") ||
+            (isEnglish && (msg.Contains("height") || msg.Contains("weight") || msg.Contains("fit"))))
         {
-            return new ChatAssistantResponse(ApiMessages.AssistantSizeGuideFallback);
+            return new ChatAssistantResponse(
+                AssistantMessages.SizeGuideFallback(request.Language));
         }
 
-        if (msg.Contains("đổi") || msg.Contains("trả") || msg.Contains("ship") || msg.Contains("vận chuyển"))
+        if (msg.Contains("đổi") || msg.Contains("trả") || msg.Contains("ship") || msg.Contains("vận chuyển") ||
+            (isEnglish && (msg.Contains("exchange") || msg.Contains("return") || msg.Contains("shipping") || msg.Contains("delivery"))))
         {
-            return new ChatAssistantResponse(ApiMessages.AssistantPoliciesFallback);
+            return new ChatAssistantResponse(
+                AssistantMessages.PoliciesFallback(request.Language));
         }
 
-        return new ChatAssistantResponse(ApiMessages.AssistantGeneralFallback);
+        return new ChatAssistantResponse(
+            AssistantMessages.GeneralFallback(request.Language));
     }
+
+    private static ChatAssistantUnavailableException CreateUnavailableException(
+        ChatAssistantRequest request,
+        string message) =>
+        new(message, AssistantMessages.UnavailableTitle(request.Language));
 
     private int ReadMaxOutputTokens() =>
         int.TryParse(configuration["Ai:OpenAiCompatible:MaxOutputTokens"], out var value)

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
+import '../assistant/assistant_chat_strings.dart';
 import '../models/store_product.dart';
 import '../shared/app_strings.dart';
 
@@ -27,7 +28,9 @@ class StoreApi {
          baseUrl ??
              (const String.fromEnvironment('API_BASE_URL').isNotEmpty
                  ? const String.fromEnvironment('API_BASE_URL')
-                 : (kDebugMode ? localBaseUrl : 'https://big-fit-pgm-store.onrender.com')),
+                 : (kDebugMode
+                       ? localBaseUrl
+                       : 'https://big-fit-pgm-store.onrender.com')),
        );
 
   static const _tokenKey = 'bigfit.accessToken';
@@ -227,23 +230,21 @@ class StoreApi {
 
   Future<ChatReply> askAssistant({
     required String message,
+    required AssistantLanguage language,
     String? gender,
     String? category,
     List<Map<String, String>>? history,
   }) async {
     final body = <String, Object?>{
       'message': message,
+      'language': language.code,
       'gender': gender,
       'category': category,
     };
     if (history != null && history.isNotEmpty) {
       body['history'] = history;
     }
-    final response = await _send(
-      'POST',
-      '/assistant/chat',
-      body: body,
-    );
+    final response = await _send('POST', '/assistant/chat', body: body);
     return ChatReply.fromJson(response as Map<String, dynamic>);
   }
 
