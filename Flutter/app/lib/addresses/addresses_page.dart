@@ -92,7 +92,7 @@ class _AddressesPageState extends State<AddressesPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text(AppStrings.deliveryAddressesTitle),
+      title: Text(AppStrings.deliveryAddressesTitle),
       actions: [
         IconButton(
           tooltip: AppStrings.addAddress,
@@ -106,11 +106,11 @@ class _AddressesPageState extends State<AddressesPage> {
         : _error != null
         ? ErrorStateView(message: _error!)
         : _addresses.isEmpty
-        ? const Center(child: Text(AppStrings.addressesEmpty))
+        ? Center(child: Text(AppStrings.addressesEmpty))
         : ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const AppInfoNote(
+              AppInfoNote(
                 text: AppStrings.mapSdkNotice,
                 style: AppInfoNoteStyle.bordered,
               ),

@@ -29,7 +29,7 @@ class _OrdersPageState extends State<OrdersPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text(AppStrings.orderHistoryTitle)),
+    appBar: AppBar(title: Text(AppStrings.orderHistoryTitle)),
     body: AsyncContentView<List<CustomerOrder>>(
       future: _orders,
       isEmpty: (items) => items.isEmpty,
@@ -51,7 +51,8 @@ class _OrdersPageState extends State<OrdersPage> {
               borderRadius: BorderRadius.circular(AppRadii.lg),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => OrderDetailPage(api: widget.api, order: order),
+                  builder: (_) =>
+                      OrderDetailPage(api: widget.api, order: order),
                 ),
               ),
               child: Padding(
@@ -95,9 +96,8 @@ class _OrdersPageState extends State<OrdersPage> {
                       children: [
                         Text(
                           AppStrings.trackOrder,
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: AppColors.brand,
-                          ),
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(color: AppColors.brand),
                         ),
                         const SizedBox(width: 4),
                         const Icon(

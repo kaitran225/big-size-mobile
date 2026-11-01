@@ -243,7 +243,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.checkoutTitle),
+        title: Text(AppStrings.checkoutTitle),
         leading: IconButton(
           tooltip: AppStrings.cancel,
           onPressed: () => Navigator.of(context).maybePop(),
@@ -380,14 +380,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   children: [
                     TextFormField(
                       controller: _contactControllers['label'],
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: AppStrings.fieldAddressLabel,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     TextFormField(
                       controller: _contactControllers['recipientName'],
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: AppStrings.fieldRecipientName,
                       ),
                       validator: _requiredValidator,
@@ -396,7 +396,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     TextFormField(
                       controller: _contactControllers['phoneNumber'],
                       keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: AppStrings.fieldPhoneNumber,
                       ),
                       validator: _requiredValidator,
@@ -404,7 +404,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     const SizedBox(height: AppSpacing.md),
                     TextFormField(
                       controller: _addressControllers['addressLine'],
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: AppStrings.fieldAddressLine,
                       ),
                       validator: _requiredValidator,
@@ -412,7 +412,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     const SizedBox(height: AppSpacing.md),
                     TextFormField(
                       controller: _addressControllers['city'],
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: AppStrings.fieldCity,
                       ),
                       validator: _requiredValidator,
@@ -441,7 +441,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ? null
                 : () => setState(() => _step = CheckoutStep.address),
             icon: const Icon(Icons.arrow_forward),
-            label: const Text(AppStrings.stepAddress),
+            label: Text(AppStrings.stepAddress),
           ),
         ),
       ],
@@ -479,7 +479,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               children: [
                 TextFormField(
                   controller: _addressControllers['addressLine'],
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: AppStrings.fieldAddressLine,
                   ),
                   validator: _requiredValidator,
@@ -487,9 +487,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: _addressControllers['city'],
-                  decoration: const InputDecoration(
-                    labelText: AppStrings.fieldCity,
-                  ),
+                  decoration: InputDecoration(labelText: AppStrings.fieldCity),
                   validator: _requiredValidator,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -498,7 +496,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     Expanded(
                       child: TextFormField(
                         controller: _addressControllers['province'],
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: AppStrings.fieldProvince,
                         ),
                       ),
@@ -507,7 +505,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     Expanded(
                       child: TextFormField(
                         controller: _addressControllers['postalCode'],
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: AppStrings.fieldPostalCode,
                         ),
                       ),
@@ -517,7 +515,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(
                   controller: _addressControllers['countryCode'],
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: AppStrings.fieldCountryCode,
                   ),
                   validator: _requiredValidator,
@@ -661,7 +659,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         ),
                       ),
                       Text(
-                        '${item.size} · ${item.color} · Qty ${item.quantity}',
+                        '${item.size} · ${item.color} · '
+                        '${AppStrings.quantityShort} ${item.quantity}',
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
@@ -777,7 +776,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ),
                   ),
             icon: const Icon(Icons.local_shipping_outlined),
-            label: const Text(AppStrings.trackOrder),
+            label: Text(AppStrings.trackOrder),
           ),
         ),
         const SizedBox(height: AppSpacing.md),
@@ -786,7 +785,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           child: OutlinedButton(
             onPressed: () =>
                 Navigator.of(context).popUntil((route) => route.isFirst),
-            child: const Text(AppStrings.continueShopping),
+            child: Text(AppStrings.continueShopping),
           ),
         ),
       ],

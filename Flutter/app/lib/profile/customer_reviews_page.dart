@@ -9,7 +9,7 @@ class CustomerReviewsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text(AppStrings.myReviews)),
-        body: const NotImplementedView(title: AppStrings.myReviews),
-      );
+    appBar: AppBar(title: Text(AppStrings.myReviews)),
+    body: NotImplementedView(title: AppStrings.myReviews),
+  );
 }

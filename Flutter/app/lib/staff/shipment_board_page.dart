@@ -59,7 +59,7 @@ class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
     final theme = Theme.of(context);
     final shipments = ShipmentBoard.instance.shipments;
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.staffShipmentsTitle)),
+      appBar: AppBar(title: Text(AppStrings.staffShipmentsTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null

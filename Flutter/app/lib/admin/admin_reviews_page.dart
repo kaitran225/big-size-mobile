@@ -9,7 +9,7 @@ class AdminReviewsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text(AppStrings.customerReviews)),
-        body: const NotImplementedView(title: AppStrings.customerReviews),
-      );
+    appBar: AppBar(title: Text(AppStrings.customerReviews)),
+    body: NotImplementedView(title: AppStrings.customerReviews),
+  );
 }

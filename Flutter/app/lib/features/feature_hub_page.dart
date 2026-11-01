@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../admin/store_management_page.dart';
 import '../map/delivery_map_page.dart';
@@ -20,11 +20,11 @@ class FeatureHubPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text(AppStrings.featureHubTitle)),
+    appBar: AppBar(title: Text(AppStrings.featureHubTitle)),
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const AppSectionHeader(text: AppStrings.yourAccount),
+        AppSectionHeader(text: AppStrings.yourAccount),
         const SizedBox(height: 10),
         AppListTileCard(
           icon: Icons.person_outline,
@@ -54,7 +54,7 @@ class FeatureHubPage extends StatelessWidget {
         ),
         if (_isStaffOrAdmin(session?.roles ?? const [])) ...[
           const SizedBox(height: 20),
-          const AppSectionHeader(text: AppStrings.storeTools),
+          AppSectionHeader(text: AppStrings.storeTools),
           const SizedBox(height: 10),
           AppListTileCard(
             icon: Icons.local_shipping_outlined,

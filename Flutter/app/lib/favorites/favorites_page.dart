@@ -43,7 +43,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text(AppStrings.favoritesTitle),
+      title: Text(AppStrings.favoritesTitle),
       actions: [
         IconButton(
           onPressed: () => setState(_load),

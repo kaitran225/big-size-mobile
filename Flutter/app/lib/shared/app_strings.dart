@@ -1,4 +1,39 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+enum AppLanguage { english, vietnamese }
+
 abstract final class AppStrings {
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  static final ValueNotifier<AppLanguage> language = ValueNotifier(
+    AppLanguage.english,
+  );
+
+  static Future<void> initialize() async {
+    final savedLanguage = await _storage.read(key: 'app-language');
+    if (savedLanguage == 'vi') {
+      language.value = AppLanguage.vietnamese;
+    }
+  }
+
+  static Future<void> setLanguage(AppLanguage value) async {
+    await _storage.write(
+      key: 'app-language',
+      value: value == AppLanguage.vietnamese ? 'vi' : 'en',
+    );
+    language.value = value;
+  }
+
+  static bool get isVietnamese => language.value == AppLanguage.vietnamese;
+
+  static String _text(String english, String vietnamese) =>
+      isVietnamese ? vietnamese : english;
+
+  static String get languageTitle => _text('Language', 'Ngôn ngữ');
+  static String get languageEnglish => 'English';
+  static String get languageVietnamese => 'Tiếng Việt';
+  static String get languageCode => isVietnamese ? 'VI' : 'EN';
+
   // App -------------------------------------------------------------------
 
   /// Platform application title, in sentence case.
@@ -9,436 +44,737 @@ abstract final class AppStrings {
 
   // Actions ---------------------------------------------------------------
 
-  static const String cancel = 'Cancel';
-  static const String save = 'Save';
-  static const String later = 'Later';
-  static const String tryAgain = 'Try again';
-  static const String refresh = 'Refresh';
-  static const String required = 'Required';
+  static String get cancel => _text('Cancel', 'Hủy');
+  static String get save => _text('Save', 'Lưu');
+  static String get later => _text('Later', 'Để sau');
+  static String get tryAgain => _text('Try again', 'Thử lại');
+  static String get refresh => _text('Refresh', 'Làm mới');
+  static String get required => _text('Required', 'Bắt buộc');
 
   // Storefront ------------------------------------------------------------
 
-  static const String heroTitle = 'Clothing that fits';
-  static const String heroSubtitle = 'Explore the BigFit collection';
-  static const String collectionHeading = 'THE COLLECTION';
-  static const String onSaleHeading = 'ON SALE';
-  static const String womenSegment = 'WOMEN';
-  static const String menSegment = 'MEN';
-  static const String searchHint = 'Search clothes, styles, and sizes';
-  static const String filterAll = 'All';
-  static const String filterOnSale = 'On sale';
-  static const String filterInStock = 'In stock';
-  static const String sortName = 'Name';
-  static const String sortPriceAsc = 'Price ↑';
-  static const String sortPriceDesc = 'Price ↓';
-  static const String sortNewest = 'Newest';
-  static const String loadMore = 'Load more';
-  static const String catalogEmptyTitle =
-      'Your next favourite fit is on its way.';
-  static const String catalogEmptySubtitle =
-      'The cleaned catalogue is ready for review. Products will appear here '
-      'after you approve and import the CSV.';
-  static const String navShop = 'Shop';
-  static const String navSale = 'Sale';
+  static String get heroTitle =>
+      _text('Clothing that fits', 'Trang phục vừa vặn');
+  static String get heroSubtitle =>
+      _text('Explore the BigFit collection', 'Khám phá bộ sưu tập BigFit');
+  static String get collectionHeading => _text('THE COLLECTION', 'BỘ SƯU TẬP');
+  static String get onSaleHeading => _text('ON SALE', 'ĐANG GIẢM GIÁ');
+  static String get womenSegment => _text('WOMEN', 'NỮ');
+  static String get menSegment => _text('MEN', 'NAM');
+  static String get searchHint => _text(
+    'Search clothes, styles, and sizes',
+    'Tìm quần áo, phong cách và kích cỡ',
+  );
+  static String get filterAll => _text('All', 'Tất cả');
+  static String get filterOnSale => _text('On sale', 'Đang giảm giá');
+  static String get filterInStock => _text('In stock', 'Còn hàng');
+  static String get sortName => _text('Name', 'Tên');
+  static String get sortPriceAsc => _text('Price ↑', 'Giá tăng dần ↑');
+  static String get sortPriceDesc => _text('Price ↓', 'Giá giảm dần ↓');
+  static String get sortNewest => _text('Newest', 'Mới nhất');
+  static String get loadMore => _text('Load more', 'Tải thêm');
+  static String get catalogEmptyTitle => _text(
+    'Your next favourite fit is on its way.',
+    'Mẫu trang phục yêu thích tiếp theo sắp có mặt.',
+  );
+  static String get catalogEmptySubtitle => _text(
+    'The cleaned catalogue is ready for review. Products will appear here after you approve and import the CSV.',
+    'Danh mục đã được làm sạch và sẵn sàng để xem xét. Sản phẩm sẽ xuất hiện sau khi bạn duyệt và nhập tệp CSV.',
+  );
+  static String get navShop => _text('Shop', 'Mua sắm');
+  static String get navSale => _text('Sale', 'Khuyến mãi');
 
   // Store connection ------------------------------------------------------
 
-  static const String storeConnectionTitle = 'Store connection';
-  static const String renderDeployment = 'Render deployment';
-  static const String localDevelopmentServer = 'Local development server';
-  static const String apiPathNote =
-      'The API path is added automatically. Changing servers signs you out so '
-      'credentials are not reused on another server.';
+  static String get storeConnectionTitle =>
+      _text('Store connection', 'Kết nối cửa hàng');
+  static String get renderDeployment =>
+      _text('Render deployment', 'Máy chủ Render');
+  static String get localDevelopmentServer =>
+      _text('Local development server', 'Máy chủ phát triển cục bộ');
+  static String get apiPathNote => _text(
+    'The API path is added automatically. Changing servers signs you out so credentials are not reused on another server.',
+    'Đường dẫn API được tự động thêm vào. Khi đổi máy chủ, bạn sẽ đăng xuất để thông tin đăng nhập không được dùng lại trên máy chủ khác.',
+  );
 
   // Account sheet ---------------------------------------------------------
 
-  static const String ordersTitle = 'Orders';
-  static const String favoritesTitle = 'Favorites';
-  static const String addressesTitle = 'Addresses';
-  static const String notificationsTitle = 'Notifications';
-  static const String aiStylist = 'AI stylist';
-  static const String moreFeatures = 'More features';
-  static const String signOut = 'Sign out';
-  static const String signIn = 'Sign in';
-  static const String account = 'Account';
+  static String get ordersTitle => _text('Orders', 'Đơn hàng');
+  static String get favoritesTitle => _text('Favorites', 'Yêu thích');
+  static String get addressesTitle => _text('Addresses', 'Địa chỉ');
+  static String get notificationsTitle => _text('Notifications', 'Thông báo');
+  static String get aiStylist => _text('AI stylist', 'Tư vấn AI');
+  static String get moreFeatures => _text('More features', 'Thêm tính năng');
+  static String get signOut => _text('Sign out', 'Đăng xuất');
+  static String get signIn => _text('Sign in', 'Đăng nhập');
+  static String get account => _text('Account', 'Tài khoản');
 
   // Authentication --------------------------------------------------------
 
-  static const String joinBigFit = 'Join BigFit';
-  static const String welcomeBack = 'Welcome back';
-  static const String registerSubtitle =
-      'Create a customer account to get started.';
-  static const String loginSubtitle = 'Sign in with your BigFit account.';
-  static const String displayName = 'Display name';
-  static const String email = 'Email';
-  static const String password = 'Password';
-  static const String passwordPolicyHint =
-      'Use 12+ characters with uppercase, lowercase, number, and symbol.';
-  static const String createAccount = 'Create customer account';
-  static const String switchToSignIn = 'Already have an account? Sign in';
-  static const String switchToRegister = 'New to BigFit? Create an account';
-  static const String validationDisplayName = 'Enter at least 2 characters.';
-  static const String validationEmail = 'Enter a valid email address.';
-  static const String validationPasswordLength = 'Use at least 12 characters.';
-  static const String validationPasswordRequired = 'Enter your password.';
+  static String get joinBigFit => _text('Join BigFit', 'Tham gia BigFit');
+  static String get welcomeBack =>
+      _text('Welcome back', 'Chào mừng bạn quay lại');
+  static String get registerSubtitle => _text(
+    'Create a customer account to get started.',
+    'Tạo tài khoản khách hàng để bắt đầu.',
+  );
+  static String get loginSubtitle => _text(
+    'Sign in with your BigFit account.',
+    'Đăng nhập bằng tài khoản BigFit của bạn.',
+  );
+  static String get displayName => _text('Display name', 'Tên hiển thị');
+  static String get email => _text('Email', 'Email');
+  static String get password => _text('Password', 'Mật khẩu');
+  static String get passwordPolicyHint => _text(
+    'Use 12+ characters with uppercase, lowercase, number, and symbol.',
+    'Dùng ít nhất 12 ký tự, gồm chữ hoa, chữ thường, số và ký hiệu.',
+  );
+  static String get createAccount =>
+      _text('Create customer account', 'Tạo tài khoản khách hàng');
+  static String get switchToSignIn =>
+      _text('Already have an account? Sign in', 'Đã có tài khoản? Đăng nhập');
+  static String get switchToRegister => _text(
+    'New to BigFit? Create an account',
+    'Bạn mới biết BigFit? Tạo tài khoản',
+  );
+  static String get validationDisplayName =>
+      _text('Enter at least 2 characters.', 'Nhập ít nhất 2 ký tự.');
+  static String get validationEmail =>
+      _text('Enter a valid email address.', 'Nhập địa chỉ email hợp lệ.');
+  static String get validationPasswordLength =>
+      _text('Use at least 12 characters.', 'Mật khẩu cần ít nhất 12 ký tự.');
+  static String get validationPasswordRequired =>
+      _text('Enter your password.', 'Nhập mật khẩu.');
 
   // Product ---------------------------------------------------------------
 
-  static const String soldOut = 'SOLD OUT';
-  static const String sizeAndColour = 'Size & colour';
-  static const String currentlyUnavailable = 'Currently unavailable';
-  static const String addToBag = 'Add to bag';
-  static const String buyNow = 'Buy now';
-  static const String addToFavorites = 'Add to favorites';
+  static String get soldOut => _text('SOLD OUT', 'HẾT HÀNG');
+  static String get sizeAndColour =>
+      _text('Size & colour', 'Kích cỡ và màu sắc');
+  static String get currentlyUnavailable =>
+      _text('Currently unavailable', 'Hiện không có sẵn');
+  static String get addToBag => _text('Add to bag', 'Thêm vào túi');
+  static String get buyNow => _text('Buy now', 'Mua ngay');
+  static String get addToFavorites =>
+      _text('Add to favorites', 'Thêm vào yêu thích');
 
   // Cart and checkout -----------------------------------------------------
 
-  static const String shoppingBagTitle = 'Shopping bag';
-  static const String bagEmpty = 'Your bag is empty.';
-  static const String subtotal = 'Subtotal';
-  static const String pleaseWait = 'Please wait…';
-  static const String continueToOrder = 'Continue to order';
-  static const String addressNeededTitle = 'Delivery address needed';
-  static const String addressNeededMessage =
-      'Add a delivery address before creating your order.';
-  static const String addAddress = 'Add address';
-  static const String reviewOrderTitle = 'Review your order';
-  static const String deliveryAddress = 'Delivery address';
-  static const String orderOnlyNotice =
-      'This creates an order only. Online payment is not connected to the '
-      'backend yet.';
-  static const String createOrder = 'Create order';
+  static String get shoppingBagTitle => _text('Shopping bag', 'Túi hàng');
+  static String get bagEmpty =>
+      _text('Your bag is empty.', 'Túi hàng của bạn đang trống.');
+  static String get subtotal => _text('Subtotal', 'Tạm tính');
+  static String get pleaseWait => _text('Please wait…', 'Vui lòng đợi…');
+  static String get continueToOrder =>
+      _text('Continue to order', 'Tiếp tục đặt hàng');
+  static String get addressNeededTitle =>
+      _text('Delivery address needed', 'Cần địa chỉ giao hàng');
+  static String get addressNeededMessage => _text(
+    'Add a delivery address before creating your order.',
+    'Thêm địa chỉ giao hàng trước khi tạo đơn hàng.',
+  );
+  static String get addAddress => _text('Add address', 'Thêm địa chỉ');
+  static String get reviewOrderTitle =>
+      _text('Review your order', 'Kiểm tra đơn hàng');
+  static String get deliveryAddress =>
+      _text('Delivery address', 'Địa chỉ giao hàng');
+  static String get orderOnlyNotice => _text(
+    'This creates an order only. Online payment is not connected to the backend yet.',
+    'Thao tác này chỉ tạo đơn hàng. Thanh toán trực tuyến chưa được kết nối với backend.',
+  );
+  static String get createOrder => _text('Create order', 'Tạo đơn hàng');
 
   // Favorites -------------------------------------------------------------
 
-  static const String favoritesEmpty = 'No favorites saved yet.';
-  static const String addedToFavorites = 'Added to your favorites.';
+  static String get favoritesEmpty =>
+      _text('No favorites saved yet.', 'Bạn chưa lưu sản phẩm yêu thích nào.');
+  static String get addedToFavorites =>
+      _text('Added to your favorites.', 'Đã thêm vào danh sách yêu thích.');
 
   // Orders ----------------------------------------------------------------
 
-  static const String orderHistoryTitle = 'Order history';
-  static const String ordersEmpty = 'No orders yet.';
+  static String get orderHistoryTitle =>
+      _text('Order history', 'Lịch sử đơn hàng');
+  static String get ordersEmpty =>
+      _text('No orders yet.', 'Chưa có đơn hàng nào.');
 
   // Addresses -------------------------------------------------------------
 
-  static const String deliveryAddressesTitle = 'Delivery addresses';
-  static const String addressesEmpty = 'No delivery addresses saved yet.';
-  static const String mapSdkNotice =
-      'Map SDK is not configured. You can save optional coordinates '
-      'manually; saved locations are sent to the backend.';
-  static const String editAddressTitle = 'Edit address';
-  static const String defaultAddressLabel = 'Home';
+  static String get deliveryAddressesTitle =>
+      _text('Delivery addresses', 'Địa chỉ giao hàng');
+  static String get addressesEmpty => _text(
+    'No delivery addresses saved yet.',
+    'Chưa lưu địa chỉ giao hàng nào.',
+  );
+  static String get mapSdkNotice => _text(
+    'Map SDK is not configured. You can save optional coordinates manually; saved locations are sent to the backend.',
+    'Chưa cấu hình SDK bản đồ. Bạn có thể nhập tọa độ tùy chọn; vị trí đã lưu sẽ được gửi đến backend.',
+  );
+  static String get editAddressTitle =>
+      _text('Edit address', 'Chỉnh sửa địa chỉ');
+  static String get defaultAddressLabel => _text('Home', 'Nhà riêng');
   static const String defaultCountryCode = 'VN';
-  static const String setAsDefault = 'Set as default';
-  static const String fieldAddressLabel = 'Address label';
-  static const String fieldRecipientName = 'Recipient name';
-  static const String fieldPhoneNumber = 'Phone number';
-  static const String fieldAddressLine = 'Street address';
-  static const String fieldCity = 'City';
-  static const String fieldProvince = 'Province / state';
-  static const String fieldPostalCode = 'Postal code';
-  static const String fieldCountryCode = 'Country code (2 letters)';
-  static const String fieldLatitude = 'Latitude (optional)';
-  static const String fieldLongitude = 'Longitude (optional)';
+  static String get setAsDefault => _text('Set as default', 'Đặt làm mặc định');
+  static String get fieldAddressLabel => _text('Address label', 'Tên địa chỉ');
+  static String get fieldRecipientName =>
+      _text('Recipient name', 'Tên người nhận');
+  static String get fieldPhoneNumber => _text('Phone number', 'Số điện thoại');
+  static String get fieldAddressLine =>
+      _text('Street address', 'Địa chỉ đường phố');
+  static String get fieldCity => _text('City', 'Thành phố');
+  static String get fieldProvince => _text('Province / state', 'Tỉnh / bang');
+  static String get fieldPostalCode => _text('Postal code', 'Mã bưu chính');
+  static String get fieldCountryCode =>
+      _text('Country code (2 letters)', 'Mã quốc gia (2 chữ cái)');
+  static String get fieldLatitude =>
+      _text('Latitude (optional)', 'Vĩ độ (không bắt buộc)');
+  static String get fieldLongitude =>
+      _text('Longitude (optional)', 'Kinh độ (không bắt buộc)');
 
   // Notifications ---------------------------------------------------------
 
-  static const String pushNotConnectedNotice =
-      'Live push updates are not connected yet';
-  static const String notificationsEmpty = 'You are all caught up.';
+  static String get pushNotConnectedNotice => _text(
+    'Live push updates are not connected yet',
+    'Chưa kết nối cập nhật thông báo trực tiếp',
+  );
+  static String get notificationsEmpty =>
+      _text('You are all caught up.', 'Bạn đã xem hết thông báo.');
 
   // Assistant -------------------------------------------------------------
 
-  static const String assistantTitle = 'BigFit AI stylist';
-  static const String assistantSubtitle =
-      'Ask about catalogue items, prices, availability, or size guidance.';
-  static const String assistantEmpty = 'How can I help you find your fit?';
-  static const String assistantInputHint = 'Ask your stylist…';
+  static String get assistantTitle =>
+      _text('BigFit AI stylist', 'Tư vấn phong cách BigFit AI');
+  static String get assistantSubtitle => _text(
+    'Ask about catalogue items, prices, availability, or size guidance.',
+    'Hỏi về sản phẩm, giá cả, tình trạng hàng hoặc tư vấn kích cỡ.',
+  );
+  static String get assistantEmpty => _text(
+    'How can I help you find your fit?',
+    'Tôi có thể giúp bạn tìm trang phục phù hợp như thế nào?',
+  );
+  static String get assistantInputHint =>
+      _text('Ask your stylist…', 'Hỏi tư vấn viên…');
 
   // Payment ---------------------------------------------------------------
 
-  static const String paymentTitle = 'Payment';
-  static const String paymentCod = 'Cash on delivery';
-  static const String paymentCodSubtitle = 'Pay when your order arrives';
-  static const String paymentBank = 'Bank transfer';
-  static const String paymentBankSubtitle =
-      'Transfer instructions are sent after checkout';
-  static const String paymentGateway = 'VNPay / MoMo sandbox';
-  static const String paymentGatewaySubtitle =
-      'Test payment flow. No real money is charged.';
+  static String get paymentTitle => _text('Payment', 'Thanh toán');
+  static String get paymentCod =>
+      _text('Cash on delivery', 'Thanh toán khi nhận hàng');
+  static String get paymentCodSubtitle =>
+      _text('Pay when your order arrives', 'Thanh toán khi đơn hàng được giao');
+  static String get paymentBank =>
+      _text('Bank transfer', 'Chuyển khoản ngân hàng');
+  static String get paymentBankSubtitle => _text(
+    'Transfer instructions are sent after checkout',
+    'Thông tin chuyển khoản sẽ được gửi sau khi thanh toán',
+  );
+  static String get paymentGateway =>
+      _text('VNPay / MoMo sandbox', 'VNPay / MoMo thử nghiệm');
+  static String get paymentGatewaySubtitle => _text(
+    'Test payment flow. No real money is charged.',
+    'Luồng thanh toán thử nghiệm. Không phát sinh giao dịch thật.',
+  );
 
   // Map -------------------------------------------------------------------
 
-  static const String mapTitle = 'Choose delivery location';
-  static const String useThisLocation = 'Use this location';
+  static String get mapTitle =>
+      _text('Choose delivery location', 'Chọn vị trí giao hàng');
+  static String get useThisLocation =>
+      _text('Use this location', 'Dùng vị trí này');
 
   // Profile ---------------------------------------------------------------
 
-  static const String profileTitle = 'My profile';
-  static const String profileEditTitle = 'Account details';
+  static String get profileTitle => _text('My profile', 'Hồ sơ của tôi');
+  static String get profileEditTitle =>
+      _text('Account details', 'Thông tin tài khoản');
   static const String avatarFallback = 'B';
-  static const String guest = 'Guest';
-  static const String signInToSaveProfile = 'Sign in to save your profile';
-  static const String accountType = 'Account type';
-  static const String customerProfile = 'Customer profile';
-  static const String fitPreferences = 'Fit preferences';
-  static const String fitPreferencesValue = 'Sizes M–XXL · Not set';
-  static const String myReviews = 'My reviews';
-  static const String reviewsNotConnected =
-      'Review management API is not connected';
-  static const String profileFrameNote =
-      'Profile editing and size preferences are shown as a frame. The current '
-      'backend does not expose profile update or review endpoints.';
+  static String get guest => _text('Guest', 'Khách');
+  static String get signInToSaveProfile =>
+      _text('Sign in to save your profile', 'Đăng nhập để lưu hồ sơ');
+  static String get accountType => _text('Account type', 'Loại tài khoản');
+  static String get customerProfile =>
+      _text('Customer profile', 'Hồ sơ khách hàng');
+  static String get fitPreferences =>
+      _text('Fit preferences', 'Tùy chọn kích cỡ');
+  static String get fitPreferencesValue =>
+      _text('Sizes M–XXL · Not set', 'Cỡ M–XXL · Chưa thiết lập');
+  static String get myReviews => _text('My reviews', 'Đánh giá của tôi');
+  static String get reviewsNotConnected => _text(
+    'Review management API is not connected',
+    'API quản lý đánh giá chưa được kết nối',
+  );
+  static String get profileFrameNote => _text(
+    'Profile editing and size preferences are shown as a frame. The current backend does not expose profile update or review endpoints.',
+    'Màn hình chỉnh sửa hồ sơ và tùy chọn kích cỡ chỉ là bản xem trước. Backend hiện chưa hỗ trợ cập nhật hồ sơ hoặc đánh giá.',
+  );
 
   // Account security ------------------------------------------------------
 
-  static const String securityTitle = 'Account security';
-  static const String securityHeadline = 'Protect your BigFit account';
-  static const String securityIntro =
-      'These flows are ready for email and OTP service wiring.';
-  static const String verifyEmail = 'Verify your email';
-  static const String verifyEmailDescription =
-      'Confirm your email address with a one-time link.';
-  static const String emailServicePending = 'Email service pending';
-  static const String resetPassword = 'Reset password';
-  static const String resetPasswordDescription =
-      'Request a secure password reset email.';
-  static const String resetApiPending = 'Reset API pending';
-  static const String otpTitle = 'One-time passcode';
-  static const String otpDescription =
-      'Enter a time-limited code sent to your email.';
-  static const String otpApiPending = 'OTP API pending';
-  static const String securityPreviewNotice =
-      'UI preview only. Email delivery, OTP verification, retry limits, and '
-      'password reset are not active.';
+  static String get securityTitle =>
+      _text('Account security', 'Bảo mật tài khoản');
+  static String get securityHeadline =>
+      _text('Protect your BigFit account', 'Bảo vệ tài khoản BigFit của bạn');
+  static String get securityIntro => _text(
+    'These flows are ready for email and OTP service wiring.',
+    'Các luồng này đã sẵn sàng để tích hợp email và OTP.',
+  );
+  static String get verifyEmail => _text('Verify your email', 'Xác minh email');
+  static String get verifyEmailDescription => _text(
+    'Confirm your email address with a one-time link.',
+    'Xác nhận địa chỉ email bằng liên kết dùng một lần.',
+  );
+  static String get emailServicePending =>
+      _text('Email service pending', 'Dịch vụ email đang chờ tích hợp');
+  static String get resetPassword =>
+      _text('Reset password', 'Đặt lại mật khẩu');
+  static String get resetPasswordDescription => _text(
+    'Request a secure password reset email.',
+    'Yêu cầu email đặt lại mật khẩu an toàn.',
+  );
+  static String get resetApiPending =>
+      _text('Reset API pending', 'API đặt lại mật khẩu đang chờ tích hợp');
+  static String get otpTitle =>
+      _text('One-time passcode', 'Mã xác minh một lần');
+  static String get otpDescription => _text(
+    'Enter a time-limited code sent to your email.',
+    'Nhập mã có thời hạn được gửi đến email của bạn.',
+  );
+  static String get otpApiPending =>
+      _text('OTP API pending', 'API OTP đang chờ tích hợp');
+  static String get securityPreviewNotice => _text(
+    'UI preview only. Email delivery, OTP verification, retry limits, and password reset are not active.',
+    'Chỉ là bản xem trước giao diện. Gửi email, xác minh OTP, giới hạn thử lại và đặt lại mật khẩu chưa hoạt động.',
+  );
 
   // Feature hub -----------------------------------------------------------
 
-  static const String featureHubTitle = 'More from BigFit';
-  static const String yourAccount = 'Your account';
-  static const String profileAndFit = 'Profile & fit preferences';
-  static const String profileAndFitPreview =
-      'Preview account details and fit preferences';
-  static const String profileAndFitSignedIn =
-      'Personal details, sizes, and reviews';
-  static const String deliveryMap = 'Delivery map';
-  static const String paymentMethods = 'Payment methods';
-  static const String paymentMethodsSubtitle =
-      'COD, bank transfer, and gateway preview';
-  static const String accountSecuritySubtitle =
-      'Email verification, reset, and OTP';
-  static const String storeTools = 'Store tools';
-  static const String storeToolsSubtitle =
-      'Products, inventory, orders, and reviews';
+  static String get featureHubTitle =>
+      _text('More from BigFit', 'Khám phá thêm từ BigFit');
+  static String get yourAccount => _text('Your account', 'Tài khoản của bạn');
+  static String get profileAndFit =>
+      _text('Profile & fit preferences', 'Hồ sơ và tùy chọn kích cỡ');
+  static String get profileAndFitPreview => _text(
+    'Preview account details and fit preferences',
+    'Xem trước thông tin tài khoản và tùy chọn kích cỡ',
+  );
+  static String get profileAndFitSignedIn => _text(
+    'Personal details, sizes, and reviews',
+    'Thông tin cá nhân, kích cỡ và đánh giá',
+  );
+  static String get deliveryMap => _text('Delivery map', 'Bản đồ giao hàng');
+  static String get paymentMethods =>
+      _text('Payment methods', 'Phương thức thanh toán');
+  static String get paymentMethodsSubtitle => _text(
+    'COD, bank transfer, and gateway preview',
+    'Thanh toán khi nhận hàng, chuyển khoản và xem trước cổng thanh toán',
+  );
+  static String get accountSecuritySubtitle => _text(
+    'Email verification, reset, and OTP',
+    'Xác minh email, đặt lại mật khẩu và OTP',
+  );
+  static String get storeTools => _text('Store tools', 'Công cụ cửa hàng');
+  static String get storeToolsSubtitle => _text(
+    'Products, inventory, orders, and reviews',
+    'Sản phẩm, tồn kho, đơn hàng và đánh giá',
+  );
 
   // Store management ------------------------------------------------------
 
-  static const String storeManagementTitle = 'Store management';
-  static const String managementOverview = 'Management overview';
-  static const String productsAndInventory = 'Products & inventory';
-  static const String productsAndInventoryDetail =
-      'Manage catalogue items, variants, and stock.';
-  static const String ordersDetail =
-      'Review orders and update fulfilment status.';
-  static const String customerReviews = 'Customer reviews';
-  static const String customerReviewsDetail = 'Moderate product feedback.';
-  static const String managementNotConnected =
-      'Management endpoints are not connected. This screen does not change '
-      'store data.';
-  static const String storeManagementRestricted =
-      'Store management is available to Admin and Store Staff accounts.';
+  static String get storeManagementTitle =>
+      _text('Store management', 'Quản lý cửa hàng');
+  static String get managementOverview =>
+      _text('Management overview', 'Tổng quan quản lý');
+  static String get productsAndInventory =>
+      _text('Products & inventory', 'Sản phẩm và tồn kho');
+  static String get productsAndInventoryDetail => _text(
+    'Manage catalogue items, variants, and stock.',
+    'Quản lý sản phẩm, biến thể và hàng tồn kho.',
+  );
+  static String get ordersDetail => _text(
+    'Review orders and update fulfilment status.',
+    'Xem đơn hàng và cập nhật trạng thái xử lý.',
+  );
+  static String get customerReviews =>
+      _text('Customer reviews', 'Đánh giá của khách hàng');
+  static String get customerReviewsDetail =>
+      _text('Moderate product feedback.', 'Kiểm duyệt phản hồi về sản phẩm.');
+  static String get managementNotConnected => _text(
+    'Management endpoints are not connected. This screen does not change store data.',
+    'Các endpoint quản lý chưa được kết nối. Màn hình này không thay đổi dữ liệu cửa hàng.',
+  );
+  static String get storeManagementRestricted => _text(
+    'Store management is available to Admin and Store Staff accounts.',
+    'Chỉ tài khoản Admin và Nhân viên cửa hàng mới có thể quản lý cửa hàng.',
+  );
 
   // Storefront redesign ---------------------------------------------------
 
-  static const String promoHeadline = 'Up to 40% off mid-season styles';
-  static const String promoCaption = 'Free delivery over 2.000.000 VND';
-  static const String shopAll = 'Shop all';
-  static const String newIn = 'New in';
-  static const String bestSellers = 'Best sellers';
-  static const String womenCategory = 'Women';
-  static const String menCategory = 'Men';
-  static const String shopBySize = 'Shop by size';
-  static const String viewAll = 'View all';
-  static const String freeDeliveryNote =
-      'Free delivery on orders over 2.000.000 VND';
-  static const String easyReturnsNote = 'Free size exchange within 14 days';
-  static const String securePaymentNote =
-      'Secure checkout with sandbox payment';
-  static const String resultsFor = 'Results for';
+  static String get promoHeadline => _text(
+    'Up to 40% off mid-season styles',
+    'Giảm đến 40% cho bộ sưu tập giữa mùa',
+  );
+  static String get promoCaption => _text(
+    'Free delivery over 2.000.000 VND',
+    'Miễn phí giao hàng cho đơn từ 2.000.000 VND',
+  );
+  static String get shopAll => _text('Shop all', 'Mua tất cả');
+  static String get newIn => _text('New in', 'Hàng mới');
+  static String get bestSellers => _text('Best sellers', 'Bán chạy nhất');
+  static String get womenCategory => _text('Women', 'Nữ');
+  static String get menCategory => _text('Men', 'Nam');
+  static String get shopBySize => _text('Shop by size', 'Mua theo kích cỡ');
+  static String get viewAll => _text('View all', 'Xem tất cả');
+  static String get freeDeliveryNote => _text(
+    'Free delivery on orders over 2.000.000 VND',
+    'Miễn phí giao hàng cho đơn từ 2.000.000 VND',
+  );
+  static String get easyReturnsNote => _text(
+    'Free size exchange within 14 days',
+    'Đổi kích cỡ miễn phí trong vòng 14 ngày',
+  );
+  static String get securePaymentNote => _text(
+    'Secure checkout with sandbox payment',
+    'Thanh toán an toàn trong môi trường thử nghiệm',
+  );
+  static String get resultsFor => _text('Results for', 'Kết quả cho');
 
   // Product page ----------------------------------------------------------
 
-  static const String productDetailsTitle = 'Product';
-  static const String selectSize = 'Select a size';
-  static const String selectSizeFirst = 'Choose a size to continue';
-  static const String quantity = 'Quantity';
-  static const String productOverview = 'Overview';
-  static const String productCare = 'Care and fit';
-  static const String productCareNote =
-      'Machine wash cold, dry flat, and wash with similar colours.';
-  static const String fitGuarantee = 'BigFit fit guarantee';
-  static const String fitGuaranteeNote =
-      'Every order includes a free size exchange if the fit is not right.';
-  static String onlyLeft(int quantity) => 'Only $quantity left';
-  static const String addToBagAndCheckout = 'Add to bag and checkout';
+  static String get productDetailsTitle => _text('Product', 'Sản phẩm');
+  static String get selectSize => _text('Select a size', 'Chọn kích cỡ');
+  static String get selectSizeFirst =>
+      _text('Choose a size to continue', 'Chọn kích cỡ để tiếp tục');
+  static String get quantity => _text('Quantity', 'Số lượng');
+  static String get quantityShort => _text('Qty', 'SL');
+  static String get productOverview => _text('Overview', 'Tổng quan');
+  static String get productCare =>
+      _text('Care and fit', 'Bảo quản và độ vừa vặn');
+  static String get productCareNote => _text(
+    'Machine wash cold, dry flat, and wash with similar colours.',
+    'Giặt máy bằng nước lạnh, phơi phẳng và giặt cùng màu tương tự.',
+  );
+  static String get fitGuarantee =>
+      _text('BigFit fit guarantee', 'Cam kết vừa vặn BigFit');
+  static String get fitGuaranteeNote => _text(
+    'Every order includes a free size exchange if the fit is not right.',
+    'Mỗi đơn hàng đều được đổi kích cỡ miễn phí nếu sản phẩm không vừa.',
+  );
+  static String onlyLeft(int quantity) =>
+      _text('Only $quantity left', 'Chỉ còn $quantity sản phẩm');
+  static String get addToBagAndCheckout =>
+      _text('Add to bag and checkout', 'Thêm vào túi và thanh toán');
 
   // Checkout --------------------------------------------------------------
 
-  static const String checkoutTitle = 'Checkout';
-  static const String stepContact = 'Contact';
-  static const String stepAddress = 'Address';
-  static const String stepPayment = 'Payment';
-  static const String stepDone = 'Done';
-  static const String useSavedContact = 'Use a saved contact';
-  static const String newContact = 'New contact';
-  static const String saveAndContinue = 'Save and continue';
-  static const String contactSaved = 'Contact saved';
-  static const String noSavedContacts = 'No saved contacts yet';
-  static const String deliveryAddressStep = 'Delivery address';
-  static const String dropPinHint =
-      'Tap the map to drop a pin on your address, then drag it to fine-tune.';
-  static const String pinPlaced = 'Pin placed';
-  static const String coordinatesLabel = 'Coordinates';
-  static const String clearPin = 'Clear pin';
-  static const String orderSummary = 'Order summary';
-  static const String delivery = 'Delivery';
-  static const String free = 'Free';
-  static const String total = 'Total';
-  static const String paymentStepTitle = 'Payment method';
-  static const String sandboxBannerNote =
-      'Test payment environment. You will not be charged.';
-  static const String secureCheckoutTitle = 'Secure checkout';
-  static const String stylistTab = 'Stylist';
-  static const String processingPayment = 'Processing payment…';
-  static const String placeOrder = 'Place order';
-  static const String orderPlacedTitle = 'Order placed';
-  static const String orderPlacedBody =
-      'Your order is confirmed. Track it any time from your order history.';
-  static const String trackOrder = 'Track order';
-  static const String continueShopping = 'Continue shopping';
-  static const String paymentDeclinedTitle = 'Payment declined';
-  static const String paymentDeclinedBody =
-      'The sandbox gateway rejected this payment. Try another method.';
-  static const String paymentReference = 'Reference';
+  static String get checkoutTitle => _text('Checkout', 'Thanh toán');
+  static String get stepContact => _text('Contact', 'Liên hệ');
+  static String get stepAddress => _text('Address', 'Địa chỉ');
+  static String get stepPayment => _text('Payment', 'Thanh toán');
+  static String get stepDone => _text('Done', 'Hoàn tất');
+  static String get useSavedContact =>
+      _text('Use a saved contact', 'Dùng thông tin liên hệ đã lưu');
+  static String get newContact => _text('New contact', 'Thông tin liên hệ mới');
+  static String get saveAndContinue =>
+      _text('Save and continue', 'Lưu và tiếp tục');
+  static String get contactSaved =>
+      _text('Contact saved', 'Đã lưu thông tin liên hệ');
+  static String get noSavedContacts =>
+      _text('No saved contacts yet', 'Chưa có thông tin liên hệ nào được lưu');
+  static String get deliveryAddressStep =>
+      _text('Delivery address', 'Địa chỉ giao hàng');
+  static String get dropPinHint => _text(
+    'Tap the map to drop a pin on your address, then drag it to fine-tune.',
+    'Chạm vào bản đồ để ghim địa chỉ, sau đó kéo ghim để điều chỉnh vị trí.',
+  );
+  static String get pinPlaced => _text('Pin placed', 'Đã ghim vị trí');
+  static String get coordinatesLabel => _text('Coordinates', 'Tọa độ');
+  static String get clearPin => _text('Clear pin', 'Xóa ghim');
+  static String get orderSummary => _text('Order summary', 'Tóm tắt đơn hàng');
+  static String get delivery => _text('Delivery', 'Giao hàng');
+  static String get free => _text('Free', 'Miễn phí');
+  static String get total => _text('Total', 'Tổng cộng');
+  static String get paymentStepTitle =>
+      _text('Payment method', 'Phương thức thanh toán');
+  static String get sandboxBannerNote => _text(
+    'Test payment environment. You will not be charged.',
+    'Môi trường thanh toán thử nghiệm. Bạn sẽ không bị tính phí.',
+  );
+  static String get secureCheckoutTitle =>
+      _text('Secure checkout', 'Thanh toán an toàn');
+  static String get stylistTab => _text('Stylist', 'Tư vấn');
+  static String get processingPayment =>
+      _text('Processing payment…', 'Đang xử lý thanh toán…');
+  static String get placeOrder => _text('Place order', 'Đặt hàng');
+  static String get orderPlacedTitle =>
+      _text('Order placed', 'Đặt hàng thành công');
+  static String get orderPlacedBody => _text(
+    'Your order is confirmed. Track it any time from your order history.',
+    'Đơn hàng của bạn đã được xác nhận. Bạn có thể theo dõi bất cứ lúc nào trong lịch sử đơn hàng.',
+  );
+  static String get trackOrder => _text('Track order', 'Theo dõi đơn hàng');
+  static String get continueShopping =>
+      _text('Continue shopping', 'Tiếp tục mua sắm');
+  static String get paymentDeclinedTitle =>
+      _text('Payment declined', 'Thanh toán bị từ chối');
+  static String get paymentDeclinedBody => _text(
+    'The sandbox gateway rejected this payment. Try another method.',
+    'Cổng thanh toán thử nghiệm đã từ chối giao dịch. Hãy thử phương thức khác.',
+  );
+  static String get paymentReference => _text('Reference', 'Mã giao dịch');
 
   // Orders and tracking ----------------------------------------------------
 
-  static const String noOrdersTitle = 'No orders yet';
-  static const String noOrdersBody =
-      'When you place an order it will appear here with its tracking.';
-  static const String orderStatusTitle = 'Status';
-  static const String shipmentTracking = 'Shipment tracking';
-  static const String stagePlaced = 'Order placed';
-  static const String stageConfirmed = 'Confirmed';
-  static const String stagePacked = 'Packed';
-  static const String stageShipped = 'Shipped';
-  static const String stageOutForDelivery = 'Out for delivery';
-  static const String stageDelivered = 'Delivered';
-  static const String trackingNumber = 'Tracking number';
-  static const String courier = 'Courier';
-  static const String orderItems = 'Items';
-  static const String orderPlacedOn = 'Placed on';
-  static const String shippingTo = 'Shipping to';
+  static String get noOrdersTitle => _text('No orders yet', 'Chưa có đơn hàng');
+  static String get noOrdersBody => _text(
+    'When you place an order it will appear here with its tracking.',
+    'Đơn hàng bạn đặt sẽ xuất hiện tại đây cùng thông tin theo dõi.',
+  );
+  static String get orderStatusTitle => _text('Status', 'Trạng thái');
+  static String get shipmentTracking =>
+      _text('Shipment tracking', 'Theo dõi giao hàng');
+  static String get stagePlaced => _text('Order placed', 'Đã đặt hàng');
+  static String get stageConfirmed => _text('Confirmed', 'Đã xác nhận');
+  static String get stagePacked => _text('Packed', 'Đã đóng gói');
+  static String get stageShipped => _text('Shipped', 'Đã gửi hàng');
+  static String get stageOutForDelivery =>
+      _text('Out for delivery', 'Đang giao hàng');
+  static String get stageDelivered => _text('Delivered', 'Đã giao hàng');
+  static String get trackingNumber => _text('Tracking number', 'Mã vận đơn');
+  static String get courier => _text('Courier', 'Đơn vị vận chuyển');
+  static String get orderItems => _text('Items', 'Sản phẩm');
+  static String get orderPlacedOn => _text('Placed on', 'Ngày đặt');
+  static String get shippingTo => _text('Shipping to', 'Giao đến');
 
   // Staff tools ------------------------------------------------------------
 
-  static const String staffShipmentsTitle = 'Shipment tracker';
-  static const String staffShipmentsSubtitle =
-      'Live board of every shipment leaving the warehouse';
-  static const String advanceStatus = 'Advance status';
-  static const String markDelivered = 'Mark delivered';
-  static const String boardNote =
-      'Shipment states are held on the device for this demo.';
-  static const String noShipments = 'No shipments on the board';
-  static const String customerLabel = 'Customer';
+  static String get staffShipmentsTitle =>
+      _text('Shipment tracker', 'Theo dõi giao hàng');
+  static String get staffShipmentsSubtitle => _text(
+    'Live board of every shipment leaving the warehouse',
+    'Bảng theo dõi trực tiếp các đơn rời kho',
+  );
+  static String get advanceStatus =>
+      _text('Advance status', 'Chuyển trạng thái');
+  static String get markDelivered =>
+      _text('Mark delivered', 'Đánh dấu đã giao');
+  static String get boardNote => _text(
+    'Shipment states are held on the device for this demo.',
+    'Trạng thái giao hàng được lưu trên thiết bị trong bản dùng thử này.',
+  );
+  static String get noShipments =>
+      _text('No shipments on the board', 'Không có đơn giao hàng nào');
+  static String get customerLabel => _text('Customer', 'Khách hàng');
 
   // Account page -----------------------------------------------------------
 
-  static const String accountTitle = 'My account';
-  static const String accountSubtitle =
-      'Orders, addresses and account security';
-  static const String accountOrders = 'Orders';
-  static const String accountAddresses = 'Addresses';
-  static const String accountFavorites = 'Favourites';
-  static const String accountNotifications = 'Notifications';
-  static const String accountStylist = 'AI stylist';
-  static const String accountSecurity = 'Account security';
-  static const String accountStaff = 'Staff tools';
-  static const String accountOverview = 'Overview';
-  static const String signOutAction = 'Sign out';
-  static const String signedInAs = 'Signed in as';
+  static String get accountTitle => _text('My account', 'Tài khoản của tôi');
+  static String get accountSubtitle => _text(
+    'Orders, addresses and account security',
+    'Đơn hàng, địa chỉ và bảo mật tài khoản',
+  );
+  static String get accountOrders => _text('Orders', 'Đơn hàng');
+  static String get accountAddresses => _text('Addresses', 'Địa chỉ');
+  static String get accountFavorites => _text('Favourites', 'Yêu thích');
+  static String get accountNotifications => _text('Notifications', 'Thông báo');
+  static String get accountStylist => _text('AI stylist', 'Tư vấn AI');
+  static String get accountSecurity =>
+      _text('Account security', 'Bảo mật tài khoản');
+  static String get accountStaff => _text('Staff tools', 'Công cụ nhân viên');
+  static String get accountOverview => _text('Overview', 'Tổng quan');
+  static String get signOutAction => _text('Sign out', 'Đăng xuất');
+  static String get signedInAs => _text('Signed in as', 'Đang đăng nhập với');
 
   // Placeholders ----------------------------------------------------------
 
-  static const String notImplementedLabel = 'NOT IMPLEMENTED';
-  static const String notImplementedNotice =
-      'This feature is scheduled for a later module.';
-  static const String paymentResultTitle = 'Payment result';
-  static const String paymentResultSubtitle =
-      'Success and failure states after a provider callback';
+  static String get notImplementedLabel =>
+      _text('NOT IMPLEMENTED', 'CHƯA TRIỂN KHAI');
+  static String get notImplementedNotice => _text(
+    'This feature is scheduled for a later module.',
+    'Tính năng này sẽ được bổ sung trong mô-đun sau.',
+  );
+  static String get paymentResultTitle =>
+      _text('Payment result', 'Kết quả thanh toán');
+  static String get paymentResultSubtitle => _text(
+    'Success and failure states after a provider callback',
+    'Trạng thái thành công hoặc thất bại sau phản hồi từ nhà cung cấp',
+  );
 
   // Errors ----------------------------------------------------------------
 
-  static const String errorRequestFailed =
-      'The request failed. Please try again.';
-  static const String errorSession =
-      'Could not read the saved sign-in session.';
-  static const String errorStoreApi =
-      'Could not reach the BigFit store API. Check the server and API_BASE_URL.';
-  static const String errorLoadMore = 'Could not load more products.';
-  static const String errorLoadBag = 'Could not load your bag.';
-  static const String errorAddToBag = 'Could not add this item to your bag.';
-  static const String errorSaveFavorite = 'Could not save this favorite.';
-  static const String errorSignIn =
-      'Could not sign in. Check your connection and try again.';
-  static const String errorLoadAddresses = 'Could not load addresses.';
-  static const String errorSaveAddress = 'Could not save the address.';
-  static const String errorDeleteAddress = 'Could not delete the address.';
-  static const String invalidBaseUrl =
-      'Enter a valid HTTP or HTTPS API base URL.';
+  static String get errorRequestFailed => _text(
+    'The request failed. Please try again.',
+    'Yêu cầu thất bại. Vui lòng thử lại.',
+  );
+  static String get errorSession => _text(
+    'Could not read the saved sign-in session.',
+    'Không thể đọc phiên đăng nhập đã lưu.',
+  );
+  static String get errorStoreApi => _text(
+    'Could not reach the BigFit store API. Check the server and API_BASE_URL.',
+    'Không thể kết nối API cửa hàng BigFit. Hãy kiểm tra máy chủ và API_BASE_URL.',
+  );
+  static String get errorLoadMore =>
+      _text('Could not load more products.', 'Không thể tải thêm sản phẩm.');
+  static String get errorLoadBag =>
+      _text('Could not load your bag.', 'Không thể tải túi hàng.');
+  static String get errorAddToBag => _text(
+    'Could not add this item to your bag.',
+    'Không thể thêm sản phẩm này vào túi hàng.',
+  );
+  static String get errorSaveFavorite => _text(
+    'Could not save this favorite.',
+    'Không thể lưu sản phẩm yêu thích này.',
+  );
+  static String get errorSignIn => _text(
+    'Could not sign in. Check your connection and try again.',
+    'Không thể đăng nhập. Hãy kiểm tra kết nối và thử lại.',
+  );
+  static String get errorLoadAddresses =>
+      _text('Could not load addresses.', 'Không thể tải địa chỉ.');
+  static String get errorSaveAddress =>
+      _text('Could not save the address.', 'Không thể lưu địa chỉ.');
+  static String get errorDeleteAddress =>
+      _text('Could not delete the address.', 'Không thể xóa địa chỉ.');
+  static String get invalidBaseUrl => _text(
+    'Enter a valid HTTP or HTTPS API base URL.',
+    'Nhập URL API hợp lệ bắt đầu bằng HTTP hoặc HTTPS.',
+  );
 
   // Tooltips --------------------------------------------------------------
 
-  static const String tooltipChooseServer = 'Choose API server';
-  static const String tooltipSearch = 'Search';
-  static const String tooltipDeleteAddress = 'Delete address';
-  static const String tooltipDeleteNotification = 'Delete notification';
-  static const String tooltipRemoveItem = 'Remove item';
+  static String get tooltipChooseServer =>
+      _text('Choose API server', 'Chọn máy chủ API');
+  static String get tooltipSearch => _text('Search', 'Tìm kiếm');
+  static String get tooltipDeleteAddress =>
+      _text('Delete address', 'Xóa địa chỉ');
+  static String get tooltipDeleteNotification =>
+      _text('Delete notification', 'Xóa thông báo');
+  static String get tooltipRemoveItem => _text('Remove item', 'Xóa sản phẩm');
+
+  // Storefront and cart copy ----------------------------------------------
+
+  static String get heroBrandCaption => 'BIGFIT / STREETWEAR';
+  static String get heroFindYourFit =>
+      _text('FIND\nYOUR FIT.', 'TÌM PHONG CÁCH CỦA BẠN.');
+  static String get heroStreetwearCaption => _text(
+    'EVERYDAY STREETWEAR.\nMADE TO BE YOURS.',
+    'THỜI TRANG HẰNG NGÀY.\nDÀNH RIÊNG CHO BẠN.',
+  );
+  static String get cartItemsHeading => _text('ITEMS', 'MÓN HÀNG');
+  static String get cartSelectionHeading =>
+      _text('YOUR SELECTION', 'SẢN PHẨM ĐÃ CHỌN');
+  static String get cartEmptyHeading =>
+      _text('YOUR BAG IS EMPTY', 'TÚI HÀNG ĐANG TRỐNG');
+  static String get cartContinueShopping =>
+      _text('CONTINUE SHOPPING', 'TIẾP TỤC MUA SẮM');
+  static String get cartTotalHeading => _text('TOTAL', 'TỔNG CỘNG');
+  static String get cartOrderSummaryHeading =>
+      _text('ORDER SUMMARY', 'TÓM TẮT ĐƠN HÀNG');
+  static String get categoryAll => _text('ALL', 'TẤT CẢ');
+  static String get productViewAction => _text('VIEW PRODUCT', 'XEM SẢN PHẨM');
+  static String get mapTapToPlacePin =>
+      _text('Tap to place a pin', 'Chạm để ghim vị trí');
+  static String get showPassword => _text('Show password', 'Hiện mật khẩu');
+  static String get hidePassword => _text('Hide password', 'Ẩn mật khẩu');
+  static String get footerStreetwear =>
+      _text('EVERYDAY STREETWEAR.', 'THỜI TRANG HẰNG NGÀY.');
+  static String get footerAboutHeading => _text('ABOUT BIGFIT', 'VỀ BIGFIT');
+  static String get footerAboutBody => _text(
+    'BIGFIT is a streetwear store focused on comfort, confidence, and '
+        'personal style.\n\nWe aim to offer products that suit a wide '
+        'range of body types and personalities.',
+    'BIGFIT là cửa hàng thời trang streetwear hướng đến sự thoải mái, '
+        'tự tin và phong cách riêng.\n\nChúng tôi mong muốn mang đến '
+        'những sản phẩm phù hợp với nhiều vóc dáng và cá tính khác nhau.',
+  );
+  static String get footerExchangeHeading =>
+      _text('EXCHANGE POLICY', 'CHÍNH SÁCH ĐỔI HÀNG');
+  static String get footerExchangeConditions =>
+      _text('EXCHANGE CONDITIONS', 'ĐIỀU KIỆN ĐỔI HÀNG');
+  static String get footerExchangeRequirements => _text(
+    '• Items must have their original tags and labels.\n'
+        '• Items must be unused.\n'
+        '• Items must not be damaged.\n'
+        '• Provide your order details when requesting an exchange.',
+    '• Sản phẩm còn nguyên tem, nhãn.\n'
+        '• Sản phẩm chưa qua sử dụng.\n'
+        '• Sản phẩm không bị hư hỏng.\n'
+        '• Cung cấp thông tin đơn hàng khi yêu cầu đổi.',
+  );
+  static String get footerExchangeHowTo =>
+      _text('HOW TO EXCHANGE', 'CÁCH ĐỔI HÀNG');
+  static String get footerExchangeInstructions => _text(
+    'Contact BIGFIT with your order number, the item you want to exchange, '
+        'and the reason for the exchange.',
+    'Liên hệ BIGFIT và cung cấp mã đơn hàng, sản phẩm cần đổi cùng lý do '
+        'đổi hàng.',
+  );
+  static String get footerExchangeDisclaimer => _text(
+    'The exchange period and shipping costs are confirmed according to '
+        'the store’s current policy.',
+    'Thời hạn đổi hàng và chi phí vận chuyển được xác nhận theo chính '
+        'sách thực tế của cửa hàng.',
+  );
+  static String get footerCopyright => '© BIGFIT. All rights reserved.';
+  static String get sandboxPaymentDeclined => _text(
+    'The sandbox gateway declined the payment.',
+    'Cổng thanh toán thử nghiệm đã từ chối giao dịch.',
+  );
+  static String approvedSandboxPayment(
+    String method,
+    String amount,
+    String currency,
+  ) => _text(
+    '$method payment approved for $amount $currency.',
+    'Thanh toán $method đã được chấp thuận với số tiền $amount $currency.',
+  );
 
   // Builders --------------------------------------------------------------
   //
   // Strings that depend on runtime data. Each one is named after the text it
   // produces so the call site reads like the sentence it shows.
 
-  static String roleLabel(String roles) => 'Role: $roles';
+  static String roleLabel(String roles) =>
+      _text('Role: $roles', 'Vai trò: $roles');
 
-  static String currentApi(String url) => 'Current API: $url';
+  static String currentApi(String url) =>
+      _text('Current API: $url', 'API hiện tại: $url');
 
-  static String connectedTo(String url) => 'Connected to $url';
+  static String connectedTo(String url) =>
+      _text('Connected to $url', 'Đã kết nối tới $url');
 
-  static String changeServerFailed(Object error) =>
-      'Could not change the API server: $error';
+  static String changeServerFailed(Object error) => _text(
+    'Could not change the API server: $error',
+    'Không thể đổi máy chủ API: $error',
+  );
 
   static String productCountLabel(int shown, int total) =>
-      '$shown of $total products';
+      _text('$shown of $total products', '$shown / $total sản phẩm');
 
-  static String shoppingBagTooltip(int count) => 'Shopping bag ($count)';
+  static String shoppingBagTooltip(int count) =>
+      _text('Shopping bag ($count)', 'Túi hàng ($count)');
 
-  static String discountBadge(int? percent) => '${percent ?? 0}% OFF';
+  static String discountBadge(int? percent) =>
+      _text('${percent ?? 0}% OFF', 'GIẢM ${percent ?? 0}%');
 
-  static String discountText(int? percent) => '${percent ?? 0}% off';
+  static String discountText(int? percent) =>
+      _text('${percent ?? 0}% off', 'Giảm ${percent ?? 0}%');
 
-  static String addedToBag(String productName, String size) =>
-      '$productName · $size added to bag';
+  static String addedToBag(String productName, String size) => _text(
+    '$productName · $size added to bag',
+    'Đã thêm $productName · $size vào túi hàng',
+  );
 
-  static String orderCreated(String orderNumber) =>
-      'Order $orderNumber created. Payment is pending integration.';
+  static String orderCreated(String orderNumber) => _text(
+    'Order $orderNumber created. Payment is pending integration.',
+    'Đã tạo đơn hàng $orderNumber. Thanh toán chưa được tích hợp.',
+  );
 
   static String requestFailedWithStatus(int statusCode) =>
-      'Request failed ($statusCode).';
+      _text('Request failed ($statusCode).', 'Yêu cầu thất bại ($statusCode).');
 
   static String addressTitle(String label, bool isDefault) =>
-      isDefault ? '$label · Default' : label;
+      isDefault ? _text('$label · Default', '$label · Mặc định') : label;
 
   static String addressSummary(
     String recipient,
@@ -455,7 +791,36 @@ abstract final class AppStrings {
       '$size · $color × $quantity';
 
   static String orderStatusLine(String status, String date) =>
-      '$status · $date';
+      '${orderStatus(status)} · $date';
+
+  static String orderStatus(String status) => switch (status.toLowerCase()) {
+    'pending' => _text('Pending', 'Đang chờ xử lý'),
+    'confirmed' => stageConfirmed,
+    'processing' => _text('Processing', 'Đang xử lý'),
+    'shipped' => stageShipped,
+    'outfordelivery' => stageOutForDelivery,
+    'delivered' => stageDelivered,
+    'cancelled' => _text('Cancelled', 'Đã hủy'),
+    _ => status,
+  };
+
+  static String categoryLabel(String category) => switch (category) {
+    'Bottoms' => _text('Bottoms', 'Quần'),
+    'Casualwear' => _text('Casualwear', 'Đồ thường ngày'),
+    'Dresses & Skirts' => _text('Dresses & Skirts', 'Váy và chân váy'),
+    'Innerwear' => _text('Innerwear', 'Đồ mặc trong'),
+    'Knitwear' => _text('Knitwear', 'Đồ dệt kim'),
+    'Outerwear' => _text('Outerwear', 'Áo khoác'),
+    'Shirts' => _text('Shirts', 'Áo sơ mi'),
+    _ => category,
+  };
+
+  static String paymentMethodName(String method) => switch (method) {
+    'cod' => paymentCod,
+    'bankTransfer' => paymentBank,
+    'gateway' => paymentGateway,
+    _ => method,
+  };
 
   static String notificationSubtitle(String message, String date) =>
       '$message\n$date';

@@ -9,7 +9,7 @@ class OtpEntryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text(AppStrings.otpTitle)),
-        body: const NotImplementedView(title: AppStrings.otpTitle),
-      );
+    appBar: AppBar(title: Text(AppStrings.otpTitle)),
+    body: NotImplementedView(title: AppStrings.otpTitle),
+  );
 }

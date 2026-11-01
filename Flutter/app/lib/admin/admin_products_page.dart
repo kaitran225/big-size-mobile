@@ -9,7 +9,7 @@ class AdminProductsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text(AppStrings.productsAndInventory)),
-        body: const NotImplementedView(title: AppStrings.productsAndInventory),
-      );
+    appBar: AppBar(title: Text(AppStrings.productsAndInventory)),
+    body: NotImplementedView(title: AppStrings.productsAndInventory),
+  );
 }

@@ -1,4 +1,5 @@
 import '../models/checkout_models.dart';
+import '../shared/app_strings.dart';
 
 /// A local stand-in for a payment provider sandbox.
 ///
@@ -19,10 +20,10 @@ class SandboxGateway {
     await Future<void>.delayed(processingDelay);
 
     if (decline) {
-      return const SandboxPaymentResult(
+      return SandboxPaymentResult(
         approved: false,
         reference: '',
-        message: 'The sandbox gateway declined the payment.',
+        message: AppStrings.sandboxPaymentDeclined,
       );
     }
 
@@ -30,8 +31,11 @@ class SandboxGateway {
     return SandboxPaymentResult(
       approved: true,
       reference: 'SBX-${stamp.toUpperCase()}',
-      message: '${method.name} payment approved for '
-          '${amount.toStringAsFixed(2)} $currencyCode.',
+      message: AppStrings.approvedSandboxPayment(
+        AppStrings.paymentMethodName(method.name),
+        amount.toStringAsFixed(2),
+        currencyCode,
+      ),
     );
   }
 }

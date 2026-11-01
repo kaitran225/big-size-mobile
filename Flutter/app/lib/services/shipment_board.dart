@@ -2,6 +2,7 @@ import 'dart:math';
 
 import '../models/checkout_models.dart';
 import '../models/store_product.dart';
+import '../shared/app_strings.dart';
 
 /// In-memory shipment board shared by the customer tracker and the staff view.
 ///
@@ -29,13 +30,13 @@ class ShipmentBoard {
   }
 
   /// Registers an order on the board and returns its shipment record.
-  Shipment track(CustomerOrder order, {String customerName = 'BigFit customer'}) {
+  Shipment track(CustomerOrder order, {String? customerName}) {
     return _shipments.putIfAbsent(order.id, () {
       final stamp = DateTime.now().millisecondsSinceEpoch.toRadixString(36);
       return Shipment(
         id: order.id,
         orderNumber: order.orderNumber,
-        customerName: customerName,
+        customerName: customerName ?? AppStrings.customerLabel,
         stage: stageForStatus(order.status),
         courier: _couriers[_random.nextInt(_couriers.length)],
         trackingNumber: 'BF${stamp.toUpperCase()}',

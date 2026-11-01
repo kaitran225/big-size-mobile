@@ -16,10 +16,7 @@ import 'product_skeleton_card.dart';
 import 'product_tile.dart';
 
 class StorefrontPage extends StatefulWidget {
-  const StorefrontPage({
-    super.key,
-    required this.api,
-  });
+  const StorefrontPage({super.key, required this.api});
 
   final StoreApi api;
 
@@ -173,20 +170,14 @@ class _StorefrontPageState extends State<StorefrontPage> {
   void _openProduct(StoreProduct product) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => ProductDetailsPage(
-          api: widget.api,
-          product: product,
-        ),
+        builder: (_) => ProductDetailsPage(api: widget.api, product: product),
       ),
     );
   }
 
   Future<void> _openFeature(Widget page) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => page,
-      ),
-    );
+    await Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => page));
 
     await _refreshCartCount();
   }
@@ -231,9 +222,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
     if (_session != null) return true;
 
     final session = await Navigator.of(context).push<AuthSession>(
-      MaterialPageRoute<AuthSession>(
-        builder: (_) => AuthPage(api: widget.api),
-      ),
+      MaterialPageRoute<AuthSession>(builder: (_) => AuthPage(api: widget.api)),
     );
 
     if (session == null || !mounted) return false;
@@ -255,11 +244,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
     } catch (error) {
       if (!mounted) return;
 
-      showAppErrorSnackBar(
-        context,
-        error,
-        fallback: AppStrings.errorLoadBag,
-      );
+      showAppErrorSnackBar(context, error, fallback: AppStrings.errorLoadBag);
     }
   }
 
@@ -294,7 +279,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
               elevation: 0,
               scrolledUnderElevation: 0,
 
-              // Logo chuyển sang bên trái giống header HADES.
+              // Keep the logo aligned to the left side of the header.
               centerTitle: false,
               titleSpacing: 16,
 
@@ -310,10 +295,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
                   icon: Badge(
                     isLabelVisible: _cartCount > 0,
                     label: Text('$_cartCount'),
-                    child: const Icon(
-                      Icons.shopping_bag_outlined,
-                      size: 22,
-                    ),
+                    child: const Icon(Icons.shopping_bag_outlined, size: 22),
                   ),
                 ),
                 IconButton(
@@ -322,10 +304,34 @@ class _StorefrontPageState extends State<StorefrontPage> {
                       : AppStrings.account,
                   onPressed: () => _selectTab(3),
                   icon: Icon(
-                    _session == null
-                        ? Icons.person_outline
-                        : Icons.person,
+                    _session == null ? Icons.person_outline : Icons.person,
                     size: 22,
+                  ),
+                ),
+                PopupMenuButton<AppLanguage>(
+                  tooltip: AppStrings.languageTitle,
+                  onSelected: AppStrings.setLanguage,
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: AppLanguage.english,
+                      child: Text(AppStrings.languageEnglish),
+                    ),
+                    PopupMenuItem(
+                      value: AppLanguage.vietnamese,
+                      child: Text(AppStrings.languageVietnamese),
+                    ),
+                  ],
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Center(
+                      child: Text(
+                        AppStrings.languageCode,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -334,24 +340,18 @@ class _StorefrontPageState extends State<StorefrontPage> {
           : null,
       body: switch (_selectedTab) {
         0 => _buildShopBody(theme),
-        1 => AssistantPage(
-            api: widget.api,
-            gender: _gender,
-          ),
-        2 => OrdersPage(
-            key: ValueKey(_ordersRevision),
-            api: widget.api,
-          ),
+        1 => AssistantPage(api: widget.api, gender: _gender),
+        2 => OrdersPage(key: ValueKey(_ordersRevision), api: widget.api),
         _ => ProfilePage(
-            key: ValueKey(_profileRevision),
-            api: widget.api,
-            onSessionChanged: _syncSession,
-          ),
+          key: ValueKey(_profileRevision),
+          api: widget.api,
+          onSessionChanged: _syncSession,
+        ),
       },
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedTab,
         onDestinationSelected: _selectTab,
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.storefront_outlined),
             label: AppStrings.navShop,
@@ -379,18 +379,12 @@ class _StorefrontPageState extends State<StorefrontPage> {
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          // Hàng danh mục được đưa lên ngay dưới AppBar.
-          SliverToBoxAdapter(
-            child: _buildTopCategoryBar(),
-          ),
+          // Keep the category navigation directly below the app bar.
+          SliverToBoxAdapter(child: _buildTopCategoryBar()),
 
-          SliverToBoxAdapter(
-            child: _buildHero(theme),
-          ),
+          SliverToBoxAdapter(child: _buildHero(theme)),
 
-          SliverToBoxAdapter(
-            child: _buildControls(theme),
-          ),
+          SliverToBoxAdapter(child: _buildControls(theme)),
 
           if (_loading)
             SliverPadding(
@@ -400,22 +394,13 @@ class _StorefrontPageState extends State<StorefrontPage> {
                 mainAxisSpacing: 18,
                 crossAxisSpacing: 14,
                 childAspectRatio: 0.62,
-                children: List.generate(
-                  6,
-                  (_) => const ProductSkeletonCard(),
-                ),
+                children: List.generate(6, (_) => const ProductSkeletonCard()),
               ),
             )
           else if (_error != null)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: _buildError(),
-            )
+            SliverFillRemaining(hasScrollBody: false, child: _buildError())
           else if (_products.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: _buildEmptyState(),
-            )
+            SliverFillRemaining(hasScrollBody: false, child: _buildEmptyState())
           else ...[
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -448,22 +433,19 @@ class _StorefrontPageState extends State<StorefrontPage> {
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               sliver: SliverGrid.builder(
                 itemCount: _products.length,
-                gridDelegate:
-                    SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount:
-                      MediaQuery.sizeOf(context).width >= 1200
-                          ? 4
-                          : MediaQuery.sizeOf(context).width >= 800
-                              ? 3
-                              : 2,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: MediaQuery.sizeOf(context).width >= 1200
+                      ? 4
+                      : MediaQuery.sizeOf(context).width >= 800
+                      ? 3
+                      : 2,
                   mainAxisSpacing: 22,
                   crossAxisSpacing: 12,
-                  childAspectRatio:
-                      MediaQuery.sizeOf(context).width < 600
-                          ? 0.62
-                          : MediaQuery.sizeOf(context).width < 1200
-                              ? 0.70
-                              : 0.78,
+                  childAspectRatio: MediaQuery.sizeOf(context).width < 600
+                      ? 0.62
+                      : MediaQuery.sizeOf(context).width < 1200
+                      ? 0.70
+                      : 0.78,
                 ),
                 itemBuilder: (context, index) => ProductTile(
                   product: _products[index],
@@ -483,26 +465,22 @@ class _StorefrontPageState extends State<StorefrontPage> {
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text(AppStrings.loadMore),
+                          : Text(AppStrings.loadMore),
                     ),
                   ),
                 ),
               ),
 
-            SliverToBoxAdapter(
-              child: _buildFooter(),
-            ),
+            SliverToBoxAdapter(child: _buildFooter()),
           ],
         ],
       ),
     );
   }
 
-  // Thanh ALL, BOTTOM, CASUALWEAR... nằm trên cùng.
+  // Keep the category strip visible at the top of the storefront.
   Widget _buildTopCategoryBar() {
     return Container(
       width: double.infinity,
@@ -517,9 +495,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
       child: Container(
         width: double.infinity,
         height: 260,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
         clipBehavior: Clip.antiAlias,
         child: Stack(
           fit: StackFit.expand,
@@ -563,8 +539,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'BIGFIT / STREETWEAR',
+                  Text(
+                    AppStrings.heroBrandCaption,
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 9,
@@ -575,8 +551,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
 
                   const Spacer(),
 
-                  const Text(
-                    'FIND\nYOUR FIT.',
+                  Text(
+                    AppStrings.heroFindYourFit,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 36,
@@ -588,8 +564,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
 
                   const SizedBox(height: 10),
 
-                  const Text(
-                    'EVERYDAY STREETWEAR.\nMADE TO BE YOURS.',
+                  Text(
+                    AppStrings.heroStreetwearCaption,
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 9,
@@ -607,25 +583,17 @@ class _StorefrontPageState extends State<StorefrontPage> {
                         showSelectedIcon: false,
                         style: ButtonStyle(
                           backgroundColor:
-                              WidgetStateProperty.resolveWith<Color>(
-                            (states) {
-                              return states.contains(
-                                WidgetState.selected,
-                              )
-                                  ? Colors.white
-                                  : Colors.transparent;
-                            },
-                          ),
+                              WidgetStateProperty.resolveWith<Color>((states) {
+                                return states.contains(WidgetState.selected)
+                                    ? Colors.white
+                                    : Colors.transparent;
+                              }),
                           foregroundColor:
-                              WidgetStateProperty.resolveWith<Color>(
-                            (states) {
-                              return states.contains(
-                                WidgetState.selected,
-                              )
-                                  ? Colors.black
-                                  : Colors.white;
-                            },
-                          ),
+                              WidgetStateProperty.resolveWith<Color>((states) {
+                                return states.contains(WidgetState.selected)
+                                    ? Colors.black
+                                    : Colors.white;
+                              }),
                           side: const WidgetStatePropertyAll(
                             BorderSide(color: Colors.white54),
                           ),
@@ -635,19 +603,13 @@ class _StorefrontPageState extends State<StorefrontPage> {
                             ),
                           ),
                           padding: const WidgetStatePropertyAll(
-                            EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
                           textStyle: const WidgetStatePropertyAll(
-                            TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
-                            ),
+                            TextStyle(fontSize: 9, fontWeight: FontWeight.w900),
                           ),
                         ),
-                        segments: const [
+                        segments: [
                           ButtonSegment<String>(
                             value: 'Women',
                             label: Text(AppStrings.womenSegment),
@@ -688,9 +650,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
               hintText: AppStrings.searchHint,
               prefixIcon: const Icon(Icons.search),
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 12,
-              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
               suffixIcon: IconButton(
                 tooltip: AppStrings.tooltipSearch,
                 onPressed: _loadStore,
@@ -706,11 +666,10 @@ class _StorefrontPageState extends State<StorefrontPage> {
             child: Row(
               children: [
                 FilterChip(
-                  label: const Text(AppStrings.filterOnSale),
+                  label: Text(AppStrings.filterOnSale),
                   selected: _onSale,
                   visualDensity: VisualDensity.compact,
-                  materialTapTargetSize:
-                      MaterialTapTargetSize.shrinkWrap,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   onSelected: (selected) {
                     setState(() => _onSale = selected);
                     _loadStore();
@@ -720,11 +679,10 @@ class _StorefrontPageState extends State<StorefrontPage> {
                 const SizedBox(width: 8),
 
                 FilterChip(
-                  label: const Text(AppStrings.filterInStock),
+                  label: Text(AppStrings.filterInStock),
                   selected: _inStock,
                   visualDensity: VisualDensity.compact,
-                  materialTapTargetSize:
-                      MaterialTapTargetSize.shrinkWrap,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   onSelected: (selected) {
                     setState(() => _inStock = selected);
                     _loadStore();
@@ -737,7 +695,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
                   child: DropdownButton<String>(
                     value: _sortBy,
                     icon: const Icon(Icons.sort, size: 20),
-                    items: const [
+                    items: [
                       DropdownMenuItem(
                         value: 'name',
                         child: Text(AppStrings.sortName),
@@ -772,15 +730,11 @@ class _StorefrontPageState extends State<StorefrontPage> {
   }
 
   Widget _buildCategoryNavigation() {
-    final categories = <StoreCategory?>[
-      null,
-      ..._categories,
-    ];
+    final categories = <StoreCategory?>[null, ..._categories];
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final canSpread =
-            constraints.maxWidth >= categories.length * 95;
+        final canSpread = constraints.maxWidth >= categories.length * 95;
 
         final children = categories.map((category) {
           final selected = category == null
@@ -788,8 +742,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
               : _categoryId == category.id;
 
           final label = category == null
-              ? 'ALL'
-              : category.name.toUpperCase();
+              ? AppStrings.categoryAll
+              : AppStrings.categoryLabel(category.name).toUpperCase();
 
           return _CategoryNavigationItem(
             label: label,
@@ -807,20 +761,14 @@ class _StorefrontPageState extends State<StorefrontPage> {
         if (canSpread) {
           return Row(
             children: children
-                .map(
-                  (child) => Expanded(
-                    child: Center(child: child),
-                  ),
-                )
+                .map((child) => Expanded(child: Center(child: child)))
                 .toList(),
           );
         }
 
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: Row(
-            children: children,
-          ),
+          child: Row(children: children),
         );
       },
     );
@@ -835,7 +783,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
   }
 
   Widget _buildEmptyState() {
-    return const EmptyStateView(
+    return EmptyStateView(
       icon: Icons.checkroom_outlined,
       title: AppStrings.catalogEmptyTitle,
       message: AppStrings.catalogEmptySubtitle,
@@ -851,8 +799,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'BIGFIT',
+          Text(
+            AppStrings.brandName,
             style: TextStyle(
               color: Colors.white,
               fontSize: 25,
@@ -863,8 +811,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
 
           const SizedBox(height: 5),
 
-          const Text(
-            'EVERYDAY STREETWEAR.',
+          Text(
+            AppStrings.footerStreetwear,
             style: TextStyle(
               color: Colors.white70,
               fontSize: 10,
@@ -894,36 +842,24 @@ class _StorefrontPageState extends State<StorefrontPage> {
 
               final aboutSection = Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'VỀ BIGFIT',
-                    style: headingStyle,
-                  ),
+                children: [
+                  Text(AppStrings.footerAboutHeading, style: headingStyle),
 
                   SizedBox(height: 10),
 
-                  Text(
-                    'BIGFIT là cửa hàng thời trang streetwear '
-                    'hướng đến sự thoải mái, tự tin và phong cách riêng.\n\n'
-                    'Chúng tôi mong muốn mang đến những sản phẩm '
-                    'phù hợp với nhiều vóc dáng và cá tính khác nhau.',
-                    style: bodyStyle,
-                  ),
+                  Text(AppStrings.footerAboutBody, style: bodyStyle),
                 ],
               );
 
               final exchangeSection = Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'CHÍNH SÁCH ĐỔI HÀNG',
-                    style: headingStyle,
-                  ),
+                children: [
+                  Text(AppStrings.footerExchangeHeading, style: headingStyle),
 
                   SizedBox(height: 10),
 
                   Text(
-                    'ĐIỀU KIỆN ĐỔI HÀNG',
+                    AppStrings.footerExchangeConditions,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -933,18 +869,12 @@ class _StorefrontPageState extends State<StorefrontPage> {
 
                   SizedBox(height: 6),
 
-                  Text(
-                    '• Sản phẩm còn nguyên tem, nhãn.\n'
-                    '• Sản phẩm chưa qua sử dụng.\n'
-                    '• Sản phẩm không bị hư hỏng.\n'
-                    '• Cung cấp thông tin đơn hàng khi yêu cầu đổi.',
-                    style: bodyStyle,
-                  ),
+                  Text(AppStrings.footerExchangeRequirements, style: bodyStyle),
 
                   SizedBox(height: 12),
 
                   Text(
-                    'CÁCH ĐỔI HÀNG',
+                    AppStrings.footerExchangeHowTo,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -954,17 +884,12 @@ class _StorefrontPageState extends State<StorefrontPage> {
 
                   SizedBox(height: 6),
 
-                  Text(
-                    'Liên hệ BIGFIT và cung cấp mã đơn hàng, '
-                    'sản phẩm cần đổi cùng lý do đổi hàng.',
-                    style: bodyStyle,
-                  ),
+                  Text(AppStrings.footerExchangeInstructions, style: bodyStyle),
 
                   SizedBox(height: 10),
 
                   Text(
-                    'Thời hạn đổi hàng và chi phí vận chuyển '
-                    'được xác nhận theo chính sách thực tế của cửa hàng.',
+                    AppStrings.footerExchangeDisclaimer,
                     style: TextStyle(
                       color: Colors.white54,
                       fontSize: 10,
@@ -997,11 +922,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
                     ),
                   ),
 
-                  Container(
-                    width: 1,
-                    height: 220,
-                    color: Colors.white24,
-                  ),
+                  Container(width: 1, height: 220, color: Colors.white24),
 
                   Expanded(
                     child: Padding(
@@ -1020,14 +941,11 @@ class _StorefrontPageState extends State<StorefrontPage> {
 
           const SizedBox(height: 12),
 
-          const Center(
+          Center(
             child: Text(
-              '© BIGFIT. All rights reserved.',
+              AppStrings.footerCopyright,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white38,
-                fontSize: 10,
-              ),
+              style: TextStyle(color: Colors.white38, fontSize: 10),
             ),
           ),
         ],
@@ -1038,9 +956,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
   Future<void> _showBag(BuildContext context) async {
     if (!await _ensureSignedIn()) return;
 
-    await _openFeature(
-      CartPage(api: widget.api),
-    );
+    await _openFeature(CartPage(api: widget.api));
   }
 }
 
@@ -1060,10 +976,7 @@ class _CategoryNavigationItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 10,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1073,8 +986,7 @@ class _CategoryNavigationItem extends StatelessWidget {
               style: TextStyle(
                 color: selected ? Colors.black : Colors.black54,
                 fontSize: 10,
-                fontWeight:
-                    selected ? FontWeight.w900 : FontWeight.w600,
+                fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
                 letterSpacing: 0.8,
               ),
             ),
@@ -1119,22 +1031,12 @@ class _BigfitAnimatedLogoState extends State<_BigfitAnimatedLogo>
     _scale = Tween<double>(
       begin: 1.0,
       end: 1.08,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _glow = Tween<double>(
       begin: 0,
       end: 16,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _startAnimation();
   }
@@ -1175,9 +1077,8 @@ class _BigfitAnimatedLogoState extends State<_BigfitAnimatedLogo>
               color: Colors.black,
               shadows: [
                 Shadow(
-                  color: const Color(0xFF14432F).withOpacity(
-                    _controller.value * 0.5,
-                  ),
+                  color: const Color(0xFF14432F)
+                      .withOpacity(_controller.value * 0.5),
                   blurRadius: _glow.value,
                 ),
               ],

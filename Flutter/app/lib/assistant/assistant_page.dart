@@ -58,16 +58,16 @@ class _AssistantPageState extends State<AssistantPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text(AppStrings.assistantTitle)),
+    appBar: AppBar(title: Text(AppStrings.assistantTitle)),
     body: Column(
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: Text(AppStrings.assistantSubtitle),
         ),
         Expanded(
           child: _messages.isEmpty
-              ? const Center(child: Text(AppStrings.assistantEmpty))
+              ? Center(child: Text(AppStrings.assistantEmpty))
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: _messages.length,
@@ -114,7 +114,7 @@ class _AssistantPageState extends State<AssistantPage> {
                     controller: _controller,
                     minLines: 1,
                     maxLines: 4,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: AppStrings.assistantInputHint,
                     ),
                     onSubmitted: (_) => _send(),

@@ -1,15 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
 
 class ProductTile extends StatefulWidget {
-  const ProductTile({
-    super.key,
-    required this.product,
-    required this.onTap,
-  });
+  const ProductTile({super.key, required this.product, required this.onTap});
 
   final StoreProduct product;
   final VoidCallback onTap;
@@ -45,7 +41,8 @@ class _ProductTileState extends State<ProductTile> {
                 children: [
                   Container(
                     color: const Color(0xFFF3F3F3),
-                    child: product.imageUrl == null ||
+                    child:
+                        product.imageUrl == null ||
                             product.imageUrl!.trim().isEmpty
                         ? _imagePlaceholder()
                         : Image.network(
@@ -54,18 +51,10 @@ class _ProductTileState extends State<ProductTile> {
                             alignment: Alignment.center,
                             webHtmlElementStrategy:
                                 WebHtmlElementStrategy.fallback,
-                            errorBuilder: (
-                              context,
-                              error,
-                              stackTrace,
-                            ) {
+                            errorBuilder: (context, error, stackTrace) {
                               return _imagePlaceholder();
                             },
-                            loadingBuilder: (
-                              context,
-                              child,
-                              loadingProgress,
-                            ) {
+                            loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) {
                                 return child;
                               }
@@ -96,9 +85,7 @@ class _ProductTileState extends State<ProductTile> {
                         ),
                         color: Colors.black,
                         child: Text(
-                          AppStrings.discountBadge(
-                            product.discountPercent,
-                          ),
+                          AppStrings.discountBadge(product.discountPercent),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 9,
@@ -116,11 +103,9 @@ class _ProductTileState extends State<ProductTile> {
                       right: 0,
                       bottom: 0,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         color: Colors.black.withValues(alpha: 0.85),
-                        child: const Text(
+                        child: Text(
                           AppStrings.soldOut,
                           textAlign: TextAlign.center,
                           style: TextStyle(
@@ -151,8 +136,8 @@ class _ProductTileState extends State<ProductTile> {
                               borderRadius: BorderRadius.zero,
                             ),
                           ),
-                          child: const Text(
-                            'XEM SẢN PHẨM',
+                          child: Text(
+                            AppStrings.productViewAction,
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w900,
@@ -195,10 +180,7 @@ class _ProductTileState extends State<ProductTile> {
               spacing: 6,
               children: [
                 Text(
-                  formatPrice(
-                    product.currentPrice,
-                    product.currencyCode,
-                  ),
+                  formatPrice(product.currentPrice, product.currencyCode),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Color(0xFF171717),
@@ -208,10 +190,7 @@ class _ProductTileState extends State<ProductTile> {
                 ),
                 if (product.isOnSale)
                   Text(
-                    formatPrice(
-                      product.price,
-                      product.currencyCode,
-                    ),
+                    formatPrice(product.price, product.currencyCode),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Colors.black45,
@@ -236,14 +215,10 @@ class _ProductTileState extends State<ProductTile> {
       child: const Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.checkroom_outlined,
-            size: 36,
-            color: Colors.black26,
-          ),
+          Icon(Icons.checkroom_outlined, size: 36, color: Colors.black26),
           SizedBox(height: 8),
           Text(
-            'BIGFIT',
+            AppStrings.brandName,
             style: TextStyle(
               color: Colors.black38,
               fontSize: 9,

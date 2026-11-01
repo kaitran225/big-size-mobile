@@ -13,13 +13,13 @@ class SecurityPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text(AppStrings.securityTitle)),
+    appBar: AppBar(title: Text(AppStrings.securityTitle)),
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const AppSectionHeader(text: AppStrings.securityHeadline),
+        AppSectionHeader(text: AppStrings.securityHeadline),
         const SizedBox(height: 6),
-        const Text(AppStrings.securityIntro),
+        Text(AppStrings.securityIntro),
         const SizedBox(height: 16),
         AppListTileCard(
           icon: Icons.mark_email_unread_outlined,
@@ -52,7 +52,7 @@ class SecurityPage extends StatelessWidget {
           isThreeLine: true,
         ),
         const SizedBox(height: 12),
-        const AppInfoNote(text: AppStrings.securityPreviewNotice),
+        AppInfoNote(text: AppStrings.securityPreviewNotice),
       ],
     ),
   );
