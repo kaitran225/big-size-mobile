@@ -95,6 +95,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddSingleton<JwtTokenIssuer>();
         services.AddScoped<DatabaseInitializer>();
+        services.AddScoped<DevelopmentCatalogSeeder>();
         services.AddScoped<ICatalogRepository, CatalogRepository>();
         services.AddScoped<IDatabaseHealthCheck, DatabaseHealthCheck>();
         services.AddScoped<INotificationService, NotificationService>();
