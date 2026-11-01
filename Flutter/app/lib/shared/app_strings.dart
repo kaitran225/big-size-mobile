@@ -240,21 +240,6 @@ abstract final class AppStrings {
   static String get notificationsEmpty =>
       _text('You are all caught up.', 'Bạn đã xem hết thông báo.');
 
-  // Assistant -------------------------------------------------------------
-
-  static String get assistantTitle =>
-      _text('BigFit AI stylist', 'Tư vấn phong cách BigFit AI');
-  static String get assistantSubtitle => _text(
-    'Ask about catalogue items, prices, availability, or size guidance.',
-    'Hỏi về sản phẩm, giá cả, tình trạng hàng hoặc tư vấn kích cỡ.',
-  );
-  static String get assistantEmpty => _text(
-    'How can I help you find your fit?',
-    'Tôi có thể giúp bạn tìm trang phục phù hợp như thế nào?',
-  );
-  static String get assistantInputHint =>
-      _text('Ask your stylist…', 'Hỏi tư vấn viên…');
-
   // Payment ---------------------------------------------------------------
 
   static String get paymentTitle => _text('Payment', 'Thanh toán');

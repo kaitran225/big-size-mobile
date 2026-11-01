@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Headers;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -22,27 +22,23 @@ internal sealed class ChatAssistantService(
         ChatAssistantRequest request,
         CancellationToken cancellationToken)
     {
-        var baseUrl = configuration["Ai:OpenAiCompatible:BaseUrl"];
-        var apiKey = configuration["Ai:OpenAiCompatible:ApiKey"];
-        var model = configuration["Ai:OpenAiCompatible:Model"];
-        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri) ||
-            string.IsNullOrWhiteSpace(apiKey) ||
-            string.IsNullOrWhiteSpace(model))
-        {
-            throw new ChatAssistantUnavailableException(
-                AssistantMessages.NotConfigured);
-        }
+        var baseUrl = configuration["Ai:OpenAiCompatible:BaseUrl"] ?? "https://api.groq.com/openai/v1";
+        var apiKey = configuration["Ai:OpenAiCompatible:ApiKey"]
+            ?? Environment.GetEnvironmentVariable("Ai__OpenAiCompatible__ApiKey")
+            ?? Environment.GetEnvironmentVariable("GROQ_API_KEY");
+        var model = configuration["Ai:OpenAiCompatible:Model"] ?? "openai/gpt-oss-120b";
 
+        // Query Categories
         var categoryQuery = dbContext.Categories.AsNoTracking().AsQueryable();
-        if (request.Gender is not null)
+        if (!string.IsNullOrWhiteSpace(request.Gender))
         {
             categoryQuery = categoryQuery.Where(category => category.Gender == request.Gender);
         }
 
         if (!string.IsNullOrWhiteSpace(request.Category))
         {
-            categoryQuery = categoryQuery.Where(category =>
-                EF.Functions.ILike(category.Name, request.Category.Trim()));
+            var cat = request.Category.Trim().ToLower();
+            categoryQuery = categoryQuery.Where(category => category.Name.ToLower() == cat);
         }
 
         var categories = await categoryQuery
@@ -61,35 +57,44 @@ internal sealed class ChatAssistantService(
             })
             .ToListAsync(cancellationToken);
 
-        var searchTerm = Regex.Split(request.Message.ToLowerInvariant(), @"[^\p{L}\p{N}]+")
-            .Where(term => term.Length >= 3)
-            .OrderByDescending(term => term.Length)
-            .FirstOrDefault();
-
+        // Query relevant Products
         var productsQuery = dbContext.Products
             .AsNoTracking()
             .Where(product => product.IsActive);
-        if (request.Gender is not null)
+
+        if (!string.IsNullOrWhiteSpace(request.Gender))
         {
             productsQuery = productsQuery.Where(product => product.Category.Gender == request.Gender);
         }
 
         if (!string.IsNullOrWhiteSpace(request.Category))
         {
-            productsQuery = productsQuery.Where(product =>
-                EF.Functions.ILike(product.Category.Name, request.Category.Trim()));
+            var cat = request.Category.Trim().ToLower();
+            productsQuery = productsQuery.Where(product => product.Category.Name.ToLower() == cat);
         }
 
-        if (searchTerm is not null)
+        // Extract search keywords from message
+        var searchTerms = Regex.Split(request.Message.ToLowerInvariant(), @"[^\p{L}\p{N}]+")
+            .Where(term => term.Length >= 2 && !IsCommonStopword(term))
+            .ToList();
+
+        if (searchTerms.Count > 0)
         {
-            var pattern = $"%{searchTerm}%";
-            productsQuery = productsQuery.Where(product =>
-                EF.Functions.ILike(product.Name, pattern) ||
-                EF.Functions.ILike(product.Category.Name, pattern));
+            var primaryTerm = searchTerms.OrderByDescending(t => t.Length).First().ToLower();
+            var matchedQuery = productsQuery.Where(product =>
+                product.Name.ToLower().Contains(primaryTerm) ||
+                product.Category.Name.ToLower().Contains(primaryTerm) ||
+                product.Variants.Any(v => v.Size.ToLower().Contains(primaryTerm) || v.Color.ToLower().Contains(primaryTerm)));
+
+            if (await matchedQuery.AnyAsync(cancellationToken))
+            {
+                productsQuery = matchedQuery;
+            }
         }
 
         var products = await productsQuery
-            .OrderBy(product => product.Name)
+            .OrderByDescending(p => p.SalePrice != null)
+            .ThenBy(p => p.Name)
             .Take(8)
             .Select(product => new
             {
@@ -107,25 +112,52 @@ internal sealed class ChatAssistantService(
             })
             .ToListAsync(cancellationToken);
 
-        var context = JsonSerializer.Serialize(new
+        // Fallback local advisor if API key is not yet configured (guarantees safe local demo)
+        if (string.IsNullOrWhiteSpace(apiKey) || apiKey.StartsWith("replace-", StringComparison.OrdinalIgnoreCase))
         {
-            request.Message,
-            request.Gender,
-            request.Category,
-            Categories = categories,
-            Products = products
+            return GenerateFallbackResponse(request);
+        }
+
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri))
+        {
+            throw CreateUnavailableException(request, AssistantMessages.NotConfigured(request.Language));
+        }
+
+        var contextJson = JsonSerializer.Serialize(new
+        {
+            UserGender = request.Gender,
+            UserCategory = request.Category,
+            AvailableCategories = categories,
+            AvailableProducts = products
         }, JsonOptions);
 
-        var systemMessage = AssistantMessages.SystemPrompt;
+        var systemPrompt =
+            $"{ChatAssistantPrompts.System(request.Language)}\n\n"
+            + $"{ChatAssistantPrompts.ProductDataHeading(request.Language)}\n{contextJson}";
+
+        // Build messages list including multi-turn history
+        var messagesList = new List<object>
+        {
+            new { role = "system", content = systemPrompt }
+        };
+
+        if (request.History is { Count: > 0 })
+        {
+            foreach (var historyItem in request.History.TakeLast(6))
+            {
+                var role = historyItem.Role.Equals("user", StringComparison.OrdinalIgnoreCase) ? "user" : "assistant";
+                messagesList.Add(new { role, content = historyItem.Content });
+            }
+        }
+
+        messagesList.Add(new { role = "user", content = request.Message });
+
         var payload = JsonSerializer.Serialize(new
         {
             model,
+            temperature = 0.5,
             max_tokens = ReadMaxOutputTokens(),
-            messages = new[]
-            {
-                new { role = "system", content = systemMessage },
-                new { role = "user", content = context }
-            }
+            messages = messagesList
         }, JsonOptions);
 
         using var httpRequest = new HttpRequestMessage(
@@ -139,8 +171,9 @@ internal sealed class ChatAssistantService(
             using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogWarning(AssistantMessages.ProviderErrorStatusLog, (int)response.StatusCode);
-                throw new ChatAssistantUnavailableException(AssistantMessages.ProviderRequestFailed);
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                logger.LogWarning(AssistantMessages.ProviderErrorStatusLog, (int)response.StatusCode, errorBody);
+                throw CreateUnavailableException(request, AssistantMessages.ProviderRequestFailed(request.Language));
             }
 
             await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
@@ -150,9 +183,10 @@ internal sealed class ChatAssistantService(
                 .GetProperty("message")
                 .GetProperty("content")
                 .GetString();
+
             if (string.IsNullOrWhiteSpace(answer))
             {
-                throw new ChatAssistantUnavailableException(AssistantMessages.ProviderEmptyResponse);
+                throw CreateUnavailableException(request, AssistantMessages.ProviderEmptyResponse(request.Language));
             }
 
             return new ChatAssistantResponse(answer.Trim());
@@ -160,23 +194,62 @@ internal sealed class ChatAssistantService(
         catch (HttpRequestException exception)
         {
             logger.LogWarning(exception, AssistantMessages.ProviderUnreachableLog);
-            throw new ChatAssistantUnavailableException(AssistantMessages.ProviderUnavailable);
+            throw CreateUnavailableException(request, AssistantMessages.ProviderUnavailable(request.Language));
         }
         catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
             logger.LogWarning(exception, AssistantMessages.ProviderTimeoutLog);
-            throw new ChatAssistantUnavailableException(AssistantMessages.ProviderTimedOut);
+            throw CreateUnavailableException(request, AssistantMessages.ProviderTimedOut(request.Language));
         }
         catch (JsonException exception)
         {
-            logger.LogWarning(exception, AssistantMessages.ProviderInvalidResponse);
-            throw new ChatAssistantUnavailableException(AssistantMessages.ProviderInvalidResponse);
+            logger.LogWarning(exception, AssistantMessages.ProviderInvalidResponseLog);
+            throw CreateUnavailableException(request, AssistantMessages.ProviderInvalidResponse(request.Language));
         }
     }
 
+    private static bool IsCommonStopword(string word) =>
+        word is "cho" or "minh" or "mình" or "tôi" or "ban" or "bạn" or "hoi" or "hỏi" or "can" or "cần" or "co" or "có" or "khong" or "không" or "nhé" or "nha" or "xem";
+
+    private static ChatAssistantResponse GenerateFallbackResponse(ChatAssistantRequest request)
+    {
+        var msg = request.Message.ToLowerInvariant();
+        var isEnglish = request.Language == "en";
+
+        var outOfScopeWords = isEnglish
+            ? new[] { "code", "python", "java", "programming", "math", "weather", "politics", "game", "movie", "homework" }
+            : new[] { "code", "python", "java", "lập trình", "toán", "thời tiết", "chính trị", "game", "phim", "bài tập" };
+        if (outOfScopeWords.Any(w => msg.Contains(w)))
+        {
+            return new ChatAssistantResponse(
+                AssistantMessages.OutOfScopeFallback(request.Language));
+        }
+
+        if (msg.Contains("size") || msg.Contains("nặng") || msg.Contains("cao") || msg.Contains("kg") ||
+            (isEnglish && (msg.Contains("height") || msg.Contains("weight") || msg.Contains("fit"))))
+        {
+            return new ChatAssistantResponse(
+                AssistantMessages.SizeGuideFallback(request.Language));
+        }
+
+        if (msg.Contains("đổi") || msg.Contains("trả") || msg.Contains("ship") || msg.Contains("vận chuyển") ||
+            (isEnglish && (msg.Contains("exchange") || msg.Contains("return") || msg.Contains("shipping") || msg.Contains("delivery"))))
+        {
+            return new ChatAssistantResponse(
+                AssistantMessages.PoliciesFallback(request.Language));
+        }
+
+        return new ChatAssistantResponse(
+            AssistantMessages.GeneralFallback(request.Language));
+    }
+
+    private static ChatAssistantUnavailableException CreateUnavailableException(
+        ChatAssistantRequest request,
+        string message) =>
+        new(message, AssistantMessages.UnavailableTitle(request.Language));
+
     private int ReadMaxOutputTokens() =>
         int.TryParse(configuration["Ai:OpenAiCompatible:MaxOutputTokens"], out var value)
-            ? Math.Clamp(value, 64, 1024)
-            : 300;
-
+            ? Math.Clamp(value, 64, 2048)
+            : 600;
 }

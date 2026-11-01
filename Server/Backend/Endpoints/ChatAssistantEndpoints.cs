@@ -1,4 +1,4 @@
-﻿using BigFit.Application.Abstractions;
+using BigFit.Application.Abstractions;
 using BigFit.Application.Assistant;
 using Microsoft.AspNetCore.Http.HttpResults;
 

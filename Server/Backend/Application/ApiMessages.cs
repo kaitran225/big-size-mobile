@@ -22,11 +22,6 @@ namespace BigFit.Application.Abstractions;
 /// OpenAPI operation ids, JSON property names, database identifiers,
 /// configuration keys, and the Swagger UI document.
 /// </para>
-/// <para>
-/// The AI assistant keeps its own text in
-/// <see cref="BigFit.Application.Assistant.AssistantMessages"/> so the
-/// provider prompt can be tuned without touching this file.
-/// </para>
 /// </remarks>
 public static class ApiMessages
 {
@@ -171,7 +166,6 @@ public static class ApiMessages
     public const string TagOrders = "Orders";
     public const string TagDeliveryAddresses = "Delivery addresses";
     public const string TagNotifications = "Notifications";
-
     // ---------------------------------------------------------------------
     // OpenAPI summaries
     // ---------------------------------------------------------------------
@@ -230,7 +224,6 @@ public static class ApiMessages
     public const string SummaryDeleteMyNotification =
         "Delete one of the current user's notifications";
     public const string SummaryGetDatabaseHealth = "Check PostgreSQL connectivity";
-
     // ---------------------------------------------------------------------
     // OpenAPI descriptions
     // ---------------------------------------------------------------------
@@ -241,7 +234,6 @@ public static class ApiMessages
         "Uses current sale prices, snapshots item details, and decrements stock transactionally.";
     public const string DescriptionBearerSecurityScheme =
         "Paste the access token returned by /api/auth/login. Swagger UI sends it as a Bearer header.";
-
     // ---------------------------------------------------------------------
     // Swagger UI document
     // ---------------------------------------------------------------------

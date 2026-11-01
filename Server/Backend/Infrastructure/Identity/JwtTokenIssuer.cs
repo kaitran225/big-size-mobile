@@ -10,9 +10,17 @@ internal sealed class JwtTokenIssuer(IConfiguration configuration)
 {
     public AuthResponse Issue(ApplicationUser user, IReadOnlyList<string> roles)
     {
-        var issuer = configuration["Auth:Jwt:Issuer"]!;
-        var audience = configuration["Auth:Jwt:Audience"]!;
-        var signingKey = configuration["Auth:Jwt:SigningKey"]!;
+        var rawIssuer = configuration["Auth:Jwt:Issuer"];
+        var issuer = rawIssuer == null ? "BigFit.Backend" : rawIssuer;
+
+        var rawAudience = configuration["Auth:Jwt:Audience"];
+        var audience = rawAudience == null ? "BigFit.Mobile" : rawAudience;
+
+        var rawSigningKey = configuration["Auth:Jwt:SigningKey"];
+        var signingKey = rawSigningKey == null
+            ? "BigFit.LocalDevelopment.SigningKey.Only.NotForProduction.2026"
+            : rawSigningKey;
+
         var lifetimeMinutes = int.TryParse(configuration["Auth:Jwt:AccessTokenMinutes"], out var minutes)
             ? Math.Clamp(minutes, 5, 120)
             : 30;

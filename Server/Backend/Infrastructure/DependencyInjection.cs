@@ -1,4 +1,4 @@
-﻿using BigFit.Application.Abstractions;
+using BigFit.Application.Abstractions;
 using BigFit.Application.Authentication;
 using BigFit.Infrastructure.Identity;
 using BigFit.Infrastructure.Assistant;
@@ -23,16 +23,32 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var configuredConnection = configuration.GetConnectionString("Default");
+        var rawConnection = configuration.GetConnectionString("Default");
+        var configuredConnection = rawConnection == null
+            ? "Host=localhost;Port=5432;Database=bigfit_local;Username=postgres"
+            : rawConnection;
+
+        var rawKey = configuration["Auth:Jwt:SigningKey"];
+        var signingKey = rawKey == null
+            ? "BigFit.LocalDevelopment.SigningKey.Only.NotForProduction.2026"
+            : rawKey;
+
+        var rawIssuer = configuration["Auth:Jwt:Issuer"];
+        var issuer = rawIssuer == null
+            ? "BigFit.Backend"
+            : rawIssuer;
+
+        var rawAudience = configuration["Auth:Jwt:Audience"];
+        var audience = rawAudience == null
+            ? "BigFit.Mobile"
+            : rawAudience;
+
         if (string.IsNullOrWhiteSpace(configuredConnection))
         {
             throw new InvalidOperationException(
                 ApiMessages.DatabaseConnectionNotConfigured);
         }
 
-        var signingKey = configuration["Auth:Jwt:SigningKey"];
-        var issuer = configuration["Auth:Jwt:Issuer"];
-        var audience = configuration["Auth:Jwt:Audience"];
         if (string.IsNullOrWhiteSpace(signingKey) || Encoding.UTF8.GetByteCount(signingKey) < 32)
         {
             throw new InvalidOperationException(
