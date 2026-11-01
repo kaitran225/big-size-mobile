@@ -17,116 +17,53 @@ internal sealed class ChatAssistantService(
     ILogger<ChatAssistantService> logger) : IChatAssistantService
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly Regex SearchTermSeparator = new(
+        @"[^\p{L}\p{N}]+",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex PersonalRequestPattern = new(
+        @"\b(?:for me|my (?:size|fit|body|measurements|outfit)|i am|i'm|i weigh|i wear|what should i (?:wear|choose|get)|what size (?:should|would) i)\b|" +
+        @"(?:cho tôi|của tôi|tôi cao|tôi nặng|tôi mặc|tôi nên|mình cao|mình nặng|mình mặc|mình nên|size của mình)",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     public async Task<ChatAssistantResponse> AskAsync(
         ChatAssistantRequest request,
         CancellationToken cancellationToken)
     {
-        var baseUrl = configuration["Ai:OpenAiCompatible:BaseUrl"] ?? "https://api.groq.com/openai/v1";
-        var apiKey = configuration["Ai:OpenAiCompatible:ApiKey"]
-            ?? Environment.GetEnvironmentVariable("Ai__OpenAiCompatible__ApiKey")
-            ?? Environment.GetEnvironmentVariable("GROQ_API_KEY");
-        var model = configuration["Ai:OpenAiCompatible:Model"] ?? "openai/gpt-oss-120b";
-
-        // Query Categories
-        var categoryQuery = dbContext.Categories.AsNoTracking().AsQueryable();
-        if (!string.IsNullOrWhiteSpace(request.Gender))
-        {
-            categoryQuery = categoryQuery.Where(category => category.Gender == request.Gender);
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Category))
-        {
-            var cat = request.Category.Trim().ToLower();
-            categoryQuery = categoryQuery.Where(category => category.Name.ToLower() == cat);
-        }
-
-        var categories = await categoryQuery
-            .OrderBy(category => category.Gender)
-            .ThenBy(category => category.Name)
-            .Select(category => new
-            {
-                category.Gender,
-                category.Name,
-                ProductCount = category.Products.Count(product => product.IsActive),
-                OnSaleCount = category.Products.Count(product => product.IsActive && product.SalePrice != null),
-                AvailableUnits = category.Products
-                    .Where(product => product.IsActive)
-                    .SelectMany(product => product.Variants)
-                    .Sum(variant => (int?)variant.StockQuantity) ?? 0
-            })
-            .ToListAsync(cancellationToken);
-
-        // Query relevant Products
-        var productsQuery = dbContext.Products
-            .AsNoTracking()
-            .Where(product => product.IsActive);
-
-        if (!string.IsNullOrWhiteSpace(request.Gender))
-        {
-            productsQuery = productsQuery.Where(product => product.Category.Gender == request.Gender);
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Category))
-        {
-            var cat = request.Category.Trim().ToLower();
-            productsQuery = productsQuery.Where(product => product.Category.Name.ToLower() == cat);
-        }
-
-        // Extract search keywords from message
-        var searchTerms = Regex.Split(request.Message.ToLowerInvariant(), @"[^\p{L}\p{N}]+")
-            .Where(term => term.Length >= 2 && !IsCommonStopword(term))
-            .ToList();
-
-        if (searchTerms.Count > 0)
-        {
-            var primaryTerm = searchTerms.OrderByDescending(t => t.Length).First().ToLower();
-            var matchedQuery = productsQuery.Where(product =>
-                product.Name.ToLower().Contains(primaryTerm) ||
-                product.Category.Name.ToLower().Contains(primaryTerm) ||
-                product.Variants.Any(v => v.Size.ToLower().Contains(primaryTerm) || v.Color.ToLower().Contains(primaryTerm)));
-
-            if (await matchedQuery.AnyAsync(cancellationToken))
-            {
-                productsQuery = matchedQuery;
-            }
-        }
-
-        var products = await productsQuery
-            .OrderByDescending(p => p.SalePrice != null)
-            .ThenBy(p => p.Name)
-            .Take(8)
-            .Select(product => new
-            {
-                product.Name,
-                Gender = product.Category.Gender,
-                Category = product.Category.Name,
-                product.Price,
-                product.SalePrice,
-                CurrentPrice = product.SalePrice ?? product.Price,
-                product.CurrencyCode,
-                IsOnSale = product.SalePrice != null,
-                AvailableUnits = product.Variants.Sum(variant => (int?)variant.StockQuantity) ?? 0,
-                Sizes = product.Variants.Select(variant => variant.Size).Distinct().ToArray(),
-                Colors = product.Variants.Select(variant => variant.Color).Distinct().ToArray()
-            })
-            .ToListAsync(cancellationToken);
-
-        // Fallback local advisor if API key is not yet configured (guarantees safe local demo)
-        if (string.IsNullOrWhiteSpace(apiKey) || apiKey.StartsWith("replace-", StringComparison.OrdinalIgnoreCase))
+        var apiKey = ReadApiKey();
+        if (string.IsNullOrWhiteSpace(apiKey) ||
+            apiKey.StartsWith("replace-", StringComparison.OrdinalIgnoreCase))
         {
             return GenerateFallbackResponse(request);
         }
 
+        var baseUrl = configuration["Ai:OpenAiCompatible:BaseUrl"]
+            ?? "https://api.groq.com/openai/v1";
         if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri))
         {
-            throw CreateUnavailableException(request, AssistantMessages.NotConfigured(request.Language));
+            throw CreateUnavailableException(
+                request,
+                AssistantMessages.NotConfigured(request.Language));
         }
+
+        var userGender = ShouldUseGenderContext(request) ? request.Gender : null;
+        var categoryName = string.IsNullOrWhiteSpace(request.Category)
+            ? null
+            : request.Category.Trim();
+
+        var categories = await LoadCategoriesAsync(
+            userGender,
+            categoryName,
+            cancellationToken);
+        var products = await LoadProductsAsync(
+            userGender,
+            categoryName,
+            request.Message,
+            cancellationToken);
 
         var contextJson = JsonSerializer.Serialize(new
         {
-            UserGender = request.Gender,
-            UserCategory = request.Category,
+            UserGender = userGender,
+            UserCategory = categoryName,
             AvailableCategories = categories,
             AvailableProducts = products
         }, JsonOptions);
@@ -134,30 +71,13 @@ internal sealed class ChatAssistantService(
         var systemPrompt =
             $"{ChatAssistantPrompts.System(request.Language)}\n\n"
             + $"{ChatAssistantPrompts.ProductDataHeading(request.Language)}\n{contextJson}";
-
-        // Build messages list including multi-turn history
-        var messagesList = new List<object>
-        {
-            new { role = "system", content = systemPrompt }
-        };
-
-        if (request.History is { Count: > 0 })
-        {
-            foreach (var historyItem in request.History.TakeLast(6))
-            {
-                var role = historyItem.Role.Equals("user", StringComparison.OrdinalIgnoreCase) ? "user" : "assistant";
-                messagesList.Add(new { role, content = historyItem.Content });
-            }
-        }
-
-        messagesList.Add(new { role = "user", content = request.Message });
-
+        var messages = BuildMessages(systemPrompt, request);
         var payload = JsonSerializer.Serialize(new
         {
-            model,
+            model = configuration["Ai:OpenAiCompatible:Model"] ?? "openai/gpt-oss-120b",
             temperature = 0.5,
             max_tokens = ReadMaxOutputTokens(),
-            messages = messagesList
+            messages
         }, JsonOptions);
 
         using var httpRequest = new HttpRequestMessage(
@@ -166,6 +86,139 @@ internal sealed class ChatAssistantService(
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         httpRequest.Content = new StringContent(payload, Encoding.UTF8, "application/json");
 
+        return await SendRequestAsync(httpRequest, request, cancellationToken);
+    }
+
+    private string? ReadApiKey() =>
+        configuration["Ai:OpenAiCompatible:ApiKey"]
+        ?? Environment.GetEnvironmentVariable("Ai__OpenAiCompatible__ApiKey")
+        ?? Environment.GetEnvironmentVariable("GROQ_API_KEY");
+
+    private async Task<List<CategoryContext>> LoadCategoriesAsync(
+        string? gender,
+        string? categoryName,
+        CancellationToken cancellationToken)
+    {
+        var query = dbContext.Categories.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(gender))
+        {
+            query = query.Where(category => category.Gender == gender);
+        }
+
+        if (!string.IsNullOrWhiteSpace(categoryName))
+        {
+            var normalizedCategory = categoryName.ToLowerInvariant();
+            query = query.Where(category => category.Name.ToLower() == normalizedCategory);
+        }
+
+        var rows = await query
+            .OrderBy(category => category.Gender)
+            .ThenBy(category => category.Name)
+            .Select(category => new CategoryContext(
+                category.Gender,
+                category.Name,
+                category.Products.Count(product => product.IsActive),
+                category.Products.Count(product => product.IsActive && product.SalePrice != null),
+                category.Products
+                    .Where(product => product.IsActive)
+                    .SelectMany(product => product.Variants)
+                    .Sum(variant => (int?)variant.StockQuantity) ?? 0))
+            .ToListAsync(cancellationToken);
+
+        return rows;
+    }
+
+    private async Task<List<ProductContext>> LoadProductsAsync(
+        string? gender,
+        string? categoryName,
+        string message,
+        CancellationToken cancellationToken)
+    {
+        var query = dbContext.Products
+            .AsNoTracking()
+            .Where(product => product.IsActive);
+
+        if (!string.IsNullOrWhiteSpace(gender))
+        {
+            query = query.Where(product => product.Category.Gender == gender);
+        }
+
+        if (!string.IsNullOrWhiteSpace(categoryName))
+        {
+            var normalizedCategory = categoryName.ToLowerInvariant();
+            query = query.Where(product => product.Category.Name.ToLower() == normalizedCategory);
+        }
+
+        var searchTerms = SearchTermSeparator.Split(message.ToLowerInvariant())
+            .Where(term => term.Length >= 2 && !IsCommonStopword(term))
+            .ToList();
+
+        if (searchTerms.Count == 0)
+        {
+            return await SelectProductsAsync(query, cancellationToken);
+        }
+
+        var primaryTerm = searchTerms.MaxBy(term => term.Length)!;
+        var matchedQuery = query.Where(product =>
+                product.Name.ToLower().Contains(primaryTerm) ||
+                product.Category.Name.ToLower().Contains(primaryTerm) ||
+                product.Variants.Any(variant =>
+                    variant.Size.ToLower().Contains(primaryTerm) ||
+                    variant.Color.ToLower().Contains(primaryTerm)));
+        var matchedProducts = await SelectProductsAsync(matchedQuery, cancellationToken);
+        return matchedProducts.Count > 0
+            ? matchedProducts
+            : await SelectProductsAsync(query, cancellationToken);
+    }
+
+    private static Task<List<ProductContext>> SelectProductsAsync(
+        IQueryable<Product> query,
+        CancellationToken cancellationToken) =>
+        query
+            .OrderByDescending(product => product.SalePrice != null)
+            .ThenBy(product => product.Name)
+            .Take(8)
+            .Select(product => new ProductContext(
+                product.Name,
+                product.Category.Gender,
+                product.Category.Name,
+                product.Price,
+                product.SalePrice,
+                product.SalePrice ?? product.Price,
+                product.CurrencyCode,
+                product.SalePrice != null,
+                product.Variants.Sum(variant => (int?)variant.StockQuantity) ?? 0,
+                product.Variants.Select(variant => variant.Size).Distinct().ToArray(),
+                product.Variants.Select(variant => variant.Color).Distinct().ToArray()))
+            .ToListAsync(cancellationToken);
+
+    private static List<object> BuildMessages(string systemPrompt, ChatAssistantRequest request)
+    {
+        var messages = new List<object>
+        {
+            new { role = "system", content = systemPrompt }
+        };
+
+        if (request.History is { Count: > 0 })
+        {
+            messages.AddRange(request.History.TakeLast(6).Select(historyItem => new
+            {
+                role = historyItem.Role.Equals("user", StringComparison.OrdinalIgnoreCase)
+                    ? "user"
+                    : "assistant",
+                content = historyItem.Content
+            }));
+        }
+
+        messages.Add(new { role = "user", content = request.Message });
+        return messages;
+    }
+
+    private async Task<ChatAssistantResponse> SendRequestAsync(
+        HttpRequestMessage httpRequest,
+        ChatAssistantRequest request,
+        CancellationToken cancellationToken)
+    {
         try
         {
             using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
@@ -206,6 +259,24 @@ internal sealed class ChatAssistantService(
             logger.LogWarning(exception, AssistantMessages.ProviderInvalidResponseLog);
             throw CreateUnavailableException(request, AssistantMessages.ProviderInvalidResponse(request.Language));
         }
+    }
+
+    private static bool ShouldUseGenderContext(ChatAssistantRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Gender))
+        {
+            return false;
+        }
+
+        if (PersonalRequestPattern.IsMatch(request.Message))
+        {
+            return true;
+        }
+
+        return request.History?
+            .Where(item => item.Role.Equals("user", StringComparison.OrdinalIgnoreCase))
+            .TakeLast(6)
+            .Any(item => PersonalRequestPattern.IsMatch(item.Content)) == true;
     }
 
     private static bool IsCommonStopword(string word) =>
@@ -252,4 +323,24 @@ internal sealed class ChatAssistantService(
         int.TryParse(configuration["Ai:OpenAiCompatible:MaxOutputTokens"], out var value)
             ? Math.Clamp(value, 64, 2048)
             : 600;
+
+    private sealed record CategoryContext(
+        string Gender,
+        string Name,
+        int ProductCount,
+        int OnSaleCount,
+        int AvailableUnits);
+
+    private sealed record ProductContext(
+        string Name,
+        string Gender,
+        string Category,
+        decimal Price,
+        decimal? SalePrice,
+        decimal CurrentPrice,
+        string CurrencyCode,
+        bool IsOnSale,
+        int AvailableUnits,
+        string[] Sizes,
+        string[] Colors);
 }
