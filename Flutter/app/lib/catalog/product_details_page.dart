@@ -7,7 +7,6 @@ import '../models/store_product.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
-import '../shared/theme/app_theme.dart';
 import '../shared/widgets/app_snack_bar.dart';
 import 'product_price_line.dart';
 
@@ -82,12 +81,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                24,
-                20,
-                32,
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -244,9 +238,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         final soldOut = variant.stockQuantity == 0;
 
         return ChoiceChip(
-          label: Text(
-            AppStrings.variantSummary(variant.size, variant.color),
-          ),
+          label: Text(AppStrings.variantSummary(variant.size, variant.color)),
           selected: selected,
           onSelected: soldOut
               ? null
@@ -256,9 +248,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     _quantity = 1;
                   });
                 },
-          avatar: soldOut
-              ? const Icon(Icons.block, size: 14)
-              : null,
+          avatar: soldOut ? const Icon(Icons.block, size: 14) : null,
           selectedColor: Colors.black,
           backgroundColor: Colors.white,
           disabledColor: const Color(0xFFF0F0F0),
@@ -269,14 +259,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             color: selected
                 ? Colors.white
                 : soldOut
-                    ? Colors.black38
-                    : Colors.black,
+                ? Colors.black38
+                : Colors.black,
             fontWeight: FontWeight.w700,
             fontSize: 12,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           showCheckmark: false,
         );
       }).toList(),
@@ -312,8 +300,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             ),
           ),
           IconButton(
-            onPressed: _quantity <
-                    (_selectedVariant?.stockQuantity ?? 0)
+            onPressed: _quantity < (_selectedVariant?.stockQuantity ?? 0)
                 ? () => setState(() => _quantity += 1)
                 : null,
             icon: const Icon(Icons.add, size: 18),
@@ -357,9 +344,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Color(0xFFE5E5E5)),
-        ),
+        border: Border(top: BorderSide(color: Color(0xFFE5E5E5))),
       ),
       child: SafeArea(
         top: false,
@@ -421,9 +406,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                             ? null
                             : () => _addToBag(variant),
                         child: Text(
-                          _busy
-                              ? AppStrings.pleaseWait
-                              : AppStrings.addToBag,
+                          _busy ? AppStrings.pleaseWait : AppStrings.addToBag,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -451,9 +434,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                             ? null
                             : () => _buyNow(variant),
                         child: Text(
-                          _busy
-                              ? AppStrings.pleaseWait
-                              : AppStrings.buyNow,
+                          _busy ? AppStrings.pleaseWait : AppStrings.buyNow,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -497,11 +478,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
       setState(() => _busy = false);
 
-      showAppErrorSnackBar(
-        context,
-        error,
-        fallback: AppStrings.errorAddToBag,
-      );
+      showAppErrorSnackBar(context, error, fallback: AppStrings.errorAddToBag);
     }
   }
 
@@ -521,20 +498,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       setState(() => _busy = false);
 
       await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => CheckoutPage(api: widget.api),
-        ),
+        MaterialPageRoute<void>(builder: (_) => CheckoutPage(api: widget.api)),
       );
     } catch (error) {
       if (!mounted) return;
 
       setState(() => _busy = false);
 
-      showAppErrorSnackBar(
-        context,
-        error,
-        fallback: AppStrings.errorAddToBag,
-      );
+      showAppErrorSnackBar(context, error, fallback: AppStrings.errorAddToBag);
     }
   }
 
@@ -545,9 +516,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     if (!mounted) return false;
 
     final result = await Navigator.of(context).push<AuthSession>(
-      MaterialPageRoute<AuthSession>(
-        builder: (_) => AuthPage(api: widget.api),
-      ),
+      MaterialPageRoute<AuthSession>(builder: (_) => AuthPage(api: widget.api)),
     );
 
     return result != null;
@@ -567,8 +536,7 @@ class _HeroImage extends StatelessWidget {
       url!,
       fit: BoxFit.contain,
       webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
-      errorBuilder: (context, error, stackTrace) =>
-          const _ImageFallback(),
+      errorBuilder: (context, error, stackTrace) => const _ImageFallback(),
     );
   }
 }
@@ -581,21 +549,14 @@ class _ImageFallback extends StatelessWidget {
     return Container(
       color: const Color(0xFFF1F1F1),
       child: const Center(
-        child: Icon(
-          Icons.checkroom_outlined,
-          size: 72,
-          color: Colors.black26,
-        ),
+        child: Icon(Icons.checkroom_outlined, size: 72, color: Colors.black26),
       ),
     );
   }
 }
 
 class _PerkTile extends StatelessWidget {
-  const _PerkTile({
-    required this.icon,
-    required this.label,
-  });
+  const _PerkTile({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
@@ -612,11 +573,7 @@ class _PerkTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: Colors.black,
-          ),
+          Icon(icon, size: 20, color: Colors.black),
           const SizedBox(height: 10),
           Text(
             label,

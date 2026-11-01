@@ -5,7 +5,6 @@ import '../models/store_product.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
-import '../shared/theme/app_theme.dart';
 import '../shared/widgets/app_snack_bar.dart';
 import '../shared/widgets/error_state_view.dart';
 import '../shared/widgets/skeleton_row_list.dart';

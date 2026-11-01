@@ -1007,7 +1007,7 @@ class _CategoryNavigationItem extends StatelessWidget {
 }
 
 class _BigfitAnimatedLogo extends StatefulWidget {
-  const _BigfitAnimatedLogo({super.key});
+  const _BigfitAnimatedLogo();
 
   @override
   State<_BigfitAnimatedLogo> createState() => _BigfitAnimatedLogoState();
@@ -1078,7 +1078,7 @@ class _BigfitAnimatedLogoState extends State<_BigfitAnimatedLogo>
               shadows: [
                 Shadow(
                   color: const Color(0xFF14432F)
-                      .withOpacity(_controller.value * 0.5),
+                      .withValues(alpha: _controller.value * 0.5),
                   blurRadius: _glow.value,
                 ),
               ],
