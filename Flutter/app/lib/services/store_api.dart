@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -27,7 +27,7 @@ class StoreApi {
          baseUrl ??
              (const String.fromEnvironment('API_BASE_URL').isNotEmpty
                  ? const String.fromEnvironment('API_BASE_URL')
-                 : 'https://big-fit-pgm-store.onrender.com'),
+                 : (kDebugMode ? localBaseUrl : 'https://big-fit-pgm-store.onrender.com')),
        );
 
   static const _tokenKey = 'bigfit.accessToken';
@@ -43,6 +43,8 @@ class StoreApi {
   String? _accessToken;
 
   String get baseUrl => _baseUri.toString().replaceFirst(RegExp(r'/$'), '');
+  bool get isAuthenticated => _accessToken != null && _accessToken!.isNotEmpty;
+  String? get accessToken => _accessToken;
 
   static Uri _normalizeBaseUri(String value) {
     final parsed = Uri.parse(value.trim());
@@ -227,11 +229,20 @@ class StoreApi {
     required String message,
     String? gender,
     String? category,
+    List<Map<String, String>>? history,
   }) async {
+    final body = <String, Object?>{
+      'message': message,
+      'gender': gender,
+      'category': category,
+    };
+    if (history != null && history.isNotEmpty) {
+      body['history'] = history;
+    }
     final response = await _send(
       'POST',
       '/assistant/chat',
-      body: {'message': message, 'gender': gender, 'category': category},
+      body: body,
     );
     return ChatReply.fromJson(response as Map<String, dynamic>);
   }

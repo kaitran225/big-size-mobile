@@ -1,4 +1,4 @@
-﻿using BigFit.Application.Abstractions;
+using BigFit.Application.Abstractions;
 using BigFit.Application.Assistant;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -13,10 +13,10 @@ public static class ChatAssistantEndpoints
             IChatAssistantService assistant,
             CancellationToken cancellationToken) =>
                 TypedResults.Ok(await assistant.AskAsync(request, cancellationToken)))
-        .WithTags(AssistantMessages.Tag)
+        .WithTags(ApiMessages.TagAssistant)
         .WithName("AskBigFitAssistant")
-        .WithSummary(AssistantMessages.Summary)
-        .WithDescription(AssistantMessages.Description)
+        .WithSummary(ApiMessages.SummaryAskAssistant)
+        .WithDescription(ApiMessages.DescriptionAskAssistant)
         .RequireAuthorization()
         .RequireRateLimiting("assistant");
 

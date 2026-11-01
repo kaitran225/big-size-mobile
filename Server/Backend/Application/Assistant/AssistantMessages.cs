@@ -1,61 +1,47 @@
 namespace BigFit.Application.Assistant;
 
+using BigFit.Application.Abstractions;
+
 /// <summary>
-/// Every piece of text owned by the AI assistant: the system prompt sent to
-/// the provider, the messages returned to the client when the assistant
-/// cannot answer, and the OpenAPI documentation for the endpoint.
+/// References strings centralized in <see cref="ApiMessages"/> for the AI assistant module.
 /// </summary>
 public static class AssistantMessages
 {
     // ---------------------------------------------------------------------
-    // Provider prompt
+    // Provider prompt & fallbacks
     // ---------------------------------------------------------------------
 
-    /// <summary>
-    /// System prompt that keeps the assistant grounded in the catalogue data
-    /// supplied with each question.
-    /// </summary>
-    public const string SystemPrompt =
-        "You are BigFit's concise clothing shopping assistant. Answer only from the supplied BigFit catalogue data. " +
-        "Never invent prices, stock, sizes, policies, or products. Explain when requested information is absent. " +
-        "Use the product's currentPrice for today's price and mention salePrice only when isOnSale is true. " +
-        "Keep answers brief and recommend checking fit because sizes vary by garment.";
+    public const string SystemPrompt = ApiMessages.AssistantSystemPrompt;
+    public const string OutOfScopeFallback = ApiMessages.AssistantOutOfScopeFallback;
+    public const string SizeGuideFallback = ApiMessages.AssistantSizeGuideFallback;
+    public const string PoliciesFallback = ApiMessages.AssistantPoliciesFallback;
+    public const string GeneralFallback = ApiMessages.AssistantGeneralFallback;
 
     // ---------------------------------------------------------------------
     // Failure messages
     // ---------------------------------------------------------------------
 
-    public const string UnavailableTitle = "AI assistant unavailable";
-    public const string NotConfigured =
-        "AI assistant is not configured. Set the AI provider endpoint, API key, and model.";
-    public const string ProviderRequestFailed =
-        "The AI provider could not complete the request.";
-    public const string ProviderEmptyResponse =
-        "The AI provider returned an empty response.";
-    public const string ProviderUnavailable =
-        "The AI provider is temporarily unavailable.";
-    public const string ProviderTimedOut =
-        "The AI provider request timed out.";
-    public const string ProviderInvalidResponse =
-        "The AI provider returned an invalid response.";
+    public const string UnavailableTitle = ApiMessages.AssistantUnavailableTitle;
+    public const string NotConfigured = ApiMessages.AssistantNotConfigured;
+    public const string ProviderRequestFailed = ApiMessages.AssistantProviderRequestFailed;
+    public const string ProviderEmptyResponse = ApiMessages.AssistantProviderEmptyResponse;
+    public const string ProviderUnavailable = ApiMessages.AssistantProviderUnavailable;
+    public const string ProviderTimedOut = ApiMessages.AssistantProviderTimedOut;
+    public const string ProviderInvalidResponse = ApiMessages.AssistantProviderInvalidResponse;
 
     // ---------------------------------------------------------------------
     // Logging
     // ---------------------------------------------------------------------
 
-    public const string ProviderErrorStatusLog =
-        "Configured AI provider returned HTTP {StatusCode}.";
-    public const string ProviderUnreachableLog =
-        "Could not reach the configured AI provider.";
-    public const string ProviderTimeoutLog =
-        "The configured AI provider timed out.";
+    public const string ProviderErrorStatusLog = ApiMessages.AssistantProviderErrorStatusLog;
+    public const string ProviderUnreachableLog = ApiMessages.AssistantProviderUnreachableLog;
+    public const string ProviderTimeoutLog = ApiMessages.AssistantProviderTimeoutLog;
 
     // ---------------------------------------------------------------------
     // OpenAPI text
     // ---------------------------------------------------------------------
 
-    public const string Tag = "AI assistant";
-    public const string Summary = "Ask a concise catalogue-grounded question";
-    public const string Description =
-        "The model receives compact category aggregates and at most eight relevant product summaries.";
+    public const string Tag = ApiMessages.TagAssistant;
+    public const string Summary = ApiMessages.SummaryAskAssistant;
+    public const string Description = ApiMessages.DescriptionAskAssistant;
 }

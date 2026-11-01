@@ -2,6 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BigFit.Application.Assistant;
 
+/// <summary>Single turn message in chat history.</summary>
+public sealed record ChatMessageItem(
+    [Required] string Role,
+    [Required] string Content);
+
 /// <summary>Question for the BigFit catalogue assistant.</summary>
 public sealed record ChatAssistantRequest
 {
@@ -13,6 +18,8 @@ public sealed record ChatAssistantRequest
 
     [MaxLength(120)]
     public string? Category { get; init; }
+
+    public IReadOnlyList<ChatMessageItem>? History { get; init; }
 }
 
 /// <summary>Answer from the BigFit catalogue assistant.</summary>
