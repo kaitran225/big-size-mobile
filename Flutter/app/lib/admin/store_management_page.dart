@@ -21,12 +21,12 @@ class StoreManagementPage extends StatelessWidget {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.storeManagementTitle)),
+      appBar: AppBar(title: Text(AppStrings.storeManagementTitle)),
       body: canManage
           ? ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                const AppSectionHeader(text: AppStrings.managementOverview),
+                AppSectionHeader(text: AppStrings.managementOverview),
                 const SizedBox(height: 12),
                 AppListTileCard(
                   icon: Icons.inventory_2_outlined,
@@ -47,13 +47,13 @@ class StoreManagementPage extends StatelessWidget {
                   onTap: () => _open(context, const AdminReviewsPage()),
                 ),
                 const SizedBox(height: 12),
-                const AppInfoNote(
+                AppInfoNote(
                   text: AppStrings.managementNotConnected,
                   style: AppInfoNoteStyle.plain,
                 ),
               ],
             )
-          : const Center(
+          : Center(
               child: Padding(
                 padding: EdgeInsets.all(32),
                 child: AppInfoNote(

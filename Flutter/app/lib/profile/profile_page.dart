@@ -75,7 +75,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final theme = Theme.of(context);
     final session = _session;
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.accountTitle)),
+      appBar: AppBar(title: Text(AppStrings.accountTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -101,13 +101,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   OutlinedButton.icon(
                     onPressed: _signOut,
                     icon: const Icon(Icons.logout),
-                    label: const Text(AppStrings.signOutAction),
+                    label: Text(AppStrings.signOutAction),
                   )
                 else
                   FilledButton.icon(
                     onPressed: _openAuth,
                     icon: const Icon(Icons.login),
-                    label: const Text(AppStrings.signIn),
+                    label: Text(AppStrings.signIn),
                   ),
               ],
             ),

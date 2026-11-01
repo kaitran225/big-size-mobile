@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
 import '../services/store_api.dart';
@@ -54,7 +54,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text(AppStrings.notificationsTitle),
+      title: Text(AppStrings.notificationsTitle),
       actions: [
         IconButton(
           tooltip: AppStrings.refresh,
@@ -62,7 +62,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           icon: const Icon(Icons.refresh),
         ),
       ],
-      bottom: const PreferredSize(
+      bottom: PreferredSize(
         preferredSize: Size.fromHeight(34),
         child: Padding(
           padding: EdgeInsets.only(bottom: 10),

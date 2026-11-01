@@ -9,7 +9,7 @@ class EmailVerificationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text(AppStrings.verifyEmail)),
-        body: const NotImplementedView(title: AppStrings.verifyEmail),
-      );
+    appBar: AppBar(title: Text(AppStrings.verifyEmail)),
+    body: NotImplementedView(title: AppStrings.verifyEmail),
+  );
 }

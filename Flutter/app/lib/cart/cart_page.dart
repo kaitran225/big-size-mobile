@@ -83,9 +83,7 @@ class _CartPageState extends State<CartPage> {
 
   Future<void> _checkout() async {
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => CheckoutPage(api: widget.api),
-      ),
+      MaterialPageRoute<void>(builder: (_) => CheckoutPage(api: widget.api)),
     );
 
     await _load();
@@ -110,7 +108,7 @@ class _CartPageState extends State<CartPage> {
         foregroundColor: Colors.black,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text(
+        title: Text(
           AppStrings.shoppingBagTitle,
           style: TextStyle(
             color: Colors.black,
@@ -125,7 +123,7 @@ class _CartPageState extends State<CartPage> {
               padding: const EdgeInsets.only(right: 18),
               child: Center(
                 child: Text(
-                  '${cart.items.length} ITEMS',
+                  '${cart.items.length} ${AppStrings.cartItemsHeading}',
                   style: const TextStyle(
                     color: Colors.black54,
                     fontSize: 10,
@@ -140,40 +138,34 @@ class _CartPageState extends State<CartPage> {
       body: _loading
           ? const SkeletonRowList()
           : _error != null
-              ? ErrorStateView(message: _error!)
-              : cart!.items.isEmpty
-                  ? _buildEmptyBag()
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(
-                        18,
-                        12,
-                        18,
-                        28,
-                      ),
-                      children: [
-                        const Text(
-                          'YOUR SELECTION',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        for (final item in cart.items) ...[
-                          _CartLine(
-                            item: item,
-                            busy: _busy,
-                            onChange: (quantity) =>
-                                _changeQuantity(item, quantity),
-                          ),
-                          const SizedBox(height: 14),
-                        ],
-                        const SizedBox(height: 12),
-                        _SummaryCard(cart: cart),
-                      ],
-                    ),
+          ? ErrorStateView(message: _error!)
+          : cart!.items.isEmpty
+          ? _buildEmptyBag()
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 28),
+              children: [
+                Text(
+                  AppStrings.cartSelectionHeading,
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                for (final item in cart.items) ...[
+                  _CartLine(
+                    item: item,
+                    busy: _busy,
+                    onChange: (quantity) => _changeQuantity(item, quantity),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                const SizedBox(height: 12),
+                _SummaryCard(cart: cart),
+              ],
+            ),
       bottomNavigationBar: cart == null || cart.items.isEmpty
           ? null
           : _buildCheckoutBar(cart),
@@ -201,8 +193,8 @@ class _CartPageState extends State<CartPage> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'YOUR BAG IS EMPTY',
+            Text(
+              AppStrings.cartEmptyHeading,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.black,
@@ -235,8 +227,8 @@ class _CartPageState extends State<CartPage> {
                   borderRadius: BorderRadius.zero,
                 ),
               ),
-              child: const Text(
-                'CONTINUE SHOPPING',
+              child: Text(
+                AppStrings.cartContinueShopping,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
@@ -256,9 +248,7 @@ class _CartPageState extends State<CartPage> {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Color(0xFFE5E5E5)),
-        ),
+        border: Border(top: BorderSide(color: Color(0xFFE5E5E5))),
       ),
       child: SafeArea(
         top: false,
@@ -271,8 +261,8 @@ class _CartPageState extends State<CartPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'TOTAL',
+                    Text(
+                      AppStrings.cartTotalHeading,
                       style: TextStyle(
                         color: Colors.black54,
                         fontSize: 10,
@@ -282,10 +272,7 @@ class _CartPageState extends State<CartPage> {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      formatPrice(
-                        cart.subtotal + shipping,
-                        cart.currencyCode,
-                      ),
+                      formatPrice(cart.subtotal + shipping, cart.currencyCode),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -312,7 +299,7 @@ class _CartPageState extends State<CartPage> {
                         borderRadius: BorderRadius.zero,
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
@@ -369,8 +356,7 @@ class _CartLine extends StatelessWidget {
                     width: 96,
                     height: 116,
                     fit: BoxFit.cover,
-                    webHtmlElementStrategy:
-                        WebHtmlElementStrategy.fallback,
+                    webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                     errorBuilder: (_, _, _) => _imagePlaceholder(),
                   ),
           ),
@@ -431,10 +417,9 @@ class _CartLine extends StatelessWidget {
                     ),
                     _StepperButton(
                       icon: Icons.add,
-                      onPressed:
-                          busy || item.quantity >= item.stockQuantity
-                              ? null
-                              : () => onChange(item.quantity + 1),
+                      onPressed: busy || item.quantity >= item.stockQuantity
+                          ? null
+                          : () => onChange(item.quantity + 1),
                     ),
                     const Spacer(),
                     IconButton(
@@ -463,21 +448,14 @@ class _CartLine extends StatelessWidget {
       height: 116,
       color: const Color(0xFFF1F1F1),
       child: const Center(
-        child: Icon(
-          Icons.checkroom_outlined,
-          size: 34,
-          color: Colors.black38,
-        ),
+        child: Icon(Icons.checkroom_outlined, size: 34, color: Colors.black38),
       ),
     );
   }
 }
 
 class _StepperButton extends StatelessWidget {
-  const _StepperButton({
-    required this.icon,
-    required this.onPressed,
-  });
+  const _StepperButton({required this.icon, required this.onPressed});
 
   final IconData icon;
   final VoidCallback? onPressed;
@@ -491,13 +469,9 @@ class _StepperButton extends StatelessWidget {
         width: 30,
         height: 30,
         decoration: BoxDecoration(
-          color: onPressed == null
-              ? const Color(0xFFF5F5F5)
-              : Colors.white,
+          color: onPressed == null ? const Color(0xFFF5F5F5) : Colors.white,
           border: Border.all(
-            color: onPressed == null
-                ? const Color(0xFFE5E5E5)
-                : Colors.black,
+            color: onPressed == null ? const Color(0xFFE5E5E5) : Colors.black,
           ),
         ),
         child: Icon(
@@ -528,8 +502,8 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'ORDER SUMMARY',
+          Text(
+            AppStrings.cartOrderSummaryHeading,
             style: TextStyle(
               color: Colors.black,
               fontSize: 13,
@@ -553,10 +527,7 @@ class _SummaryCard extends StatelessWidget {
           ),
           _SummaryRow(
             label: AppStrings.total,
-            value: formatPrice(
-              cart.subtotal + shipping,
-              cart.currencyCode,
-            ),
+            value: formatPrice(cart.subtotal + shipping, cart.currencyCode),
             emphasized: true,
           ),
         ],

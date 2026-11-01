@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
 import '../shared/app_strings.dart';
@@ -117,7 +117,7 @@ class _AddressEditorState extends State<AddressEditor> {
                 ),
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text(AppStrings.setAsDefault),
+                title: Text(AppStrings.setAsDefault),
                 value: _isDefault,
                 onChanged: (value) =>
                     setState(() => _isDefault = value ?? false),

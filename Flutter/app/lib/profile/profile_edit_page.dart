@@ -9,7 +9,7 @@ class ProfileEditPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text(AppStrings.profileEditTitle)),
-        body: const NotImplementedView(title: AppStrings.profileEditTitle),
-      );
+    appBar: AppBar(title: Text(AppStrings.profileEditTitle)),
+    body: NotImplementedView(title: AppStrings.profileEditTitle),
+  );
 }

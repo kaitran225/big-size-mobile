@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../models/store_product.dart';
 import '../shared/app_strings.dart';
@@ -131,7 +131,7 @@ class _ProductDetailsSheetState extends State<ProductDetailsSheet> {
                 child: OutlinedButton.icon(
                   onPressed: widget.onToggleFavorite,
                   icon: const Icon(Icons.favorite_border),
-                  label: const Text(AppStrings.addToFavorites),
+                  label: Text(AppStrings.addToFavorites),
                 ),
               ),
             ],

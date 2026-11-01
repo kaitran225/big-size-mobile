@@ -9,7 +9,7 @@ class FitPreferencesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text(AppStrings.fitPreferences)),
-        body: const NotImplementedView(title: AppStrings.fitPreferences),
-      );
+    appBar: AppBar(title: Text(AppStrings.fitPreferences)),
+    body: NotImplementedView(title: AppStrings.fitPreferences),
+  );
 }

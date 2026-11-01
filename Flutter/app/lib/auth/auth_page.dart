@@ -124,7 +124,7 @@ class _AuthPageState extends State<AuthPage> {
                             controller: _nameController,
                             textCapitalization: TextCapitalization.words,
                             textInputAction: TextInputAction.next,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: AppStrings.displayName,
                               prefixIcon: Icon(Icons.person_outline),
                             ),
@@ -140,7 +140,7 @@ class _AuthPageState extends State<AuthPage> {
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.email],
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: AppStrings.email,
                             prefixIcon: Icon(Icons.mail_outline),
                           ),
@@ -167,8 +167,8 @@ class _AuthPageState extends State<AuthPage> {
                             prefixIcon: const Icon(Icons.lock_outline),
                             suffixIcon: IconButton(
                               tooltip: _obscurePassword
-                                  ? 'Show password'
-                                  : 'Hide password',
+                                  ? AppStrings.showPassword
+                                  : AppStrings.hidePassword,
                               onPressed: () => setState(
                                 () => _obscurePassword = !_obscurePassword,
                               ),

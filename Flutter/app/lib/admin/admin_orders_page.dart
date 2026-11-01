@@ -9,7 +9,7 @@ class AdminOrdersPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text(AppStrings.ordersTitle)),
-        body: const NotImplementedView(title: AppStrings.ordersTitle),
-      );
+    appBar: AppBar(title: Text(AppStrings.ordersTitle)),
+    body: NotImplementedView(title: AppStrings.ordersTitle),
+  );
 }

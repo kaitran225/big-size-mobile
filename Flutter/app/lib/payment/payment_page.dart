@@ -24,7 +24,7 @@ class _PaymentPageState extends State<PaymentPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.paymentTitle)),
+      appBar: AppBar(title: Text(AppStrings.paymentTitle)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.lg,

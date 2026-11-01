@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../shared/theme/app_theme.dart';
+import '../shared/app_strings.dart';
 
 /// A tappable delivery map that turns a tap into map coordinates.
 ///
@@ -85,7 +86,7 @@ class _MapPointPickerState extends State<MapPointPicker> {
                   ),
                   child: Text(
                     _latitude == null
-                        ? 'Tap to place a pin'
+                        ? AppStrings.mapTapToPlacePin
                         : '${_latitude!.toStringAsFixed(5)}, '
                               '${_longitude!.toStringAsFixed(5)}',
                     style: const TextStyle(

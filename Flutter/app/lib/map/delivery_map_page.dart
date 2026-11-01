@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../shared/app_strings.dart';
 import '../shared/theme/app_theme.dart';
@@ -21,7 +21,7 @@ class _DeliveryMapPageState extends State<DeliveryMapPage> {
     final theme = Theme.of(context);
     final hasPoint = _latitude != null && _longitude != null;
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.mapTitle)),
+      appBar: AppBar(title: Text(AppStrings.mapTitle)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.lg,
@@ -85,7 +85,7 @@ class _DeliveryMapPageState extends State<DeliveryMapPage> {
                     })
                   : null,
               icon: const Icon(Icons.check),
-              label: const Text(AppStrings.useThisLocation),
+              label: Text(AppStrings.useThisLocation),
             ),
           ),
         ],
