@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../auth/auth_page.dart';
-import 'assistant_chat_strings.dart';
 import '../models/store_product.dart';
 import '../services/store_api.dart';
+import '../shared/theme/app_theme.dart';
+import 'assistant_chat_strings.dart';
+import 'assistant_markdown.dart';
 
 class _ChatMessage {
   _ChatMessage({required this.isUser, required this.text, required this.time});
@@ -142,9 +144,7 @@ class _AssistantPageState extends State<AssistantPage> {
             child: Text(strings.cancel),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF174C3C),
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.brand),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(strings.confirm),
           ),
@@ -189,12 +189,12 @@ class _AssistantPageState extends State<AssistantPage> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: const Color(0xFF174C3C).withValues(alpha: 0.15),
+                color: AppColors.brandSoft,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.smart_toy_outlined,
-                color: Color(0xFF174C3C),
+                Icons.checkroom_rounded,
+                color: AppColors.brand,
                 size: 20,
               ),
             ),
@@ -209,7 +209,11 @@ class _AssistantPageState extends State<AssistantPage> {
                 ),
                 Text(
                   strings.online,
-                  style: TextStyle(fontSize: 11, color: Colors.green),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.success,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -240,11 +244,11 @@ class _AssistantPageState extends State<AssistantPage> {
                 child: Text(strings.vietnameseLanguage),
               ),
             ],
-            icon: const Icon(Icons.translate),
+            icon: const Icon(Icons.translate_rounded),
           ),
           IconButton(
             tooltip: strings.refreshChat,
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.add_comment_outlined),
             onPressed: _messages.length > 1 ? _resetChat : null,
           ),
         ],
@@ -261,10 +265,7 @@ class _AssistantPageState extends State<AssistantPage> {
                 Expanded(
                   child: ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
                     itemCount: _messages.length + (_sending ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == _messages.length && _sending) {
@@ -325,13 +326,13 @@ class _AssistantPageState extends State<AssistantPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF174C3C).withValues(alpha: 0.1),
+              color: AppColors.brandSoft,
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.auto_awesome,
+              Icons.checkroom_rounded,
               size: 54,
-              color: Color(0xFF174C3C),
+              color: AppColors.brand,
             ),
           ),
           const SizedBox(height: 20),
@@ -343,12 +344,15 @@ class _AssistantPageState extends State<AssistantPage> {
           Text(
             _strings.loginDescription,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.4),
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.inkMuted,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF174C3C),
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -375,20 +379,17 @@ class _AssistantPageState extends State<AssistantPage> {
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: ActionChip(
-                backgroundColor: const Color(0xFF174C3C)
-                    .withValues(alpha: 0.08),
+                backgroundColor: AppColors.brandSoft,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(
-                    color: const Color(0xFF174C3C).withValues(alpha: 0.2),
-                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(color: AppColors.hairline),
                 ),
                 label: Text(
                   prompt,
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF174C3C),
+                    color: AppColors.brand,
                   ),
                 ),
                 onPressed: _sending ? null : () => _send(prompt),
@@ -405,7 +406,7 @@ class _AssistantPageState extends State<AssistantPage> {
         '${msg.time.hour.toString().padLeft(2, '0')}:${msg.time.minute.toString().padLeft(2, '0')}';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         mainAxisAlignment: isUser
             ? MainAxisAlignment.end
@@ -414,25 +415,27 @@ class _AssistantPageState extends State<AssistantPage> {
         children: [
           if (!isUser) ...[
             Container(
-              margin: const EdgeInsets.only(right: 8, top: 4),
-              padding: const EdgeInsets.all(6),
+              margin: const EdgeInsets.only(right: 8, top: 3),
+              padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                color: const Color(0xFF174C3C).withValues(alpha: 0.15),
+                color: AppColors.brandSoft,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.smart_toy_outlined,
-                size: 16,
-                color: Color(0xFF174C3C),
+                Icons.checkroom_rounded,
+                size: 17,
+                color: AppColors.brand,
               ),
             ),
           ],
           Flexible(
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 320),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.sizeOf(context).width * 0.78,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               decoration: BoxDecoration(
-                color: isUser ? const Color(0xFF174C3C) : Colors.white,
+                color: isUser ? AppColors.brand : AppColors.surface,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
@@ -445,29 +448,27 @@ class _AssistantPageState extends State<AssistantPage> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+                    color: Colors.black.withValues(alpha: 0.035),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
                 ],
-                border: isUser
-                    ? null
-                    : Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                border: isUser ? null : Border.all(color: AppColors.hairline),
               ),
               child: Column(
                 crossAxisAlignment: isUser
                     ? CrossAxisAlignment.end
                     : CrossAxisAlignment.start,
                 children: [
-                  _buildFormattedContent(msg.text, isUser),
-                  const SizedBox(height: 4),
+                  AssistantMarkdown(data: msg.text, isUser: isUser),
+                  const SizedBox(height: 6),
                   Text(
                     timeStr,
                     style: TextStyle(
                       fontSize: 10,
                       color: isUser
                           ? Colors.white.withValues(alpha: 0.7)
-                          : Colors.black38,
+                          : AppColors.inkMuted,
                     ),
                   ),
                 ],
@@ -476,67 +477,22 @@ class _AssistantPageState extends State<AssistantPage> {
           ),
           if (isUser) ...[
             Container(
-              margin: const EdgeInsets.only(left: 8, top: 4),
-              padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                color: Color(0xFF174C3C),
+              margin: const EdgeInsets.only(left: 8, top: 3),
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: AppColors.brandSoft,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.person, size: 16, color: Colors.white),
+              child: const Icon(
+                Icons.person_outline_rounded,
+                size: 17,
+                color: AppColors.brand,
+              ),
             ),
           ],
         ],
       ),
     );
-  }
-
-  Widget _buildFormattedContent(String text, bool isUser) {
-    // Render simple markdown: bold **word**
-    final spans = <TextSpan>[];
-    final regex = RegExp(r'\*\*(.*?)\*\*');
-    int lastIndex = 0;
-
-    for (final match in regex.allMatches(text)) {
-      if (match.start > lastIndex) {
-        spans.add(
-          TextSpan(
-            text: text.substring(lastIndex, match.start),
-            style: TextStyle(
-              color: isUser ? Colors.white : Colors.black87,
-              fontSize: 14,
-              height: 1.4,
-            ),
-          ),
-        );
-      }
-      spans.add(
-        TextSpan(
-          text: match.group(1),
-          style: TextStyle(
-            color: isUser ? Colors.white : Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            height: 1.4,
-          ),
-        ),
-      );
-      lastIndex = match.end;
-    }
-
-    if (lastIndex < text.length) {
-      spans.add(
-        TextSpan(
-          text: text.substring(lastIndex),
-          style: TextStyle(
-            color: isUser ? Colors.white : Colors.black87,
-            fontSize: 14,
-            height: 1.4,
-          ),
-        ),
-      );
-    }
-
-    return RichText(text: TextSpan(children: spans));
   }
 
   Widget _buildTypingIndicator() => Padding(
@@ -547,15 +503,15 @@ class _AssistantPageState extends State<AssistantPage> {
       children: [
         Container(
           margin: const EdgeInsets.only(right: 8),
-          padding: const EdgeInsets.all(6),
+          padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
-            color: const Color(0xFF174C3C).withValues(alpha: 0.15),
+            color: AppColors.brandSoft,
             shape: BoxShape.circle,
           ),
           child: const Icon(
-            Icons.smart_toy_outlined,
-            size: 16,
-            color: Color(0xFF174C3C),
+            Icons.checkroom_rounded,
+            size: 17,
+            color: AppColors.brand,
           ),
         ),
         Container(
@@ -563,7 +519,7 @@ class _AssistantPageState extends State<AssistantPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+            border: Border.all(color: AppColors.hairline),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -573,7 +529,7 @@ class _AssistantPageState extends State<AssistantPage> {
                 height: 14,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Color(0xFF174C3C),
+                  color: AppColors.brand,
                 ),
               ),
               SizedBox(width: 10),
@@ -582,7 +538,7 @@ class _AssistantPageState extends State<AssistantPage> {
                 style: const TextStyle(
                   fontSize: 13,
                   fontStyle: FontStyle.italic,
-                  color: Colors.black54,
+                  color: AppColors.inkMuted,
                 ),
               ),
             ],
@@ -595,14 +551,15 @@ class _AssistantPageState extends State<AssistantPage> {
   Widget _buildInputBar() => SafeArea(
     top: false,
     child: Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
+        border: const Border(top: BorderSide(color: AppColors.hairline)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
+            color: Colors.black.withValues(alpha: 0.025),
+            blurRadius: 10,
+            offset: const Offset(0, -3),
           ),
         ],
       ),
@@ -617,30 +574,38 @@ class _AssistantPageState extends State<AssistantPage> {
               textInputAction: TextInputAction.send,
               decoration: InputDecoration(
                 hintText: _strings.inputHint,
-                hintStyle: const TextStyle(fontSize: 14, color: Colors.black38),
+                hintStyle: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.inkMuted,
+                ),
                 filled: true,
-                fillColor: Colors.grey.shade100,
+                fillColor: AppColors.brandSoft,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 10,
+                  vertical: 12,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(18),
                   borderSide: BorderSide.none,
                 ),
+                counterText: '',
               ),
               onSubmitted: (_) => _send(),
             ),
           ),
           const SizedBox(width: 8),
-          Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFF174C3C),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
+          SizedBox(
+            height: 48,
+            width: 48,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
               onPressed: _sending ? null : () => _send(),
-              icon: const Icon(Icons.send, color: Colors.white, size: 20),
+              child: const Icon(Icons.arrow_upward_rounded, size: 22),
             ),
           ),
         ],
