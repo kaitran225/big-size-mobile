@@ -1,15 +1,10 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
-
-import '../shared/theme/app_theme.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import '../shared/app_strings.dart';
+import '../shared/theme/app_theme.dart';
 
-/// A tappable delivery map that turns a tap into map coordinates.
-///
-/// The production build swaps this for `google_maps_flutter`, so the widget
-/// keeps the same contract: the caller receives a latitude and longitude and
-/// can move the pin until it sits on the right spot.
 class MapPointPicker extends StatefulWidget {
   const MapPointPicker({
     super.key,
@@ -17,230 +12,176 @@ class MapPointPicker extends StatefulWidget {
     this.initialLatitude,
     this.initialLongitude,
     this.height = 280,
+    this.autoLocateOnStart = true,
   });
 
   final void Function(double latitude, double longitude) onPointChanged;
   final double? initialLatitude;
   final double? initialLongitude;
   final double height;
+  final bool autoLocateOnStart;
 
   @override
   State<MapPointPicker> createState() => _MapPointPickerState();
 }
 
 class _MapPointPickerState extends State<MapPointPicker> {
-  static const double _minLatitude = 10.70;
-  static const double _maxLatitude = 10.82;
-  static const double _minLongitude = 106.60;
-  static const double _maxLongitude = 106.80;
-
-  Offset? _pin;
-  double? _latitude;
-  double? _longitude;
+  late MapController _mapController;
+  late LatLng _currentCenter;
+  bool _isLocating = false;
 
   @override
   void initState() {
     super.initState();
-    final latitude = widget.initialLatitude;
-    final longitude = widget.initialLongitude;
-    if (latitude != null && longitude != null) {
-      _latitude = latitude;
-      _longitude = longitude;
+    _mapController = MapController();
+    // Vị trí mặc định: TP. Hồ Chí Minh
+    _currentCenter = LatLng(
+      widget.initialLatitude ?? 10.7769,
+      widget.initialLongitude ?? 106.7009,
+    );
+
+    if (widget.initialLatitude == null &&
+        widget.initialLongitude == null &&
+        widget.autoLocateOnStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _locateMe());
     }
   }
 
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) {
-      final size = Size(constraints.maxWidth, widget.height);
-      final pin = _pin ?? _positionForCoordinates(size);
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadii.lg),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapUp: (details) => _updatePin(details.localPosition, size),
-          onPanUpdate: (details) => _updatePin(details.localPosition, size),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: CustomPaint(painter: _DeliveryMapPainter(pin: pin)),
-              ),
-              if (pin != null)
-                Positioned(
-                  left: pin.dx - 22,
-                  top: pin.dy - 46,
-                  child: const _PinMarker(),
-                ),
-              Positioned(
-                left: AppSpacing.md,
-                bottom: AppSpacing.md,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.94),
-                    borderRadius: BorderRadius.circular(AppRadii.pill),
-                    border: Border.all(color: AppColors.hairline),
-                  ),
-                  child: Text(
-                    _latitude == null
-                        ? AppStrings.mapTapToPlacePin
-                        : '${_latitude!.toStringAsFixed(5)}, '
-                              '${_longitude!.toStringAsFixed(5)}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+  Future<void> _locateMe() async {
+    if (_isLocating) return;
+    setState(() => _isLocating = true);
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always) {
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 5),
           ),
-        ),
-      );
-    },
-  );
-
-  Offset? _positionForCoordinates(Size size) {
-    final latitude = _latitude;
-    final longitude = _longitude;
-    if (latitude == null ||
-        longitude == null ||
-        latitude < _minLatitude ||
-        latitude > _maxLatitude ||
-        longitude < _minLongitude ||
-        longitude > _maxLongitude) {
-      return null;
+        );
+        final newCenter = LatLng(position.latitude, position.longitude);
+        if (mounted) {
+          setState(() {
+            _currentCenter = newCenter;
+            _isLocating = false;
+          });
+          _mapController.move(newCenter, 16.0);
+          widget.onPointChanged(newCenter.latitude, newCenter.longitude);
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('Error getting location: $e');
     }
-    return Offset(
-      (longitude - _minLongitude) /
-          (_maxLongitude - _minLongitude) *
-          size.width,
-      (_maxLatitude - latitude) / (_maxLatitude - _minLatitude) * size.height,
+
+    if (mounted) {
+      setState(() => _isLocating = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadii.lg),
+      child: SizedBox(
+        height: widget.height,
+        child: Stack(
+          children: [
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _currentCenter,
+                initialZoom: 15.0,
+                onTap: (tapPosition, point) {
+                  setState(() {
+                    _currentCenter = point;
+                  });
+                  widget.onPointChanged(point.latitude, point.longitude);
+                },
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate:
+                      'https://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.app',
+                  maxZoom: 19,
+                  maxNativeZoom: 19,
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _currentCenter,
+                      width: 44,
+                      height: 44,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2.5),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black38, blurRadius: 6),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.location_on,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            // Nút "Vị trí của tôi" (Locate Me Button)
+            Positioned(
+              right: AppSpacing.md,
+              bottom: AppSpacing.md,
+              child: FloatingActionButton.small(
+                heroTag: null,
+                onPressed: _isLocating ? null : _locateMe,
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.brand,
+                tooltip: AppStrings.myLocationTooltip,
+                child: _isLocating
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.brand,
+                        ),
+                      )
+                    : const Icon(Icons.my_location),
+              ),
+            ),
+            // Hiển thị tọa độ ở góc dưới bên trái
+            Positioned(
+              left: AppSpacing.md,
+              bottom: AppSpacing.md,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.94),
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
+                  border: Border.all(color: AppColors.hairline),
+                ),
+                child: Text(
+                  '${_currentCenter.latitude.toStringAsFixed(5)}, ${_currentCenter.longitude.toStringAsFixed(5)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
-
-  void _updatePin(Offset position, Size size) {
-    final dx = position.dx.clamp(0.0, size.width);
-    final dy = position.dy.clamp(0.0, size.height);
-    final latitude =
-        _maxLatitude - (dy / size.height) * (_maxLatitude - _minLatitude);
-    final longitude =
-        _minLongitude + (dx / size.width) * (_maxLongitude - _minLongitude);
-    setState(() {
-      _pin = Offset(dx, dy);
-      _latitude = latitude;
-      _longitude = longitude;
-    });
-    widget.onPointChanged(latitude, longitude);
-  }
-}
-
-class _PinMarker extends StatelessWidget {
-  const _PinMarker();
-
-  @override
-  Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Container(
-        padding: const EdgeInsets.all(6),
-        decoration: const BoxDecoration(
-          color: AppColors.brand,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(Icons.location_on, color: Colors.white, size: 20),
-      ),
-      Container(width: 2, height: 12, color: AppColors.brand),
-    ],
-  );
-}
-
-/// Paints a stylised street map so the picker reads as a map surface.
-class _DeliveryMapPainter extends CustomPainter {
-  _DeliveryMapPainter({this.pin});
-
-  final Offset? pin;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final background = Paint()..color = const Color(0xFFEFE9DE);
-    canvas.drawRect(Offset.zero & size, background);
-
-    final park = Paint()..color = const Color(0xFFD9E6D3);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          size.width * 0.06,
-          size.height * 0.08,
-          size.width * 0.3,
-          size.height * 0.24,
-        ),
-        const Radius.circular(18),
-      ),
-      park,
-    );
-
-    final water = Paint()..color = const Color(0xFFD5E4EC);
-    final river = Path()
-      ..moveTo(size.width * 0.72, 0)
-      ..cubicTo(
-        size.width * 0.62,
-        size.height * 0.3,
-        size.width * 0.9,
-        size.height * 0.6,
-        size.width * 0.78,
-        size.height,
-      );
-    canvas.drawPath(river, water);
-
-    final block = Paint()..color = const Color(0xFFE4DCD0);
-    final random = math.Random(7);
-    for (var index = 0; index < 26; index++) {
-      final left = random.nextDouble() * size.width;
-      final top = random.nextDouble() * size.height;
-      final width = 18 + random.nextDouble() * 46;
-      final height = 14 + random.nextDouble() * 34;
-      if (left + width > size.width || top + height > size.height) continue;
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(left, top, width, height),
-          const Radius.circular(4),
-        ),
-        block,
-      );
-    }
-
-    final street = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 8
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    final lanes = Paint()
-      ..color = const Color(0xFFE6E0D4)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-
-    for (var index = 1; index <= 3; index++) {
-      final y = size.height * index / 4;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), street);
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), lanes);
-    }
-    for (var index = 1; index <= 4; index++) {
-      final x = size.width * index / 5;
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), street);
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), lanes);
-    }
-
-    if (pin != null) {
-      final halo = Paint()..color = AppColors.brand.withValues(alpha: 0.12);
-      canvas.drawCircle(pin!, 34, halo);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DeliveryMapPainter oldDelegate) => oldDelegate.pin != pin;
 }

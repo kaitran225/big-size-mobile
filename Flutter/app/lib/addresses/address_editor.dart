@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../map/map_point_picker.dart';
 import '../models/store_product.dart';
 import '../shared/app_strings.dart';
+import '../shared/theme/app_theme.dart';
 import '../shared/widgets/app_dialog.dart';
 
 /// Dialog that creates or edits one delivery address.
@@ -18,6 +20,8 @@ class _AddressEditorState extends State<AddressEditor> {
   final _formKey = GlobalKey<FormState>();
   late final Map<String, TextEditingController> _fields;
   bool _isDefault = false;
+  double? _latitude;
+  double? _longitude;
 
   @override
   void initState() {
@@ -38,13 +42,9 @@ class _AddressEditorState extends State<AddressEditor> {
       'countryCode': TextEditingController(
         text: address?.countryCode ?? AppStrings.defaultCountryCode,
       ),
-      'latitude': TextEditingController(
-        text: address?.latitude?.toString() ?? '',
-      ),
-      'longitude': TextEditingController(
-        text: address?.longitude?.toString() ?? '',
-      ),
     };
+    _latitude = address?.latitude;
+    _longitude = address?.longitude;
     _isDefault = address?.isDefault ?? false;
   }
 
@@ -66,38 +66,48 @@ class _AddressEditorState extends State<AddressEditor> {
     onCancel: () => Navigator.pop(context),
     onConfirm: () {
       if (!_formKey.currentState!.validate()) return;
-      final latitude = double.tryParse(_fields['latitude']!.text.trim());
-      final longitude = double.tryParse(_fields['longitude']!.text.trim());
       Navigator.pop(context, <String, Object?>{
         for (final entry in _fields.entries)
-          if (!{'latitude', 'longitude'}.contains(entry.key))
-            entry.key: entry.value.text.trim().isEmpty
-                ? null
-                : entry.value.text.trim(),
-        'latitude': latitude,
-        'longitude': longitude,
+          entry.key: entry.value.text.trim().isEmpty
+              ? null
+              : entry.value.text.trim(),
+        'latitude': _latitude,
+        'longitude': _longitude,
         'isDefault': _isDefault,
       });
     },
     content: SizedBox(
-      width: 420,
+      width: 460,
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                AppStrings.mapLocationPickerHeader,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              MapPointPicker(
+                height: 220,
+                initialLatitude: _latitude,
+                initialLongitude: _longitude,
+                onPointChanged: (lat, lng) {
+                  setState(() {
+                    _latitude = lat;
+                    _longitude = lng;
+                  });
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
               for (final entry in _fields.entries)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: TextFormField(
                     controller: entry.value,
-                    keyboardType: {'latitude', 'longitude'}.contains(entry.key)
-                        ? const TextInputType.numberWithOptions(
-                            decimal: true,
-                            signed: true,
-                          )
-                        : TextInputType.text,
+                    keyboardType: TextInputType.text,
                     decoration: InputDecoration(
                       labelText: _addressFieldLabel(entry.key),
                     ),
@@ -138,8 +148,6 @@ class _AddressEditorState extends State<AddressEditor> {
     'province' => AppStrings.fieldProvince,
     'postalCode' => AppStrings.fieldPostalCode,
     'countryCode' => AppStrings.fieldCountryCode,
-    'latitude' => AppStrings.fieldLatitude,
-    'longitude' => AppStrings.fieldLongitude,
     _ => key,
   };
 }
