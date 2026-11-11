@@ -18,3 +18,15 @@ services:
         value: BigFit.Backend
       - key: Auth__Jwt__Audience
         value: BigFit.Mobile
+      - key: Payments__SePay__PublicBaseUrl
+        value: https://big-fit-pgm-store.onrender.com
+      - key: Payments__SePay__ApiBaseUrl
+        value: https://bankhub-api-sandbox.sepay.vn
+      - key: Payments__SePay__ClientId
+        sync: false
+      - key: Payments__SePay__ClientSecret
+        sync: false
+      - key: Payments__SePay__IpnSecretKey
+        sync: false
+      - key: Payments__SePay__BankAccountXid
+        sync: false
