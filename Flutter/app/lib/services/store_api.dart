@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 import '../assistant/assistant_chat_strings.dart';
+import '../models/checkout_models.dart';
 import '../models/store_product.dart';
 import '../shared/app_strings.dart';
 
@@ -202,6 +203,52 @@ class StoreApi {
     return items
         .map((item) => CustomerOrder.fromJson(item as Map<String, dynamic>))
         .toList(growable: false);
+  }
+
+  Future<LinkedBankAccount> linkedBankAccount() async {
+    final response = await _send('GET', '/payments/sepay/account');
+    return LinkedBankAccount.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<PaymentSession> createPayment({
+    required String orderId,
+    required String method,
+  }) async {
+    final response = await _send(
+      'POST',
+      '/orders/$orderId/payments',
+      body: {'method': method},
+    );
+    return PaymentSession.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<PaymentSession> latestPayment(String orderId) async {
+    final response = await _send('GET', '/orders/$orderId/payments/latest');
+    return PaymentSession.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<PaymentSession> reportPaymentResult({
+    required String orderId,
+    required String paymentId,
+    required String result,
+  }) async {
+    final response = await _send(
+      'POST',
+      '/orders/$orderId/payments/$paymentId/result',
+      body: {'result': result},
+    );
+    return PaymentSession.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<PaymentSession> simulatePayment({
+    required String orderId,
+    required String paymentId,
+  }) async {
+    final response = await _send(
+      'POST',
+      '/orders/$orderId/payments/$paymentId/simulate',
+    );
+    return PaymentSession.fromJson(response as Map<String, dynamic>);
   }
 
   Future<CustomerOrder> createOrder({String? shippingAddressId}) async {

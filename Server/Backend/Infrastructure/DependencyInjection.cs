@@ -4,6 +4,7 @@ using BigFit.Infrastructure.Identity;
 using BigFit.Infrastructure.Assistant;
 using BigFit.Infrastructure.Notifications;
 using BigFit.Infrastructure.Shopping;
+using BigFit.Infrastructure.Payments;
 using BigFit.Infrastructure.Addresses;
 using BigFit.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -116,6 +117,9 @@ public static class DependencyInjection
         services.AddScoped<IDatabaseHealthCheck, DatabaseHealthCheck>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IShoppingService, ShoppingService>();
+        services.AddScoped<IPaymentService, SePayPaymentService>();
+        services.AddHttpClient(nameof(SePayPaymentService), client =>
+            client.Timeout = TimeSpan.FromSeconds(20));
         services.AddScoped<IAddressService, AddressService>();
         services.AddHttpClient<IChatAssistantService, ChatAssistantService>(client =>
             client.Timeout = TimeSpan.FromSeconds(25));

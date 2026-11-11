@@ -1,18 +1,21 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../map/map_point_picker.dart';
 import '../models/checkout_models.dart';
 import '../models/store_product.dart';
 import '../orders/order_detail_page.dart';
-import '../payment/sandbox_gateway.dart';
+import '../payment/payment_result_page.dart';
+import '../payment/sepay_checkout_page.dart';
 import '../services/shipment_board.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
 import '../shared/theme/app_theme.dart';
 import '../shared/widgets/app_snack_bar.dart';
-import '../map/map_point_picker.dart';
 
-/// Checkout flow: contact, delivery address, sandbox payment and confirmation.
+/// Checkout flow: contact, delivery address, then COD or SePay sandbox.
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key, required this.api});
 
@@ -23,8 +26,6 @@ class CheckoutPage extends StatefulWidget {
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
-  static const SandboxGateway _gateway = SandboxGateway();
-
   final _contactFormKey = GlobalKey<FormState>();
   final _addressFormKey = GlobalKey<FormState>();
   final _contactControllers = <String, TextEditingController>{
@@ -48,9 +49,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
   double? _longitude;
   PaymentMethod _method = PaymentMethod.gateway;
   bool _busy = false;
+  bool _awaitingConfirmation = false;
   String? _error;
+  String? _paymentError;
   CustomerOrder? _order;
-  SandboxPaymentResult? _payment;
+  PaymentSession? _payment;
+  LinkedBankAccount? _bankAccount;
+  String? _bankError;
+  var _bankLoading = false;
 
   @override
   void initState() {
@@ -127,8 +133,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
         _addresses = [..._addresses, saved];
         _selectedAddress = saved;
         _busy = false;
-        _step = CheckoutStep.address;
+        _step = CheckoutStep.payment;
       });
+      if (_method != PaymentMethod.cod) {
+        unawaited(_loadBankAccount());
+      }
       showAppSnackBar(context, AppStrings.contactSaved);
     } catch (error) {
       if (!mounted) return;
@@ -173,48 +182,182 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
+  void _openPaymentStep() {
+    setState(() => _step = CheckoutStep.payment);
+    if (_method != PaymentMethod.cod) {
+      unawaited(_loadBankAccount());
+    }
+  }
+
+  Future<void> _loadBankAccount() async {
+    if (_bankLoading) return;
+    setState(() {
+      _bankLoading = true;
+      _bankError = null;
+    });
+    try {
+      final account = await widget.api.linkedBankAccount();
+      if (!mounted) return;
+      setState(() {
+        _bankAccount = account;
+        _bankLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _bankLoading = false;
+        _bankError = error is StoreApiException
+            ? error.message
+            : AppStrings.errorRequestFailed;
+      });
+    }
+  }
+
   Future<void> _placeOrder() async {
     final address = _selectedAddress;
-    final cart = _cart;
-    if (address == null || cart == null) return;
+    if (address == null) return;
     setState(() {
       _busy = true;
       _error = null;
+      _paymentError = null;
     });
     try {
-      final payment = await _gateway.charge(
-        method: _method,
-        amount: cart.subtotal,
-        currencyCode: cart.currencyCode,
-      );
-      if (!mounted) return;
-      if (!payment.approved) {
-        setState(() {
-          _payment = payment;
-          _busy = false;
-        });
-        showAppSnackBar(context, AppStrings.paymentDeclinedTitle);
+      if (_awaitingConfirmation && _order != null) {
+        final latest = await _waitForPayment(_order!.id);
+        if (!mounted) return;
+        if (latest.status == 'Succeeded') {
+          await _complete(latest);
+        } else {
+          setState(() {
+            _payment = latest;
+            _paymentError = AppStrings.paymentWaitingBody;
+            _busy = false;
+          });
+        }
         return;
       }
 
-      final order = await widget.api.createOrder(shippingAddressId: address.id);
-      if (!mounted) return;
-      final session = await widget.api.loadSession();
-      ShipmentBoard.instance.track(
-        order,
-        customerName: session?.displayName ?? address.recipientName,
+      final order = _order ??
+          await widget.api.createOrder(shippingAddressId: address.id);
+      _order = order;
+      final payment = await widget.api.createPayment(
+        orderId: order.id,
+        method: _method.name,
       );
+      if (!mounted) return;
+      if (!payment.awaitsTransfer) {
+        await _complete(payment);
+        return;
+      }
+
+      final result = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (_) => SePayCheckoutPage(
+            api: widget.api,
+            payment: payment,
+          ),
+        ),
+      );
+      if (!mounted) return;
+      if (result != 'success') {
+        final reported = await widget.api.reportPaymentResult(
+          orderId: order.id,
+          paymentId: payment.id,
+          result: result == 'error' ? 'error' : 'cancel',
+        );
+        if (!mounted) return;
+        if (reported.status == 'Succeeded') {
+          await _complete(reported);
+          return;
+        }
+        setState(() {
+          _payment = reported;
+          _awaitingConfirmation = false;
+          _busy = false;
+        });
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => PaymentResultPage(
+              approved: false,
+              method: _method,
+              amount: reported.amount,
+              currencyCode: reported.currencyCode,
+              reference: reported.providerReference ?? '',
+              orderNumber: order.orderNumber,
+            ),
+          ),
+        );
+        return;
+      }
+
+      final latest = await _waitForPayment(order.id);
+      if (!mounted) return;
+      if (latest.status == 'Succeeded') {
+        await _complete(latest);
+        return;
+      }
+      if (latest.status == 'Failed' || latest.status == 'Cancelled') {
+        setState(() => _busy = false);
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => PaymentResultPage(
+              approved: false,
+              method: _method,
+              amount: latest.amount,
+              currencyCode: latest.currencyCode,
+              reference: latest.providerReference ?? '',
+              orderNumber: order.orderNumber,
+            ),
+          ),
+        );
+        return;
+      }
       setState(() {
-        _order = order;
-        _payment = payment;
+        _payment = latest;
+        _awaitingConfirmation = true;
+        _paymentError = AppStrings.paymentWaitingBody;
         _busy = false;
-        _step = CheckoutStep.done;
       });
     } catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
       _showError(error);
     }
+  }
+
+  Future<PaymentSession> _waitForPayment(String orderId) async {
+    PaymentSession? latest;
+    for (var attempt = 0; attempt < 8; attempt++) {
+      latest = await widget.api.latestPayment(orderId);
+      if (latest.status == 'Succeeded' ||
+          latest.status == 'Failed' ||
+          latest.status == 'Cancelled') {
+        return latest;
+      }
+      await Future<void>.delayed(const Duration(seconds: 1));
+    }
+    return latest!;
+  }
+
+  Future<void> _complete(PaymentSession payment) async {
+    final order = _order;
+    if (order == null) return;
+    final session = await widget.api.loadSession();
+    if (!mounted) return;
+    ShipmentBoard.instance.track(
+      order,
+      customerName:
+          session?.displayName ??
+          _selectedAddress?.recipientName ??
+          AppStrings.guest,
+    );
+    setState(() {
+      _payment = payment;
+      _awaitingConfirmation = false;
+      _paymentError = null;
+      _busy = false;
+      _step = CheckoutStep.done;
+    });
   }
 
   void _showError(Object error) {
@@ -437,11 +580,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: _selectedAddress == null
-                ? null
-                : () => setState(() => _step = CheckoutStep.address),
+            onPressed: _selectedAddress == null ? null : _openPaymentStep,
             icon: const Icon(Icons.arrow_forward),
-            label: Text(AppStrings.stepAddress),
+            label: Text(AppStrings.stepPayment),
           ),
         ),
       ],
@@ -580,7 +721,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
         RadioGroup<PaymentMethod>(
           groupValue: _method,
           onChanged: (method) {
-            if (method != null) setState(() => _method = method);
+            if (method == null) return;
+            setState(() => _method = method);
+            if (method != PaymentMethod.cod && _bankAccount == null) {
+              unawaited(_loadBankAccount());
+            }
           },
           child: Column(
             children: [
@@ -602,16 +747,20 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ],
           ),
         ),
+        if (_method != PaymentMethod.cod) ...[
+          const SizedBox(height: AppSpacing.md),
+          _buildBankAccountCard(),
+        ],
         const SizedBox(height: AppSpacing.md),
         _buildSummaryCard(cart, address),
-        if (_payment != null && !_payment!.approved) ...[
+        if (_paymentError != null) ...[
           const SizedBox(height: AppSpacing.md),
           _sectionCard(
             Row(
               children: [
                 const Icon(Icons.error_outline, color: AppColors.danger),
                 const SizedBox(width: AppSpacing.md),
-                Expanded(child: Text(_payment!.message)),
+                Expanded(child: Text(_paymentError!)),
               ],
             ),
           ),
@@ -623,12 +772,64 @@ class _CheckoutPageState extends State<CheckoutPage> {
             onPressed: _busy ? null : _placeOrder,
             icon: const Icon(Icons.lock_outline),
             label: Text(
-              _busy ? AppStrings.processingPayment : AppStrings.placeOrder,
+              _busy
+                  ? AppStrings.processingPayment
+                  : _awaitingConfirmation
+                  ? AppStrings.checkPayment
+                  : _order == null
+                  ? AppStrings.placeOrder
+                  : AppStrings.tryAgain,
             ),
           ),
         ),
       ],
     );
+  }
+
+  Widget _buildBankAccountCard() {
+    final theme = Theme.of(context);
+    final account = _bankAccount;
+    final qrUrl = account == null
+        ? null
+        : _bankQrUrl(account.bankBin, account.accountNumber, account.accountHolderName);
+    return _sectionCard(
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(AppStrings.paymentBank, style: theme.textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.md),
+          if (_bankLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_bankError != null)
+            Text(_bankError!, style: TextStyle(color: theme.colorScheme.error))
+          else if (account != null) ...[
+            if (qrUrl != null) ...[
+              Center(
+                child: Image.network(
+                  qrUrl,
+                  width: 180,
+                  height: 180,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
+            _summaryRow(AppStrings.bankCodeLabel, account.bankCode),
+            const SizedBox(height: AppSpacing.sm),
+            _summaryRow(AppStrings.accountNumberLabel, account.accountNumber),
+            const SizedBox(height: AppSpacing.sm),
+            _summaryRow(AppStrings.accountHolderLabel, account.accountHolderName),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String? _bankQrUrl(String bankBin, String accountNumber, String accountHolder) {
+    if (bankBin.isEmpty || accountNumber.isEmpty) return null;
+    return Uri.https('img.vietqr.io', 'image/$bankBin-$accountNumber-compact2.png', {
+      if (accountHolder.isNotEmpty) 'accountName': accountHolder,
+    }).toString();
   }
 
   Widget _buildSummaryCard(Cart? cart, CustomerAddress? address) {
@@ -741,7 +942,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          AppStrings.orderPlacedBody,
+          _payment?.method == 'cod'
+              ? AppStrings.orderPlacedCodBody
+              : AppStrings.orderPlacedBody,
           style: theme.textTheme.bodyMedium,
           textAlign: TextAlign.center,
         ),
@@ -756,9 +959,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   AppStrings.total,
                   formatPrice(order.totalAmount, order.currencyCode),
                 ),
-                if (payment != null && payment.reference.isNotEmpty) ...[
+                if (payment?.providerReference != null &&
+                    payment!.providerReference!.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.sm),
-                  _summaryRow(AppStrings.paymentReference, payment.reference),
+                  _summaryRow(
+                    AppStrings.paymentReference,
+                    payment.providerReference!,
+                  ),
                 ],
               ],
             ),

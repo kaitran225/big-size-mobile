@@ -250,14 +250,18 @@ abstract final class AppStrings {
   static String get paymentBank =>
       _text('Bank transfer', 'Chuyển khoản ngân hàng');
   static String get paymentBankSubtitle => _text(
-    'Transfer instructions are sent after checkout',
-    'Thông tin chuyển khoản sẽ được gửi sau khi thanh toán',
+    'Bank Hub sandbox transfer. No real money is charged.',
+    'Chuyển khoản thử trên Bank Hub sandbox. Không phát sinh tiền thật.',
   );
   static String get paymentGateway =>
-      _text('VNPay / MoMo sandbox', 'VNPay / MoMo thử nghiệm');
+      _text('SePay card sandbox', 'Thẻ SePay sandbox');
   static String get paymentGatewaySubtitle => _text(
-    'Test payment flow. No real money is charged.',
-    'Luồng thanh toán thử nghiệm. Không phát sinh giao dịch thật.',
+    'Bank Hub sandbox card. No real money is charged.',
+    'Thẻ thử trên Bank Hub sandbox. Không phát sinh tiền thật.',
+  );
+  static String get paymentHubBody => _text(
+    'Choose a method while checking out from your bag. Bank transfer and card wait for Bank Hub sandbox confirmation. Cash on delivery stays unpaid until the order arrives.',
+    'Chọn phương thức khi thanh toán từ túi hàng. Chuyển khoản và thẻ chờ Bank Hub sandbox xác nhận. Thanh toán khi nhận hàng được thu lúc giao.',
   );
 
   // Map -------------------------------------------------------------------
@@ -350,8 +354,8 @@ abstract final class AppStrings {
   static String get paymentMethods =>
       _text('Payment methods', 'Phương thức thanh toán');
   static String get paymentMethodsSubtitle => _text(
-    'COD, bank transfer, and gateway preview',
-    'Thanh toán khi nhận hàng, chuyển khoản và xem trước cổng thanh toán',
+    'COD, SePay transfer, and SePay card',
+    'Khi nhận hàng, chuyển khoản SePay và thẻ SePay',
   );
   static String get accountSecuritySubtitle => _text(
     'Email verification, reset, and OTP',
@@ -481,8 +485,8 @@ abstract final class AppStrings {
   static String get paymentStepTitle =>
       _text('Payment method', 'Phương thức thanh toán');
   static String get sandboxBannerNote => _text(
-    'Test payment environment. You will not be charged.',
-    'Môi trường thanh toán thử nghiệm. Bạn sẽ không bị tính phí.',
+    'SePay sandbox. You will not be charged.',
+    'SePay sandbox. Bạn sẽ không bị tính phí.',
   );
   static String get secureCheckoutTitle =>
       _text('Secure checkout', 'Thanh toán an toàn');
@@ -496,14 +500,37 @@ abstract final class AppStrings {
     'Your order is confirmed. Track it any time from your order history.',
     'Đơn hàng của bạn đã được xác nhận. Bạn có thể theo dõi bất cứ lúc nào trong lịch sử đơn hàng.',
   );
+  static String get orderPlacedCodBody => _text(
+    'Your order is placed. Pay the courier when it arrives.',
+    'Đơn hàng đã được tạo. Thanh toán cho người giao khi nhận hàng.',
+  );
+  static String get paymentWaitingBody => _text(
+    'SePay has not confirmed this payment yet. Check again in a moment.',
+    'SePay chưa xác nhận thanh toán. Hãy kiểm tra lại sau giây lát.',
+  );
+  static String get bankCodeLabel => _text('Bank code', 'Mã ngân hàng');
+  static String get accountNumberLabel =>
+      _text('Account number', 'Số tài khoản');
+  static String get accountHolderLabel =>
+      _text('Account holder', 'Chủ tài khoản');
+  static String get transferContentLabel =>
+      _text('Transfer content', 'Nội dung chuyển khoản');
+  static String get simulateSandboxPayment =>
+      _text('Simulate sandbox transfer', 'Mô phỏng giao dịch sandbox');
+  static String get waitingForBankHub => _text(
+    'Waiting for the Bank Hub sandbox to confirm this transfer.',
+    'Đang chờ Bank Hub sandbox xác nhận giao dịch.',
+  );
+  static String get checkPayment =>
+      _text('Check payment', 'Kiểm tra thanh toán');
   static String get trackOrder => _text('Track order', 'Theo dõi đơn hàng');
   static String get continueShopping =>
       _text('Continue shopping', 'Tiếp tục mua sắm');
   static String get paymentDeclinedTitle =>
       _text('Payment declined', 'Thanh toán bị từ chối');
   static String get paymentDeclinedBody => _text(
-    'The sandbox gateway rejected this payment. Try another method.',
-    'Cổng thanh toán thử nghiệm đã từ chối giao dịch. Hãy thử phương thức khác.',
+    'The SePay sandbox did not complete this payment. The order is still open so you can try again.',
+    'SePay sandbox chưa hoàn tất thanh toán. Đơn vẫn mở để bạn thử lại.',
   );
   static String get paymentReference => _text('Reference', 'Mã giao dịch');
 
@@ -701,19 +728,6 @@ abstract final class AppStrings {
         'sách thực tế của cửa hàng.',
   );
   static String get footerCopyright => '© BIGFIT. All rights reserved.';
-  static String get sandboxPaymentDeclined => _text(
-    'The sandbox gateway declined the payment.',
-    'Cổng thanh toán thử nghiệm đã từ chối giao dịch.',
-  );
-  static String approvedSandboxPayment(
-    String method,
-    String amount,
-    String currency,
-  ) => _text(
-    '$method payment approved for $amount $currency.',
-    'Thanh toán $method đã được chấp thuận với số tiền $amount $currency.',
-  );
-
   // Builders --------------------------------------------------------------
   //
   // Strings that depend on runtime data. Each one is named after the text it

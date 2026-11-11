@@ -2,6 +2,7 @@ using BigFit.Application.Assistant;
 using BigFit.Application.Addresses;
 using BigFit.Application.Catalog;
 using BigFit.Application.Notifications;
+using BigFit.Application.Payments;
 using BigFit.Application.Shopping;
 
 namespace BigFit.Application.Abstractions;
@@ -30,8 +31,36 @@ public interface IAddressService
     Task<bool> DeleteAsync(Guid userId, Guid addressId, CancellationToken cancellationToken);
 }
 
-/// <summary>Provider-neutral extension point for payment initiation and callbacks.</summary>
-public interface IPaymentService;
+/// <summary>Creates a payment for an order and applies SePay sandbox callbacks.</summary>
+public interface IPaymentService
+{
+    Task<PaymentSessionResponse> CreateAsync(
+        Guid userId, Guid orderId, string method, CancellationToken cancellationToken);
+
+    Task<PaymentSessionResponse?> GetLatestAsync(
+        Guid userId, Guid orderId, CancellationToken cancellationToken);
+
+    Task<PaymentSessionResponse> ReportClientResultAsync(
+        Guid userId,
+        Guid orderId,
+        Guid paymentId,
+        string result,
+        CancellationToken cancellationToken);
+
+    Task<PaymentSessionResponse> SimulateSandboxPaymentAsync(
+        Guid userId,
+        Guid orderId,
+        Guid paymentId,
+        CancellationToken cancellationToken);
+
+    Task<SepayBankAccountResponse> GetLinkedBankAccountAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Applies an IPN. Returns false when the caller secret does not match.
+    /// </summary>
+    Task<bool> HandleIpnAsync(
+        string? secretKey, SepayIpnPayload payload, CancellationToken cancellationToken);
+}
 
 /// <summary>Own-user notification operations.</summary>
 public interface INotificationService

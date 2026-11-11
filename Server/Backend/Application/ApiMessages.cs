@@ -83,6 +83,40 @@ public static class ApiMessages
         "A single order cannot contain products in different currencies.";
     public const string StockChangedDuringOrder =
         "Product stock changed while placing the order. Refresh the cart and try again.";
+    public const string UnsupportedPaymentMethod =
+        "method must be cod, bankTransfer, or gateway.";
+    public const string OrderNotPayable =
+        "The order was not found or can no longer be paid.";
+    public const string PaymentAlreadyCompleted =
+        "This order already has a completed payment.";
+    public const string PaymentNotFound =
+        "The payment attempt was not found.";
+    public const string UnsupportedPaymentResult =
+        "result must be cancel or error.";
+    public const string UnsupportedCheckoutCurrency =
+        "SePay checkout only supports EUR or VND orders.";
+    public const string SePayNotConfigured =
+        "Bank Hub sandbox is not configured. Set Payments:SePay client id, client secret, IPN secret, and public base URL.";
+    public const string BankAccountNotLinked =
+        "No Bank Hub sandbox account is linked. Set Payments:SePay:BankAccountXid after linking MBBank 0123456789.";
+    public const string SandboxSimulationFailed =
+        "The Bank Hub sandbox could not create the test transaction.";
+    public const string PaymentReceivedTitle = "Payment received";
+    public const string PaymentNotCompletedTitle = "Payment not completed";
+    public static string PaymentReceivedMessage(string orderNumber) =>
+        $"Payment for order {orderNumber} was received.";
+    public static string PaymentCancelledMessage(string orderNumber) =>
+        $"Payment for order {orderNumber} was cancelled.";
+    public static string PaymentFailedMessage(string orderNumber) =>
+        $"Payment for order {orderNumber} failed.";
+    public const string PaymentReturnSuccess =
+        "Payment submitted. Return to the BigFit app. The order is confirmed after SePay notifies the server.";
+    public const string PaymentReturnError =
+        "Payment was not completed. Return to the BigFit app to try again.";
+    public const string PaymentReturnCancel =
+        "Payment was cancelled. Return to the BigFit app to try again.";
+    public const string PaymentReturnUnknown =
+        "Return to the BigFit app to see the payment status.";
 
     // ---------------------------------------------------------------------
     // Addresses
@@ -151,6 +185,12 @@ public static class ApiMessages
         "PostgreSQL health check failed.";
     public const string BootstrapAdminCreatedLog =
         "Created configured bootstrap administrator {Email}.";
+    public const string SePayAmountMismatchLog =
+        "SePay IPN amount mismatch for order {OrderNumber}. Expected {Expected}, received {Received}.";
+    public const string SePayPaymentUpdatedLog =
+        "Payment {PaymentId} for order {OrderNumber} marked {Status}.";
+    public const string SePayNotificationFailedLog =
+        "Payment notification for order {OrderNumber} could not be saved.";
 
     // ---------------------------------------------------------------------
     // OpenAPI tags
@@ -166,6 +206,7 @@ public static class ApiMessages
     public const string TagOrders = "Orders";
     public const string TagDeliveryAddresses = "Delivery addresses";
     public const string TagNotifications = "Notifications";
+    public const string TagPayments = "Payments";
     // ---------------------------------------------------------------------
     // OpenAPI summaries
     // ---------------------------------------------------------------------
@@ -224,6 +265,20 @@ public static class ApiMessages
     public const string SummaryDeleteMyNotification =
         "Delete one of the current user's notifications";
     public const string SummaryGetDatabaseHealth = "Check PostgreSQL connectivity";
+    public const string SummaryCreatePayment =
+        "Start a COD or SePay sandbox payment for one pending order";
+    public const string SummaryGetLatestPayment =
+        "Get the latest payment attempt for one order";
+    public const string SummaryReportPaymentResult =
+        "Record a customer cancel or error from the SePay checkout page";
+    public const string SummarySimulatePayment =
+        "Create a Bank Hub sandbox credit that matches this payment";
+    public const string SummaryGetSePayBankAccount =
+        "Get the linked Bank Hub account shown at checkout";
+    public const string SummarySePayIpn =
+        "Receive a SePay sandbox IPN and update the payment";
+    public const string SummarySePayReturn =
+        "Browser return page after SePay checkout. Does not change the order.";
     // ---------------------------------------------------------------------
     // OpenAPI descriptions
     // ---------------------------------------------------------------------
