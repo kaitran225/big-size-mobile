@@ -7,6 +7,7 @@ import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
 import '../shared/theme/app_theme.dart';
+import 'delivery_tracking_map.dart';
 import 'order_tracker.dart';
 
 /// Order page with the shipment tracker for one placed order.
@@ -81,6 +82,8 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(AppStrings.shipmentTracking, style: theme.textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.md),
+          DeliveryTrackingMap(stage: _shipment.stage),
           const SizedBox(height: AppSpacing.md),
           Card(
             child: Padding(

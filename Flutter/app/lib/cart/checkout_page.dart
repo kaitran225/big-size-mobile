@@ -89,9 +89,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
       setState(() {
         _cart = results[0] as Cart;
         _addresses = results[1] as List<CustomerAddress>;
-        _selectedAddress =
-            _addresses.where((a) => a.isDefault).firstOrNull ??
+        final defaultAddr = _addresses.where((a) => a.isDefault).firstOrNull ??
             _addresses.firstOrNull;
+        if (defaultAddr != null) {
+          _selectAddress(defaultAddr);
+        }
         _busy = false;
       });
     } catch (error) {
@@ -373,6 +375,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
       _selectedAddress = address;
       _latitude = address.latitude;
       _longitude = address.longitude;
+      _contactControllers['label']!.text = address.label;
+      _contactControllers['recipientName']!.text = address.recipientName;
+      _contactControllers['phoneNumber']!.text = address.phoneNumber;
       _addressControllers['addressLine']!.text = address.addressLine;
       _addressControllers['city']!.text = address.city;
       _addressControllers['province']!.text = address.province ?? '';
@@ -477,7 +482,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           _sectionCard(
             Text(AppStrings.noSavedContacts, style: theme.textTheme.bodyMedium),
           )
-        else
+        else ...[
           RadioGroup<String>(
             groupValue: _selectedAddress?.id,
             onChanged: (id) {
@@ -510,13 +515,30 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ],
             ),
           ),
-        const SizedBox(height: AppSpacing.sm),
+          if (_selectedAddress != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => setState(() => _step = CheckoutStep.address),
+                icon: const Icon(Icons.arrow_forward),
+                label: Text(
+                  AppStrings.continueWithSelectedAddress(_selectedAddress!.label),
+                ),
+              ),
+            ),
+          ],
+        ],
+        const SizedBox(height: AppSpacing.xl),
         _sectionCard(
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          ExpansionTile(
+            title: Text(
+              _addresses.isEmpty ? AppStrings.newContact : AppStrings.orEnterNewAddress,
+              style: theme.textTheme.titleMedium,
+            ),
+            initiallyExpanded: _addresses.isEmpty,
             children: [
-              Text(AppStrings.newContact, style: theme.textTheme.titleMedium),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.sm),
               Form(
                 key: _contactFormKey,
                 child: Column(
@@ -569,7 +591,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 child: FilledButton(
                   onPressed: _busy ? null : _saveNewContact,
                   child: Text(
-                    _busy ? AppStrings.pleaseWait : AppStrings.saveAndContinue,
+                    _busy ? AppStrings.pleaseWait : AppStrings.saveNewAddressAndContinue,
                   ),
                 ),
               ),

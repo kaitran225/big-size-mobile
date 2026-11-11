@@ -110,10 +110,6 @@ class _AddressesPageState extends State<AddressesPage> {
         : ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              AppInfoNote(
-                text: AppStrings.mapSdkNotice,
-                style: AppInfoNoteStyle.bordered,
-              ),
               ..._addresses.map(
                 (address) => Card(
                   child: ListTile(

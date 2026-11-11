@@ -230,6 +230,38 @@ abstract final class AppStrings {
       _text('Latitude (optional)', 'Vĩ độ (không bắt buộc)');
   static String get fieldLongitude =>
       _text('Longitude (optional)', 'Kinh độ (không bắt buộc)');
+  static String get mapLocationPickerHeader => _text(
+    'Map location (tap or drag to place pin)',
+    'Vị trí trên bản đồ (chạm hoặc vuốt để chọn ghim)',
+  );
+  static String get myLocationTooltip => _text(
+    'Get my current location',
+    'Lấy vị trí hiện tại của tôi',
+  );
+  static String continueWithSelectedAddress(String label) => _text(
+    'Continue with selected address ($label)',
+    'Tiếp tục với địa chỉ đã chọn ($label)',
+  );
+  static String get orEnterNewAddress => _text(
+    'Or enter new address details',
+    'Hoặc nhập thông tin địa chỉ mới',
+  );
+  static String get saveNewAddressAndContinue => _text(
+    'Save new address & continue',
+    'Lưu địa chỉ mới & tiếp tục',
+  );
+  static String get trackingDeliveredSuccess => _text(
+    'Package delivered successfully',
+    'Đã giao hàng thành công',
+  );
+  static String get trackingDriverOnTheWay => _text(
+    'Driver is delivering to you',
+    'Tài xế đang giao hàng đến bạn',
+  );
+  static String get trackingLoadingRoute => _text(
+    'Loading road route...',
+    'Đang tải lộ trình đường đi...',
+  );
 
   // Notifications ---------------------------------------------------------
 
