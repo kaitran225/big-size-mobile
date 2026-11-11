@@ -292,8 +292,8 @@ abstract final class AppStrings {
     'Thẻ thử trên Bank Hub sandbox. Không phát sinh tiền thật.',
   );
   static String get paymentHubBody => _text(
-    'Choose a method while checking out from your bag. Bank transfer and card wait for Bank Hub sandbox confirmation. Cash on delivery stays unpaid until the order arrives.',
-    'Chọn phương thức khi thanh toán từ túi hàng. Chuyển khoản và thẻ chờ Bank Hub sandbox xác nhận. Thanh toán khi nhận hàng được thu lúc giao.',
+    'Choose a method while checking out from your bag. Bank transfer waits for Bank Hub sandbox confirmation. Cash on delivery stays unpaid until the order arrives.',
+    'Chọn phương thức khi thanh toán từ túi hàng. Chuyển khoản chờ Bank Hub sandbox xác nhận. Thanh toán khi nhận hàng được thu lúc giao.',
   );
 
   // Map -------------------------------------------------------------------

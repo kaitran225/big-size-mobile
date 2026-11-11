@@ -23,7 +23,10 @@ class PaymentPage extends StatelessWidget {
         children: [
           Text(AppStrings.paymentHubBody, style: theme.textTheme.bodyMedium),
           const SizedBox(height: AppSpacing.lg),
-          for (final method in PaymentMethod.values)
+          for (final method in const [
+            PaymentMethod.cod,
+            PaymentMethod.bankTransfer,
+          ])
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: Card(

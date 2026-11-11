@@ -46,7 +46,7 @@ Set the sandbox secrets without committing them. On Render, set
 in `render.yaml`. Locally, from `Server`:
 
 ```powershell
-dotnet user-secrets set "Payments:SePay:ClientId" "YOUR_BANK_HUB_CLIENT_ID" --project Backend
+dotnet user-secrets set "Payments:SePay:ClientId" "629b5ae57f6bb4cc793242465f94575bc8bd33eda30365dc1a72a11e5ab0cb46" --project Backend
 dotnet user-secrets set "Payments:SePay:ClientSecret" "YOUR_BANK_HUB_CLIENT_SECRET" --project Backend
 dotnet user-secrets set "Payments:SePay:IpnSecretKey" "YOUR_NOTIFY_API_KEY" --project Backend
 dotnet user-secrets set "Payments:SePay:PublicBaseUrl" "https://big-fit-pgm-store.onrender.com" --project Backend

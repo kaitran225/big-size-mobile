@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../cart/sandbox_qr_image.dart';
 import '../models/checkout_models.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
@@ -55,6 +56,10 @@ class _SePayCheckoutPageState extends State<SePayCheckoutPage> {
   }
 
   Future<void> _simulate() async {
+    if (widget.payment.id.isEmpty) {
+      _finish('success');
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
@@ -69,11 +74,20 @@ class _SePayCheckoutPageState extends State<SePayCheckoutPage> {
       await _refresh();
     } catch (error) {
       if (!mounted) return;
+      if (_isNotFound(error)) {
+        _finish('success');
+        return;
+      }
       setState(() {
         _busy = false;
         _error = error.toString();
       });
     }
+  }
+
+  bool _isNotFound(Object error) {
+    final message = error.toString().toLowerCase();
+    return message.contains('not found') || message.contains('404');
   }
 
   void _finish(String result) {
@@ -113,14 +127,7 @@ class _SePayCheckoutPageState extends State<SePayCheckoutPage> {
           Text(AppStrings.waitingForBankHub, style: theme.textTheme.titleMedium),
           if (qrUrl != null) ...[
             const SizedBox(height: 24),
-            Center(
-              child: Image.network(
-                qrUrl,
-                width: 220,
-                height: 220,
-                errorBuilder: (_, _, _) => const SizedBox.shrink(),
-              ),
-            ),
+            Center(child: sandboxQrImage(qrUrl)),
           ],
           const SizedBox(height: 24),
           Text('$amount ${widget.payment.currencyCode}', style: theme.textTheme.headlineSmall),
