@@ -4,7 +4,7 @@ services:
     runtime: docker
     dockerfilePath: ./Server/Backend/Dockerfile
     dockerContext: ./Server/Backend
-    healthCheckPath: /api/health/database
+    healthCheckPath: /api/database/health
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production

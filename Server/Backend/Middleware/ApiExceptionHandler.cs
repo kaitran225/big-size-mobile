@@ -1,6 +1,7 @@
 ﻿using BigFit.Application.Abstractions;
 using BigFit.Application.Authentication;
 using BigFit.Application.Assistant;
+using BigFit.Application.Payments;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,6 +34,10 @@ internal sealed class ApiExceptionHandler(
                 StatusCodes.Status503ServiceUnavailable,
                 assistantException.Title,
                 assistantException.Message),
+            PaymentProviderUnavailableException paymentException => (
+                StatusCodes.Status503ServiceUnavailable,
+                ApiMessages.PaymentProviderUnavailableTitle,
+                paymentException.Message),
             ArgumentException => (
                 StatusCodes.Status400BadRequest,
                 ApiMessages.InvalidRequestTitle,

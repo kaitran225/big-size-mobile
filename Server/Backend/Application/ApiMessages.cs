@@ -91,6 +91,10 @@ public static class ApiMessages
         "This order already has a completed payment.";
     public const string PaymentAttemptNotPending =
         "This payment attempt is no longer pending. Start a new payment attempt.";
+    public const string PaymentProviderUnavailableTitle =
+        "Payment provider unavailable";
+    public const string PaymentProviderUnavailable =
+        "Bank transfer is temporarily unavailable. Choose cash on delivery or try again later.";
     public const string PaymentNotFound =
         "The payment attempt was not found.";
     public const string UnsupportedPaymentResult =
@@ -222,11 +226,17 @@ public static class ApiMessages
 
     public const string InvalidFulfillmentTransition =
         "That fulfilment action is not allowed for the order's current status.";
+    public const string RejectionReasonRequired =
+        "Provide a reason before rejecting this order.";
+    public const string OrderCannotBeRejected =
+        "Only pending orders without a completed payment can be rejected.";
+    public const string OrderCannotBeAccepted =
+        "This order cannot be accepted because its payment is missing or not awaiting verification.";
 
     public const string SummaryGetFulfillmentOrders =
         "List orders in the staff fulfilment queue";
     public const string SummaryApplyFulfillmentAction =
-        "Advance an order through accept, ship, or complete";
+        "Advance or reject an order through fulfilment";
     public const string TagDeliveryAddresses = "Delivery addresses";
     public const string TagNotifications = "Notifications";
     public const string TagPayments = "Payments";
@@ -374,5 +384,5 @@ public static class ApiMessages
         $"Account setup failed and its incomplete user could not be removed: {errors}";
 
     public static string QuantityNoLongerAvailable(string productName) =>
-        $"The requested quantity is no longer available for {productName}.";
+        $"{productName} is no longer available in the requested quantity. Update your cart and try again.";
 }

@@ -146,7 +146,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
-      _showError(error);
+      await _showCheckoutError(error);
     }
   }
 
@@ -252,7 +252,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
-      _showError(error);
+      await _showCheckoutError(error);
       return;
     }
     if (!mounted) return;
@@ -445,6 +445,58 @@ class _CheckoutPageState extends State<CheckoutPage> {
       context,
       error,
       fallback: AppStrings.errorRequestFailed,
+    );
+  }
+
+  Future<void> _showCheckoutError(Object error) async {
+    final statusCode = error is StoreApiException ? error.statusCode : null;
+    final isUnavailable =
+        statusCode == 503 && _method == PaymentMethod.bankTransfer;
+    final isStockConflict = statusCode == 409;
+    final chooseCod = isUnavailable && _selectedAddress != null;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: Icon(
+          isUnavailable ? Icons.account_balance_outlined : Icons.error_outline,
+        ),
+        title: Text(
+          isUnavailable
+              ? AppStrings.bankTransferUnavailableTitle
+              : AppStrings.checkoutFailureTitle,
+        ),
+        content: Text(
+          '${appErrorMessage(error, fallback: AppStrings.errorRequestFailed)}\n\n'
+          '${isStockConflict
+              ? AppStrings.reviewCartHelp
+              : isUnavailable
+              ? AppStrings.bankTransferUnavailableHelp
+              : AppStrings.checkoutFailureHelp}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(AppStrings.cancel),
+          ),
+          if (isStockConflict)
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                Navigator.of(context).pop();
+              },
+              child: Text(AppStrings.backToBag),
+            )
+          else if (chooseCod)
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                setState(() => _method = PaymentMethod.cod);
+                await _placeOrder();
+              },
+              child: Text(AppStrings.switchToCod),
+            ),
+        ],
+      ),
     );
   }
 

@@ -155,21 +155,20 @@ internal sealed class SePayPaymentService(
             })
         };
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        using var response = await httpClientFactory.CreateClient(nameof(SePayPaymentService))
-            .SendAsync(request, cancellationToken);
+        using var response = await SendProviderRequestAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             logger.LogWarning(
                 "Bank Hub sandbox transaction create failed with status {StatusCode}.",
                 (int)response.StatusCode);
-            throw new ArgumentException(ApiMessages.SandboxSimulationFailed);
+            throw new PaymentProviderUnavailableException(ApiMessages.PaymentProviderUnavailable);
         }
 
         var transactionId = await ReadTransactionIdAsync(response, cancellationToken);
         if (string.IsNullOrWhiteSpace(transactionId))
         {
             logger.LogWarning("Bank Hub sandbox transaction create returned no transaction id.");
-            throw new ArgumentException(ApiMessages.SandboxSimulationFailed);
+            throw new PaymentProviderUnavailableException(ApiMessages.PaymentProviderUnavailable);
         }
 
         var trackedOrder = await dbContext.Orders.SingleAsync(
@@ -563,11 +562,13 @@ internal sealed class SePayPaymentService(
             HttpMethod.Get,
             $"{settings.ApiBaseUrl}/v1/bank-account?page=1&per_page=20");
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        using var response = await httpClientFactory.CreateClient(nameof(SePayPaymentService))
-            .SendAsync(request, cancellationToken);
+        using var response = await SendProviderRequestAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            throw new ArgumentException(ApiMessages.BankAccountNotLinked);
+            logger.LogWarning(
+                "Bank Hub linked account request failed with status {StatusCode}.",
+                (int)response.StatusCode);
+            throw new PaymentProviderUnavailableException(ApiMessages.PaymentProviderUnavailable);
         }
 
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
@@ -594,7 +595,8 @@ internal sealed class SePayPaymentService(
             }
         }
 
-        return configured ?? first ?? throw new ArgumentException(ApiMessages.BankAccountNotLinked);
+        return configured ?? first ??
+            throw new PaymentProviderUnavailableException(ApiMessages.PaymentProviderUnavailable);
     }
 
     private static LinkedBankAccount? MapAccount(JsonElement account)
@@ -661,11 +663,13 @@ internal sealed class SePayPaymentService(
                 Encoding.UTF8.GetBytes($"{settings.ClientId}:{settings.ClientSecret}"));
             using var request = new HttpRequestMessage(HttpMethod.Post, $"{settings.ApiBaseUrl}/v1/token");
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
-            using var response = await httpClientFactory.CreateClient(nameof(SePayPaymentService))
-                .SendAsync(request, cancellationToken);
+            using var response = await SendProviderRequestAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                throw new ArgumentException(ApiMessages.SePayNotConfigured);
+                logger.LogWarning(
+                    "Bank Hub token request failed with status {StatusCode}.",
+                    (int)response.StatusCode);
+                throw new PaymentProviderUnavailableException(ApiMessages.PaymentProviderUnavailable);
             }
 
             await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
@@ -673,7 +677,7 @@ internal sealed class SePayPaymentService(
             var token = ReadToken(document.RootElement);
             if (string.IsNullOrWhiteSpace(token))
             {
-                throw new ArgumentException(ApiMessages.SePayNotConfigured);
+                throw new PaymentProviderUnavailableException(ApiMessages.PaymentProviderUnavailable);
             }
 
             CachedToken = token;
@@ -704,6 +708,29 @@ internal sealed class SePayPaymentService(
         return null;
     }
 
+    private async Task<HttpResponseMessage> SendProviderRequestAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await httpClientFactory.CreateClient(nameof(SePayPaymentService))
+                .SendAsync(request, cancellationToken);
+        }
+        catch (HttpRequestException exception)
+        {
+            throw new PaymentProviderUnavailableException(
+                ApiMessages.PaymentProviderUnavailable,
+                exception);
+        }
+        catch (TaskCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new PaymentProviderUnavailableException(
+                ApiMessages.PaymentProviderUnavailable,
+                exception);
+        }
+    }
+
     private static bool IsBankHub(SepayIpnPayload payload) =>
         string.IsNullOrWhiteSpace(payload.NotificationType) &&
         (!string.IsNullOrWhiteSpace(payload.TransferType) ||
@@ -727,7 +754,7 @@ internal sealed class SePayPaymentService(
             !Uri.TryCreate(publicBaseUrl, UriKind.Absolute, out var publicUri) ||
             (publicUri.Scheme != Uri.UriSchemeHttps && publicUri.Scheme != Uri.UriSchemeHttp))
         {
-            throw new ArgumentException(ApiMessages.SePayNotConfigured);
+            throw new PaymentProviderUnavailableException(ApiMessages.PaymentProviderUnavailable);
         }
 
         var rateText = configuration["Payments:SePay:EurToVndRate"];

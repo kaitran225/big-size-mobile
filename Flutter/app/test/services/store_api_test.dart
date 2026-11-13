@@ -77,6 +77,27 @@ void main() {
       expect(client.requests, hasLength(1));
     });
 
+    test('retains the response status code for checkout error handling', () async {
+      final client = _QueueClient([
+        _response(503, '{"title":"Payment provider unavailable"}'),
+      ]);
+      final api = StoreApi(
+        client: client,
+        baseUrl: 'https://big-fit-pgm-store.onrender.com',
+      );
+
+      await expectLater(
+        api.getCategories('Men'),
+        throwsA(
+          isA<StoreApiException>().having(
+            (error) => error.statusCode,
+            'statusCode',
+            503,
+          ),
+        ),
+      );
+    });
+
     test('does not retry the cloud backend after its 5xx response', () async {
       final client = _QueueClient([
         _response(503, '{"title":"Local unavailable"}'),

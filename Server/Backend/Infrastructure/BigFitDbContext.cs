@@ -156,6 +156,7 @@ public sealed class BigFitDbContext(DbContextOptions<BigFitDbContext> options)
             });
             entity.HasKey(order => order.Id);
             entity.Property(order => order.OrderNumber).HasMaxLength(40).IsRequired();
+            entity.Property(order => order.RejectionReason).HasMaxLength(500);
             entity.Property(order => order.Status).HasMaxLength(20).IsRequired();
             entity.Property(order => order.CurrencyCode).HasMaxLength(3).IsRequired();
             entity.Property(order => order.Subtotal).HasPrecision(11, 2);

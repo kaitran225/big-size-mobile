@@ -8,6 +8,7 @@ public sealed class CustomerOrder
     public Guid UserId { get; set; }
     public Guid? ShippingAddressId { get; set; }
     public string Status { get; set; } = "Pending";
+    public string? RejectionReason { get; set; }
     public decimal Subtotal { get; set; }
     public decimal ShippingAmount { get; set; }
     public decimal TotalAmount { get; set; }

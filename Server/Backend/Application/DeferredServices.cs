@@ -35,6 +35,7 @@ public interface IOrderFulfillmentService
     Task<StaffOrderResponse?> ApplyActionAsync(
         Guid orderId,
         string action,
+        string? reason,
         Guid staffUserId,
         CancellationToken cancellationToken);
 }

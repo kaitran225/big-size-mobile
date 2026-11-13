@@ -595,6 +595,16 @@ abstract final class AppStrings {
     'Đơn hàng bạn đặt sẽ xuất hiện tại đây cùng thông tin theo dõi.',
   );
   static String get orderStatusTitle => _text('Status', 'Trạng thái');
+  static String get orderRejectionTitle =>
+      _text('Order update', 'Cập nhật đơn hàng');
+  static String get orderRejectionReason => _text(
+    'This order was rejected for the following reason:',
+    'Đơn hàng bị từ chối vì lý do sau:',
+  );
+  static String get orderRejectedHelp => _text(
+    'Your payment was not captured. Contact support if you need help.',
+    'Thanh toán của bạn chưa được ghi nhận. Hãy liên hệ hỗ trợ nếu cần giúp đỡ.',
+  );
   static String get shipmentTracking =>
       _text('Shipment tracking', 'Theo dõi giao hàng');
   static String get stagePlaced => _text('Order placed', 'Đã đặt hàng');
@@ -631,6 +641,43 @@ abstract final class AppStrings {
   static String get fulfillmentAccept => _text('Accept order', 'Tiếp nhận đơn');
   static String get fulfillmentVerifyAndAccept =>
       _text('Verify payment & accept', 'Xác nhận thanh toán và tiếp nhận');
+  static String get verifyPaymentPrompt => _text(
+    'Confirm that the transfer is visible in the bank account before accepting this order.',
+    'Vui lòng xác nhận đã thấy giao dịch trong tài khoản ngân hàng trước khi tiếp nhận đơn.',
+  );
+  static String get verifyPaymentConfirmation =>
+      _text('I verified the payment', 'Tôi đã xác minh thanh toán');
+  static String get fulfillmentReject => _text('Reject order', 'Từ chối đơn');
+  static String get rejectionDialogTitle =>
+      _text('Reject this order?', 'Từ chối đơn hàng này?');
+  static String get rejectionReasonLabel =>
+      _text('Reason for rejection', 'Lý do từ chối');
+  static String get rejectionReasonHint => _text(
+    'Explain why this order cannot be fulfilled.',
+    'Giải thích lý do không thể xử lý đơn hàng.',
+  );
+  static String get rejectionReasonRequired =>
+      _text('Enter a reason to continue.', 'Nhập lý do để tiếp tục.');
+  static String get rejectionReasonTooLong =>
+      _text('Use 500 characters or fewer.', 'Dùng tối đa 500 ký tự.');
+  static String get confirmRejection =>
+      _text('Reject order', 'Từ chối đơn');
+  static String get rejectionSuccess =>
+      _text('Order rejected and customer notified.', 'Đã từ chối đơn và thông báo khách hàng.');
+  static String get acceptUnavailable => _text(
+    'Cannot accept: payment is missing or not awaiting verification.',
+    'Không thể tiếp nhận: chưa có thanh toán hoặc chưa chờ xác minh.',
+  );
+  static String get rejectUnavailable => _text(
+    'This order cannot be rejected because payment has been completed.',
+    'Không thể từ chối vì thanh toán đã hoàn tất.',
+  );
+  static String get orderActionFailedTitle =>
+      _text('Could not update order', 'Không thể cập nhật đơn hàng');
+  static String get orderActionFailedHelp => _text(
+    'Your order has not been changed. Review the message and try again.',
+    'Đơn hàng chưa được thay đổi. Hãy kiểm tra thông báo và thử lại.',
+  );
   static String get fulfillmentShip => _text('Mark shipped', 'Đánh dấu đã gửi');
   static String get fulfillmentComplete =>
       _text('Mark delivered', 'Đánh dấu đã giao');
@@ -678,6 +725,26 @@ abstract final class AppStrings {
     'The request failed. Please try again.',
     'Yêu cầu thất bại. Vui lòng thử lại.',
   );
+  static String get checkoutFailureTitle =>
+      _text('Could not place your order', 'Không thể đặt hàng');
+  static String get checkoutFailureHelp => _text(
+    'Your order was not completed. Review the message and try again.',
+    'Đơn hàng chưa hoàn tất. Hãy xem thông báo và thử lại.',
+  );
+  static String get bankTransferUnavailableTitle =>
+      _text('Bank transfer is unavailable', 'Chuyển khoản chưa khả dụng');
+  static String get bankTransferUnavailableHelp => _text(
+    'Your order is saved. Try bank transfer again or switch to cash on delivery.',
+    'Đơn hàng đã được lưu. Hãy thử lại hoặc chuyển sang thanh toán khi nhận hàng.',
+  );
+  static String get reviewCartHelp => _text(
+    'Stock changed while you were checking out. Review your bag and adjust the unavailable items.',
+    'Tồn kho đã thay đổi trong lúc thanh toán. Hãy kiểm tra túi hàng và điều chỉnh sản phẩm đã hết.',
+  );
+  static String get switchToCod =>
+      _text('Switch to cash on delivery', 'Chuyển sang thanh toán khi nhận hàng');
+  static String get backToBag =>
+      _text('Review bag', 'Kiểm tra túi hàng');
   static String get errorSession => _text(
     'Could not read the saved sign-in session.',
     'Không thể đọc phiên đăng nhập đã lưu.',

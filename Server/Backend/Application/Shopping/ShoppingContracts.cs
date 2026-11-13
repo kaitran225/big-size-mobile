@@ -76,6 +76,7 @@ public sealed record OrderResponse(
     decimal ShippingAmount,
     decimal TotalAmount,
     string CurrencyCode,
+    string? RejectionReason,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     IReadOnlyList<OrderItemResponse> Items);

@@ -38,26 +38,20 @@ public static class FulfillmentEndpoints
         .WithName("GetFulfillmentOrders")
         .WithSummary(ApiMessages.SummaryGetFulfillmentOrders);
 
-        group.MapPatch("/orders/{orderId:guid}", async Task<Results<Ok<StaffOrderResponse>, NotFound, BadRequest>> (
+        group.MapPatch("/orders/{orderId:guid}", async Task<Results<Ok<StaffOrderResponse>, NotFound>> (
             Guid orderId,
             FulfillmentActionRequest request,
             IOrderFulfillmentService fulfillment,
             ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
-            try
-            {
-                var result = await fulfillment.ApplyActionAsync(
-                    orderId,
-                    request.Action,
-                    GetUserId(user),
-                    cancellationToken);
-                return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
-            }
-            catch (ArgumentException)
-            {
-                return TypedResults.BadRequest();
-            }
+            var result = await fulfillment.ApplyActionAsync(
+                orderId,
+                request.Action,
+                request.Reason,
+                GetUserId(user),
+                cancellationToken);
+            return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
         })
         .WithName("ApplyFulfillmentAction")
         .WithSummary(ApiMessages.SummaryApplyFulfillmentAction);

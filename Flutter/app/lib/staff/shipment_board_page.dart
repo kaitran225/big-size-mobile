@@ -24,6 +24,7 @@ class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
   String? _error;
   List<StaffFulfillmentOrder> _orders = const [];
   bool _includeDelivered = false;
+  final Set<String> _activeOrderActions = {};
 
   @override
   void initState() {
@@ -68,15 +69,120 @@ class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
   Future<void> _advance(StaffFulfillmentOrder order) async {
     final action = OrderShipmentMapper.nextFulfillmentAction(order.status);
     if (action == null) return;
+    if (order.needsPaymentVerification) {
+      final verified = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          icon: const Icon(Icons.account_balance_outlined),
+          title: Text(AppStrings.fulfillmentVerifyAndAccept),
+          content: Text(AppStrings.verifyPaymentPrompt),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(AppStrings.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(AppStrings.verifyPaymentConfirmation),
+            ),
+          ],
+        ),
+      );
+      if (verified != true || !mounted) return;
+    }
+    await _applyAction(order, action);
+  }
+
+  Future<void> _reject(StaffFulfillmentOrder order) async {
+    final controller = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppStrings.rejectionDialogTitle),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            maxLength: 500,
+            maxLines: 3,
+            decoration: InputDecoration(
+              labelText: AppStrings.rejectionReasonLabel,
+              hintText: AppStrings.rejectionReasonHint,
+              alignLabelWithHint: true,
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return AppStrings.rejectionReasonRequired;
+              }
+              if (value.trim().length > 500) {
+                return AppStrings.rejectionReasonTooLong;
+              }
+              return null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppStrings.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(context, controller.text.trim());
+              }
+            },
+            child: Text(AppStrings.confirmRejection),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (reason == null || !mounted) return;
+    await _applyAction(order, 'reject', reason: reason);
+  }
+
+  Future<void> _applyAction(
+    StaffFulfillmentOrder order,
+    String action, {
+    String? reason,
+  }) async {
+    if (!_activeOrderActions.add(order.id)) return;
+    setState(() {});
     try {
       await widget.api.applyFulfillmentAction(
         orderId: order.id,
         action: action,
+        reason: reason,
       );
-      if (mounted) await _load();
+      if (!mounted) return;
+      if (action == 'reject') {
+        showAppSnackBar(context, AppStrings.rejectionSuccess);
+      }
+      await _load();
     } catch (error) {
       if (!mounted) return;
-      showAppErrorSnackBar(context, error);
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          icon: const Icon(Icons.error_outline),
+          title: Text(AppStrings.orderActionFailedTitle),
+          content: Text(
+            '${appErrorMessage(error)}\n\n${AppStrings.orderActionFailedHelp}',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppStrings.cancel),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      _activeOrderActions.remove(order.id);
+      if (mounted) setState(() {});
     }
   }
 
@@ -160,7 +266,9 @@ class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
                 }
                 return _ShipmentCard(
                   order: _orders[index - 1],
+                  busy: _activeOrderActions.contains(_orders[index - 1].id),
                   onAdvance: () => _advance(_orders[index - 1]),
+                  onReject: () => _reject(_orders[index - 1]),
                 );
               },
             ),
@@ -169,20 +277,24 @@ class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
 }
 
 class _ShipmentCard extends StatelessWidget {
-  const _ShipmentCard({required this.order, required this.onAdvance});
+  const _ShipmentCard({
+    required this.order,
+    required this.busy,
+    required this.onAdvance,
+    required this.onReject,
+  });
 
   final StaffFulfillmentOrder order;
+  final bool busy;
   final VoidCallback onAdvance;
+  final VoidCallback onReject;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final stage = OrderShipmentMapper.stageForStatus(order.status);
     final action = OrderShipmentMapper.nextFulfillmentAction(order.status);
-    final isPendingBankTransfer =
-        order.status == 'Pending' &&
-        order.paymentMethod == 'bankTransfer' &&
-        order.paymentStatus == 'Pending';
+    final isPendingBankTransfer = order.needsPaymentVerification;
     final actionLabel = isPendingBankTransfer
         ? AppStrings.fulfillmentVerifyAndAccept
         : switch (action) {
@@ -243,18 +355,61 @@ class _ShipmentCard extends StatelessWidget {
                 '${AppStrings.paymentTitle}: ${order.paymentMethod} · ${order.paymentStatus ?? ""}',
                 style: theme.textTheme.bodySmall,
               ),
+            if (order.rejectionReason != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                '${AppStrings.orderRejectionReason} ${order.rejectionReason}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.danger,
+                ),
+              ),
+            ],
+            if (action == 'accept' && !order.canAccept) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                AppStrings.acceptUnavailable,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.inkMuted,
+                ),
+              ),
+            ],
+            if (order.status == 'Pending' &&
+                order.paymentStatus == 'Succeeded') ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                AppStrings.rejectUnavailable,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.inkMuted,
+                ),
+              ),
+            ],
             const SizedBox(height: AppSpacing.lg),
             ShipmentTracker(stage: stage),
             const SizedBox(height: AppSpacing.lg),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: action == null ? null : onAdvance,
+            Row(
+              children: [
+                if (action != null)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                onPressed: busy || (action == 'accept' && !order.canAccept)
+                    ? null
+                    : onAdvance,
                 icon: const Icon(Icons.trending_up),
                 label: Text(
                   order.isDelivered ? AppStrings.stageDelivered : actionLabel,
                 ),
-              ),
+                    ),
+                  ),
+                if (action == null) const Spacer(),
+                if (order.canReject) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  OutlinedButton.icon(
+                    onPressed: busy ? null : onReject,
+                    icon: const Icon(Icons.block_outlined),
+                    label: Text(AppStrings.fulfillmentReject),
+                  ),
+                ],
+              ],
             ),
           ],
         ),

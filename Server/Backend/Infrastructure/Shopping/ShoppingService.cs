@@ -216,9 +216,8 @@ internal sealed class ShoppingService(
             var product = variant.Product;
             if (!product.IsActive || item.Quantity > variant.StockQuantity)
             {
-                throw new ArgumentException(
-                    ApiMessages.QuantityNoLongerAvailable(product.Name),
-                    nameof(request));
+                throw new DataConflictException(
+                    ApiMessages.QuantityNoLongerAvailable(product.Name));
             }
 
             var unitPrice = product.SalePrice ?? product.Price;
@@ -374,6 +373,7 @@ internal sealed class ShoppingService(
             order.ShippingAmount,
             order.TotalAmount,
             order.CurrencyCode,
+            order.RejectionReason,
             order.CreatedAt,
             order.UpdatedAt,
             order.Items.Select(item => new OrderItemResponse(

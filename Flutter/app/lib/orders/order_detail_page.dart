@@ -112,7 +112,10 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                           style: theme.textTheme.titleMedium,
                         ),
                       ),
-                      _StatusChip(label: order.status),
+                      _StatusChip(
+                        label: order.status,
+                        rejected: order.rejectionReason != null,
+                      ),
                     ],
                   ),
                 ],
@@ -120,39 +123,74 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text(AppStrings.shipmentTracking, style: theme.textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.md),
-          DeliveryTrackingMap(stage: _shipment.stage),
-          const SizedBox(height: AppSpacing.md),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _MetaLine(
-                          label: AppStrings.trackingNumber,
-                          value: _shipment.trackingNumber,
-                        ),
+          if (order.rejectionReason != null)
+            Card(
+              color: theme.colorScheme.errorContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.orderRejectionTitle,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.error,
                       ),
-                      Expanded(
-                        child: _MetaLine(
-                          label: AppStrings.courier,
-                          value: _shipment.courier,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(AppStrings.orderRejectionReason),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      order.rejectionReason!,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      AppStrings.orderRejectedHelp,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else ...[
+            Text(
+              AppStrings.shipmentTracking,
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            DeliveryTrackingMap(stage: _shipment.stage),
+            const SizedBox(height: AppSpacing.md),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _MetaLine(
+                            label: AppStrings.trackingNumber,
+                            value: _shipment.trackingNumber,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  ShipmentTracker(stage: _shipment.stage),
-                ],
+                        Expanded(
+                          child: _MetaLine(
+                            label: AppStrings.courier,
+                            value: _shipment.courier,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    ShipmentTracker(stage: _shipment.stage),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.lg),
+          ],
           Text(AppStrings.orderItems, style: theme.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.md),
           Card(
@@ -192,26 +230,33 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 }
 
 class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.label});
+  const _StatusChip({required this.label, this.rejected = false});
 
   final String label;
+  final bool rejected;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
-    decoration: BoxDecoration(
-      color: AppColors.brandSoft,
-      borderRadius: BorderRadius.circular(AppRadii.pill),
-    ),
-    child: Text(
-      label,
-      style: const TextStyle(
-        color: AppColors.brand,
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 6,
       ),
-    ),
-  );
+      decoration: BoxDecoration(
+        color: rejected ? theme.colorScheme.errorContainer : AppColors.brandSoft,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: rejected ? theme.colorScheme.error : AppColors.brand,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
 }
 
 class _MetaLine extends StatelessWidget {

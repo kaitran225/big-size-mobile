@@ -338,6 +338,7 @@ class CustomerOrder {
     required this.shippingAmount,
     required this.totalAmount,
     required this.currencyCode,
+    this.rejectionReason,
     required this.createdAt,
     required this.updatedAt,
     required this.items,
@@ -350,6 +351,7 @@ class CustomerOrder {
   final double shippingAmount;
   final double totalAmount;
   final String currencyCode;
+  final String? rejectionReason;
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<OrderItem> items;
@@ -364,6 +366,7 @@ class CustomerOrder {
     shippingAmount: (json['shippingAmount'] as num).toDouble(),
     totalAmount: (json['totalAmount'] as num).toDouble(),
     currencyCode: json['currencyCode'] as String,
+    rejectionReason: json['rejectionReason'] as String?,
     createdAt: created,
     updatedAt: json['updatedAt'] != null
         ? DateTime.parse(json['updatedAt'] as String)
@@ -382,6 +385,7 @@ class CustomerOrder {
     shippingAmount: shippingAmount,
     totalAmount: totalAmount,
     currencyCode: currencyCode,
+    rejectionReason: rejectionReason,
     createdAt: createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     items: items,

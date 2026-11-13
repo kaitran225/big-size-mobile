@@ -12,9 +12,10 @@ import '../shared/app_strings.dart';
 import 'notification_realtime_service.dart';
 
 class StoreApiException implements Exception {
-  const StoreApiException(this.message);
+  const StoreApiException(this.message, {this.statusCode});
 
   final String message;
+  final int? statusCode;
 
   @override
   String toString() => message;
@@ -283,11 +284,12 @@ class StoreApi {
   Future<StaffFulfillmentOrder> applyFulfillmentAction({
     required String orderId,
     required String action,
+    String? reason,
   }) async {
     final response = await _send(
       'PATCH',
       '/fulfillment/orders/$orderId',
-      body: {'action': action},
+      body: {'action': action, 'reason': reason},
     );
     return StaffFulfillmentOrder.fromJson(response as Map<String, dynamic>);
   }
@@ -549,7 +551,10 @@ class StoreApi {
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw StoreApiException(_errorMessage(response));
+      throw StoreApiException(
+        _errorMessage(response),
+        statusCode: response.statusCode,
+      );
     }
     onSuccessBaseUri?.call(successfulBaseUri);
     if (response.body.isEmpty) return null;

@@ -139,6 +139,7 @@ class StaffFulfillmentOrder {
     required this.paymentStatus,
     required this.itemCount,
     required this.updatedAt,
+    required this.rejectionReason,
   });
 
   final String id;
@@ -152,6 +153,7 @@ class StaffFulfillmentOrder {
   final String? paymentStatus;
   final int itemCount;
   final DateTime updatedAt;
+  final String? rejectionReason;
 
   factory StaffFulfillmentOrder.fromJson(Map<String, dynamic> json) =>
       StaffFulfillmentOrder(
@@ -166,7 +168,19 @@ class StaffFulfillmentOrder {
         paymentStatus: json['paymentStatus'] as String?,
         itemCount: (json['items'] as List<dynamic>).length,
         updatedAt: DateTime.parse(json['updatedAt'] as String),
+        rejectionReason: json['rejectionReason'] as String?,
       );
 
   bool get isDelivered => status.toLowerCase() == 'delivered';
+  bool get canAccept =>
+      status == 'Confirmed' ||
+      (status == 'Pending' &&
+          ((paymentMethod == 'cod' && paymentStatus == 'Pending') ||
+              (paymentMethod == 'bankTransfer' &&
+                  (paymentStatus == 'Pending' ||
+                      paymentStatus == 'Succeeded'))));
+  bool get canReject =>
+      status == 'Pending' && paymentStatus != 'Succeeded';
+  bool get needsPaymentVerification =>
+      paymentMethod == 'bankTransfer' && paymentStatus == 'Pending';
 }

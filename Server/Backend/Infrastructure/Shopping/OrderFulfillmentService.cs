@@ -6,14 +6,17 @@ using BigFit.Application.Shopping;
 using BigFit.Domain.Entities;
 using BigFit.Infrastructure.Identity;
 using BigFit.Infrastructure.Persistence;
+using System.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BigFit.Infrastructure.Shopping;
 
 internal sealed class OrderFulfillmentService(
     BigFitDbContext dbContext,
     INotificationService notifications,
-    INotificationEventPublisher eventPublisher) : IOrderFulfillmentService
+    INotificationEventPublisher eventPublisher,
+    ILogger<OrderFulfillmentService> logger) : IOrderFulfillmentService
 {
     private const string CodProvider = "Cod";
     private const string SePayProvider = "SePay";
@@ -70,12 +73,16 @@ internal sealed class OrderFulfillmentService(
     public async Task<StaffOrderResponse?> ApplyActionAsync(
         Guid orderId,
         string action,
+        string? reason,
         Guid staffUserId,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         _ = staffUserId;
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable,
+            cancellationToken);
         var order = await dbContext.Orders
             .Include(item => item.Items)
             .SingleOrDefaultAsync(item => item.Id == orderId, cancellationToken);
@@ -84,24 +91,35 @@ internal sealed class OrderFulfillmentService(
             return null;
         }
 
-        var nextStatus = action switch
+        if (action == "reject")
         {
-            "accept" => await ResolveAcceptStatusAsync(order, cancellationToken),
-            "ship" when order.Status == "Processing" => "Shipped",
-            "complete" when order.Status == "Shipped" => "Delivered",
-            _ => null
-        };
+            await RejectOrderAsync(order, reason, cancellationToken);
+        }
+        else
+        {
+            var nextStatus = action switch
+            {
+                "accept" => await ResolveAcceptStatusAsync(order, cancellationToken),
+                "ship" when order.Status == "Processing" => "Shipped",
+                "complete" when order.Status == "Shipped" => "Delivered",
+                _ => null
+            };
 
-        if (nextStatus is null)
-        {
-            throw new ArgumentException(ApiMessages.InvalidFulfillmentTransition, nameof(action));
+            if (nextStatus is null)
+            {
+                throw new DataConflictException(action == "accept"
+                    ? ApiMessages.OrderCannotBeAccepted
+                    : ApiMessages.InvalidFulfillmentTransition);
+            }
+
+            order.Status = nextStatus;
         }
 
-        order.Status = nextStatus;
         order.UpdatedAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
-        await NotifyCustomerAsync(order, action, cancellationToken);
+        await NotifyCustomerAsync(order, action, reason, cancellationToken);
 
         var change = new OrderStatusChangedEvent(order.Id, order.Status, order.UpdatedAt);
         await eventPublisher.PublishOrderStatusChangedAsync(order.UserId, change, cancellationToken);
@@ -142,7 +160,9 @@ internal sealed class OrderFulfillmentService(
             return null;
         }
 
-        if (payment.Provider == CodProvider && payment.Method == CodMethod)
+        if (payment.Provider == CodProvider &&
+            payment.Method == CodMethod &&
+            payment.Status == "Pending")
         {
             return "Processing";
         }
@@ -163,9 +183,67 @@ internal sealed class OrderFulfillmentService(
         return "Processing";
     }
 
+    private async Task RejectOrderAsync(
+        CustomerOrder order,
+        string? reason,
+        CancellationToken cancellationToken)
+    {
+        var normalizedReason = reason?.Trim();
+        if (string.IsNullOrWhiteSpace(normalizedReason))
+        {
+            throw new ArgumentException(ApiMessages.RejectionReasonRequired, nameof(reason));
+        }
+
+        if (normalizedReason.Length > 500)
+        {
+            throw new ArgumentException(
+                ApiMessages.InvalidFulfillmentTransition,
+                nameof(reason));
+        }
+
+        var payments = await dbContext.Payments
+            .Where(item => item.OrderId == order.Id)
+            .ToListAsync(cancellationToken);
+        if (order.Status != "Pending" ||
+            payments.Any(item => item.Status == "Succeeded"))
+        {
+            throw new DataConflictException(ApiMessages.OrderCannotBeRejected);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        foreach (var payment in payments.Where(item => item.Status == "Pending"))
+        {
+            payment.Status = "Cancelled";
+            payment.CompletedAt = now;
+        }
+
+        var variantIds = order.Items
+            .Where(item => item.ProductVariantId.HasValue)
+            .Select(item => item.ProductVariantId!.Value)
+            .ToArray();
+        if (variantIds.Length > 0)
+        {
+            var variants = await dbContext.ProductVariants
+                .Where(item => variantIds.Contains(item.Id))
+                .ToDictionaryAsync(item => item.Id, cancellationToken);
+            foreach (var item in order.Items)
+            {
+                if (item.ProductVariantId is Guid variantId &&
+                    variants.TryGetValue(variantId, out var variant))
+                {
+                    variant.StockQuantity += item.Quantity;
+                }
+            }
+        }
+
+        order.Status = "Cancelled";
+        order.RejectionReason = normalizedReason;
+    }
+
     private async Task NotifyCustomerAsync(
         CustomerOrder order,
         string action,
+        string? reason,
         CancellationToken cancellationToken)
     {
         var (title, message) = action switch
@@ -179,6 +257,9 @@ internal sealed class OrderFulfillmentService(
             "complete" => (
                 $"Order {order.OrderNumber} delivered",
                 "Your order has been delivered."),
+            "reject" => (
+                $"Order {order.OrderNumber} was rejected",
+                $"Reason: {reason!.Trim()}"),
             _ => (string.Empty, string.Empty)
         };
 
@@ -196,14 +277,21 @@ internal sealed class OrderFulfillmentService(
                     Type = "order",
                     Title = title,
                     Message = message,
-                    DataJson =
-                        $"{{\"orderId\":\"{order.Id}\",\"status\":\"{order.Status}\"}}"
+                    DataJson = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        orderId = order.Id,
+                        status = order.Status,
+                        reason = action == "reject" ? reason?.Trim() : null
+                    })
                 },
                 cancellationToken);
         }
-        catch
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            // Notification failure should not roll back fulfilment.
+            logger.LogWarning(
+                exception,
+                "Could not send the customer notification for order {OrderId}.",
+                order.Id);
         }
     }
 
@@ -222,6 +310,7 @@ internal sealed class OrderFulfillmentService(
             order.ShippingAmount,
             order.TotalAmount,
             order.CurrencyCode,
+            order.RejectionReason,
             order.CreatedAt,
             order.UpdatedAt,
             order.UserId,
