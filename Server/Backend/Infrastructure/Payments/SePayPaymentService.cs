@@ -83,7 +83,7 @@ internal sealed class SePayPaymentService(
         }
 
         var settings = ReadSettings();
-        var account = await LoadLinkedAccountAsync(settings, cancellationToken);
+        var account = await ResolveTransferAccountAsync(settings, cancellationToken);
         var amount = ToVnd(order, settings.EurToVndRate);
         var payment = await LatestAsync(order.Id, SePayProvider, cancellationToken);
         if (payment is null)
@@ -136,7 +136,8 @@ internal sealed class SePayPaymentService(
 
         if (payment.Status == "Succeeded")
         {
-            return Map(payment, null, TransferFields(order, payment, null));
+            var settledAccount = await ResolveTransferAccountAsync(ReadSettings(), cancellationToken);
+            return Map(payment, null, TransferFields(order, payment, settledAccount));
         }
         if (payment.Status != "Pending")
         {
@@ -144,47 +145,67 @@ internal sealed class SePayPaymentService(
         }
 
         var settings = ReadSettings();
-        var account = await LoadLinkedAccountAsync(settings, cancellationToken);
-        using var response = await SendAuthorizedAsync(
-            settings,
-            token =>
+        string? transactionId = null;
+        if (settings.IsConfigured)
+        {
+            try
             {
-                var request = new HttpRequestMessage(
-                    HttpMethod.Post,
-                    $"{settings.ApiBaseUrl}/v1/transaction/create")
-                {
-                    Content = JsonContent.Create(new
+                var account = await LoadLinkedAccountAsync(settings, cancellationToken);
+                using var response = await SendAuthorizedAsync(
+                    settings,
+                    token =>
                     {
-                        bank_account_xid = account.Xid,
-                        transfer_type = "credit",
-                        amount = (long)decimal.Round(payment.Amount, 0, MidpointRounding.AwayFromZero),
-                        transaction_content = order.OrderNumber
-                    })
-                };
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                return request;
-            },
-            cancellationToken);
-        var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            logger.LogWarning(
-                "Bank Hub sandbox transaction create failed with status {StatusCode}: {Body}",
-                (int)response.StatusCode,
-                Truncate(body, 400));
-            throw new PaymentProviderUnavailableException(ApiMessages.SandboxSimulationFailed);
+                        var request = new HttpRequestMessage(
+                            HttpMethod.Post,
+                            $"{settings.ApiBaseUrl}/v1/transaction/create")
+                        {
+                            Content = JsonContent.Create(new
+                            {
+                                bank_account_xid = account.Xid,
+                                transfer_type = "credit",
+                                amount = (long)decimal.Round(payment.Amount, 0, MidpointRounding.AwayFromZero),
+                                transaction_content = order.OrderNumber
+                            })
+                        };
+                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                        return request;
+                    },
+                    cancellationToken);
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                if (response.IsSuccessStatusCode)
+                {
+                    transactionId = ReadTransactionId(body);
+                    if (string.IsNullOrWhiteSpace(transactionId))
+                    {
+                        logger.LogWarning(
+                            "Bank Hub sandbox transaction create returned no transaction id: {Body}",
+                            Truncate(body, 400));
+                    }
+                }
+                else
+                {
+                    logger.LogWarning(
+                        "Bank Hub sandbox transaction create failed with status {StatusCode}: {Body}",
+                        (int)response.StatusCode,
+                        Truncate(body, 400));
+                }
+            }
+            catch (PaymentProviderUnavailableException exception)
+            {
+                logger.LogWarning(
+                    "Bank Hub sandbox credit unavailable ({Reason}). Confirming the payment locally.",
+                    exception.Message);
+            }
         }
-
-        var transactionId = ReadTransactionId(body);
-        if (string.IsNullOrWhiteSpace(transactionId))
+        else
         {
-            logger.LogWarning("Bank Hub sandbox transaction create returned no transaction id: {Body}", Truncate(body, 400));
-            throw new PaymentProviderUnavailableException(ApiMessages.SandboxSimulationFailed);
+            logger.LogInformation(ApiMessages.SandboxNotConfiguredLog, order.OrderNumber);
         }
 
         // SePay posts the credit to the IPN within a second or two. Give it a moment first so the
         // demo really goes through the callback and not just this request.
-        var confirmedByIpn = await WaitForIpnAsync(payment.Id, TimeSpan.FromSeconds(3), cancellationToken);
+        var confirmedByIpn = transactionId is not null &&
+            await WaitForIpnAsync(payment.Id, TimeSpan.FromSeconds(3), cancellationToken);
         dbContext.ChangeTracker.Clear();
 
         var trackedOrder = await dbContext.Orders.SingleAsync(
@@ -203,10 +224,14 @@ internal sealed class SePayPaymentService(
                 logger.LogInformation(
                     ApiMessages.SandboxIpnMissingLog,
                     order.OrderNumber,
-                    transactionId);
+                    transactionId ?? ApiMessages.SandboxLocalReference);
             }
 
-            await MarkTransferSucceededAsync(trackedOrder, trackedPayment, transactionId, cancellationToken);
+            await MarkTransferSucceededAsync(
+                trackedOrder,
+                trackedPayment,
+                transactionId ?? $"DEMO-{payment.Id:N}",
+                cancellationToken);
         }
         else
         {
@@ -216,7 +241,8 @@ internal sealed class SePayPaymentService(
                 transactionId);
         }
 
-        return Map(trackedPayment, null, TransferFields(trackedOrder, trackedPayment, account));
+        var transferAccount = await ResolveTransferAccountAsync(settings, cancellationToken);
+        return Map(trackedPayment, null, TransferFields(trackedOrder, trackedPayment, transferAccount));
     }
 
     public async Task<SepaySandboxStatusResponse> GetSandboxStatusAsync(CancellationToken cancellationToken)
@@ -226,9 +252,7 @@ internal sealed class SePayPaymentService(
         var ipnKey = configuration["Payments:SePay:IpnSecretKey"];
         var publicBaseUrl = configuration["Payments:SePay:PublicBaseUrl"]?.TrimEnd('/');
         var status = new SepaySandboxStatusResponse(
-            !string.IsNullOrWhiteSpace(clientId) &&
-                !string.IsNullOrWhiteSpace(clientSecret) &&
-                !string.IsNullOrWhiteSpace(ipnKey),
+            "localDemo",
             !string.IsNullOrWhiteSpace(clientId),
             !string.IsNullOrWhiteSpace(clientSecret),
             !string.IsNullOrWhiteSpace(ipnKey),
@@ -243,11 +267,27 @@ internal sealed class SePayPaymentService(
             null,
             null);
 
+        var demo = DemoAccount();
+        status = status with
+        {
+            LinkedBankAccountXid = demo.Xid,
+            BankCode = demo.BankCode,
+            AccountNumber = demo.AccountNumber,
+            AccountHolderName = demo.AccountHolderName
+        };
+
+        var settings = ReadSettings();
+        if (!settings.IsConfigured)
+        {
+            return status with { Error = ApiMessages.SePayNotConfigured };
+        }
+
         try
         {
-            var account = await LoadLinkedAccountAsync(ReadSettings(), cancellationToken);
+            var account = await LoadLinkedAccountAsync(settings, cancellationToken);
             return status with
             {
+                Mode = "bankHub",
                 LinkedBankAccountXid = account.Xid,
                 BankCode = account.BankCode,
                 AccountNumber = account.AccountNumber,
@@ -906,14 +946,8 @@ internal sealed class SePayPaymentService(
 
     private SePaySettings ReadSettings()
     {
-        var clientId = ClientId();
-        var clientSecret = ClientSecret();
         var apiBaseUrl = ApiBaseUrl();
-        var publicBaseUrl = configuration["Payments:SePay:PublicBaseUrl"]?.TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(clientId) ||
-            string.IsNullOrWhiteSpace(clientSecret) ||
-            string.IsNullOrWhiteSpace(configuration["Payments:SePay:IpnSecretKey"]) ||
-            !Uri.TryCreate(apiBaseUrl, UriKind.Absolute, out _))
+        if (!Uri.TryCreate(apiBaseUrl, UriKind.Absolute, out _))
         {
             throw new PaymentProviderUnavailableException(ApiMessages.SePayNotConfigured);
         }
@@ -925,12 +959,46 @@ internal sealed class SePayPaymentService(
             : 27000m;
         return new SePaySettings(
             apiBaseUrl,
-            clientId,
-            clientSecret,
-            string.IsNullOrWhiteSpace(publicBaseUrl) ? string.Empty : publicBaseUrl,
+            ClientId() ?? string.Empty,
+            ClientSecret() ?? string.Empty,
+            configuration["Payments:SePay:PublicBaseUrl"]?.TrimEnd('/') ?? string.Empty,
             configuration["Payments:SePay:BankAccountXid"],
-            rate);
+            rate,
+            !string.IsNullOrWhiteSpace(ClientId()) &&
+                !string.IsNullOrWhiteSpace(ClientSecret()) &&
+                !string.IsNullOrWhiteSpace(configuration["Payments:SePay:IpnSecretKey"]));
     }
+
+    /// <summary>The real linked account when Bank Hub answers, otherwise the configured demo account.</summary>
+    private async Task<LinkedBankAccount> ResolveTransferAccountAsync(
+        SePaySettings settings,
+        CancellationToken cancellationToken)
+    {
+        if (!settings.IsConfigured)
+        {
+            return DemoAccount();
+        }
+
+        try
+        {
+            return await LoadLinkedAccountAsync(settings, cancellationToken);
+        }
+        catch (PaymentProviderUnavailableException exception)
+        {
+            logger.LogWarning(
+                "Bank Hub linked account unavailable ({Reason}). Showing the demo account instead.",
+                exception.Message);
+            return DemoAccount();
+        }
+    }
+
+    /// <summary>Placeholder transfer details so checkout works before Bank Hub is configured.</summary>
+    private LinkedBankAccount DemoAccount() => new(
+        configuration["Payments:SePay:DemoAccountXid"] ?? "local-demo-account",
+        configuration["Payments:SePay:DemoBankCode"] ?? "MBBank",
+        configuration["Payments:SePay:DemoBankBin"] ?? "970422",
+        configuration["Payments:SePay:DemoAccountNumber"] ?? "0123456789",
+        configuration["Payments:SePay:DemoAccountHolderName"] ?? "NGUYEN VAN A");
 
     private string? ClientId() =>
         configuration["Payments:SePay:ClientId"] ?? configuration["Payments:SePay:MerchantId"];
@@ -1094,5 +1162,6 @@ internal sealed class SePayPaymentService(
         string ClientSecret,
         string PublicBaseUrl,
         string? BankAccountXid,
-        decimal EurToVndRate);
+        decimal EurToVndRate,
+        bool IsConfigured);
 }

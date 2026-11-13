@@ -203,6 +203,10 @@ public static class ApiMessages
         "Sandbox credit {TransactionId} for order {OrderNumber} was confirmed by the IPN.";
     public const string SandboxIpnMissingLog =
         "Sandbox credit {TransactionId} for order {OrderNumber} was confirmed locally because no IPN arrived. Check the Bank Hub notify URL and key.";
+    public const string SandboxNotConfiguredLog =
+        "Bank Hub sandbox is not configured. The simulate button confirms order {OrderNumber} locally.";
+    /// <summary>Reference stored when the demo button confirms a transfer without Bank Hub.</summary>
+    public const string SandboxLocalReference = "local-demo";
 
     // ---------------------------------------------------------------------
     // OpenAPI tags

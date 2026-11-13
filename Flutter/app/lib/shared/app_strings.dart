@@ -569,14 +569,14 @@ abstract final class AppStrings {
   static String get transferContentLabel =>
       _text('Transfer content', 'Nội dung chuyển khoản');
   static String get simulateSandboxPayment =>
-      _text('Simulate sandbox transfer', 'Mô phỏng giao dịch sandbox');
+      _text('Simulate bank transfer', 'Mô phỏng chuyển khoản');
   static String get sandboxScanNote => _text(
-    'Scanning the QR alone does not confirm payment. In this sandbox, use the button below to simulate a completed transfer; the app moves on only after the backend confirms it.',
-    'Chỉ quét mã QR chưa xác nhận thanh toán. Trong sandbox này, hãy dùng nút bên dưới để mô phỏng giao dịch hoàn tất; ứng dụng chỉ tiếp tục sau khi backend xác nhận.',
+    'This is a demo checkout. Tapping the button below records the transfer as paid on the server and confirms the order.',
+    'Đây là thanh toán demo. Nhấn nút bên dưới để ghi nhận đã chuyển khoản và xác nhận đơn hàng.',
   );
   static String get waitingForBankHub => _text(
-    'Waiting for the Bank Hub sandbox to confirm this transfer.',
-    'Đang chờ Bank Hub sandbox xác nhận giao dịch.',
+    'Waiting for the transfer to be confirmed.',
+    'Đang chờ xác nhận chuyển khoản.',
   );
   static String get checkPayment =>
       _text('Check payment', 'Kiểm tra thanh toán');

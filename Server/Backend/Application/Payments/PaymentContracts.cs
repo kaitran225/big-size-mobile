@@ -13,7 +13,7 @@ public sealed record SepayBankAccountResponse(
 
 /// <summary>What the running server knows about its Bank Hub sandbox setup. Never contains secrets.</summary>
 public sealed record SepaySandboxStatusResponse(
-    bool Configured,
+    string Mode,
     bool HasClientId,
     bool HasClientSecret,
     bool HasIpnSecretKey,
@@ -24,11 +24,7 @@ public sealed record SepaySandboxStatusResponse(
     string? BankCode,
     string? AccountNumber,
     string? AccountHolderName,
-    string? Error)
-{
-    /// <summary>True when the sandbox can create a transfer session and receive the IPN.</summary>
-    public bool Ready => Configured && Error is null;
-}
+    string? Error);
 
 /// <summary>A payment attempt. Bank Hub sessions carry the bank code and transfer content in CheckoutFields.</summary>
 public sealed record PaymentSessionResponse(

@@ -81,12 +81,24 @@ It never returns secrets.
 
 Demo flow: checkout with bank transfer → the app shows the VND amount, bank,
 account number, transfer content (the order number) and a VietQR code → the
-"S simulate sandbox payment" button asks Bank Hub to create a matching credit →
-SePay posts the IPN → the backend matches the order by `content` (exact, then
-substring), compares the amount, marks the payment `Succeeded` and confirms the
-order. The simulate request waits up to 3s for that IPN and only falls back to
-confirming locally (with a warning log) if the callback never arrives, so a
-misconfigured Notify URL shows up in the logs instead of silently passing.
+"Simulate bank transfer" button confirms the order on the server.
+
+The button works with or without credentials:
+
+- **`mode: bankHub`** — settings are present and an account is reachable, so the
+  button asks Bank Hub for a matching sandbox credit (`/v1/transaction/create`),
+  SePay posts the IPN, and the callback confirms the payment. The simulate
+  request waits up to 3s for that IPN, then falls back to a local confirmation
+  with a warning log if the callback never arrives.
+- **`mode: localDemo`** — no credentials, or Bank Hub rejects them, or no active
+  account is linked. Checkout shows the configured demo account
+  (`Payments:SePay:DemoBankCode` / `DemoBankBin` / `DemoAccountNumber` /
+  `DemoAccountHolderName`, defaulting to MBBank `970422` `0123456789`
+  `NGUYEN VAN A`) and the button confirms the payment locally with a
+  `DEMO-...` reference. Nothing returns 503 and the demo never breaks.
+
+IPN matching stays exact-then-substring on `content`, compares the amount, and
+a repeated `transaction_id` never overwrites a payment that already succeeded.
 
 Sandbox test account for linking (from the SePay docs): MBBank, phone
 `0000000001`, holder `NGUYEN VAN A`, CCCD `001234567890`, account
