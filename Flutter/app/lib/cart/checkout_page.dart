@@ -7,7 +7,6 @@ import '../models/store_product.dart';
 import '../orders/order_detail_page.dart';
 import '../payment/payment_result_page.dart';
 import '../payment/sepay_checkout_page.dart';
-import '../services/shipment_board.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
@@ -405,18 +404,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Future<void> _complete(PaymentSession payment) async {
-    final order = _order;
-    if (order != null) {
-      final session = await widget.api.loadSession();
-      if (!mounted) return;
-      ShipmentBoard.instance.track(
-        order,
-        customerName:
-            session?.displayName ??
-            _selectedAddress?.recipientName ??
-            AppStrings.guest,
-      );
-    }
     if (!mounted) return;
     setState(() {
       _payment = payment;

@@ -27,6 +27,16 @@ For a local backend, use `http://localhost:5047` on desktop and web,
 `http://10.0.2.2:5047` on the Android emulator, or the development computer's
 LAN address on a physical device.
 
+## Realtime notifications
+
+After login the app connects to `{origin}/hubs/notifications` with the JWT
+query parameter. The notifications screen shows whether the hub is connected.
+Staff accounts call `SubscribeStaff` to hear `newOrder` events.
+
+## Demo flows
+
+See [docs/demo-script.md](../docs/demo-script.md) for customer vs staff walkthroughs.
+
 ## OpenAPI / Swagger
 
 The deployed API does not map a homepage or a Swagger UI at `/swagger`, so those

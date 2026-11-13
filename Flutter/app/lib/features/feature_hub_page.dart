@@ -50,7 +50,7 @@ class FeatureHubPage extends StatelessWidget {
           icon: Icons.security_outlined,
           title: AppStrings.securityTitle,
           subtitle: AppStrings.accountSecuritySubtitle,
-          onTap: () => _open(context, const SecurityPage()),
+          onTap: () => _open(context, SecurityPage(api: api)),
         ),
         if (_isStaffOrAdmin(session?.roles ?? const [])) ...[
           const SizedBox(height: 20),
@@ -68,7 +68,10 @@ class FeatureHubPage extends StatelessWidget {
             subtitle: AppStrings.storeToolsSubtitle,
             onTap: () => _open(
               context,
-              StoreManagementPage(roles: session?.roles ?? const []),
+              StoreManagementPage(
+                api: api,
+                roles: session?.roles ?? const [],
+              ),
             ),
           ),
         ],

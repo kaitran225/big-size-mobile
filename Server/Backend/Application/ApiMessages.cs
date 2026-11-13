@@ -204,6 +204,27 @@ public static class ApiMessages
     public const string TagShoppingCart = "Shopping cart";
     public const string TagFavorites = "Favorites";
     public const string TagOrders = "Orders";
+    public const string TagFulfillment = "Order fulfillment";
+    public const string TagSecurity = "Account security";
+
+    public const string OtpResendTooSoon =
+        "Please wait before requesting another verification code.";
+
+    public const string SummaryRequestEmailVerification =
+        "Send an email verification link to the signed-in user";
+    public const string SummaryConfirmEmail = "Confirm an email address using a one-time token";
+    public const string SummaryRequestPasswordReset = "Request a password reset email";
+    public const string SummaryCompletePasswordReset = "Set a new password using a reset token";
+    public const string SummaryRequestOtp = "Request a one-time passcode by email";
+    public const string SummaryVerifyOtp = "Verify a one-time passcode";
+
+    public const string InvalidFulfillmentTransition =
+        "That fulfilment action is not allowed for the order's current status.";
+
+    public const string SummaryGetFulfillmentOrders =
+        "List orders in the staff fulfilment queue";
+    public const string SummaryApplyFulfillmentAction =
+        "Advance an order through accept, ship, or complete";
     public const string TagDeliveryAddresses = "Delivery addresses";
     public const string TagNotifications = "Notifications";
     public const string TagPayments = "Payments";

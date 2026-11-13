@@ -3,16 +3,24 @@ import 'package:flutter/material.dart';
 import '../auth/auth_page.dart';
 import '../models/store_product.dart';
 import '../services/store_api.dart';
+import '../shared/app_strings.dart';
 import '../shared/theme/app_theme.dart';
+import '../shared/widgets/app_snack_bar.dart';
 import 'assistant_chat_strings.dart';
 import 'assistant_markdown.dart';
 
 class _ChatMessage {
-  _ChatMessage({required this.isUser, required this.text, required this.time});
+  _ChatMessage({
+    required this.isUser,
+    required this.text,
+    required this.time,
+    this.suggestions = const [],
+  });
 
   final bool isUser;
   final String text;
   final DateTime time;
+  final List<ChatSuggestion> suggestions;
 }
 
 class AssistantPage extends StatefulWidget {
@@ -60,6 +68,23 @@ class _AssistantPageState extends State<AssistantPage> {
         );
       }
     });
+  }
+
+  Future<void> _applySuggestion(ChatSuggestion suggestion) async {
+    if (suggestion.type != 'add_to_cart') return;
+    try {
+      await widget.api.addCartItem(
+        productVariantId: suggestion.productVariantId,
+      );
+      if (!mounted) return;
+      showAppSnackBar(
+        context,
+        AppStrings.addedToBag(suggestion.productName, suggestion.size),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      showAppErrorSnackBar(context, error);
+    }
   }
 
   Future<void> _send([String? customMessage]) async {
@@ -112,6 +137,7 @@ class _AssistantPageState extends State<AssistantPage> {
               isUser: false,
               text: response.answer,
               time: DateTime.now(),
+              suggestions: response.suggestions,
             ),
           );
           _sending = false;
@@ -461,6 +487,21 @@ class _AssistantPageState extends State<AssistantPage> {
                     : CrossAxisAlignment.start,
                 children: [
                   AssistantMarkdown(data: msg.text, isUser: isUser),
+                  if (!isUser && msg.suggestions.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: msg.suggestions
+                          .map(
+                            (suggestion) => ActionChip(
+                              label: Text(suggestion.label),
+                              onPressed: () => _applySuggestion(suggestion),
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
+                  ],
                   const SizedBox(height: 6),
                   Text(
                     timeStr,

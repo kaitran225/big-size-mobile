@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using BigFit.Application.Abstractions;
 using BigFit.Application.Catalog;
+using BigFit.Application.Notifications;
 using BigFit.Application.Shopping;
 using BigFit.Domain.Entities;
 using BigFit.Infrastructure.Persistence;
@@ -8,7 +9,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BigFit.Infrastructure.Shopping;
 
-internal sealed class ShoppingService(BigFitDbContext dbContext) : IShoppingService
+internal sealed class ShoppingService(
+    BigFitDbContext dbContext,
+    INotificationService notifications,
+    INotificationEventPublisher eventPublisher) : IShoppingService
 {
     public async Task<CartResponse> GetCartAsync(Guid userId, CancellationToken cancellationToken)
     {
@@ -274,7 +278,35 @@ internal sealed class ShoppingService(BigFitDbContext dbContext) : IShoppingServ
                 exception);
         }
 
+        await PublishOrderPlacedAsync(order, cancellationToken);
         return Map(order);
+    }
+
+    private async Task PublishOrderPlacedAsync(
+        CustomerOrder order,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await notifications.CreateForUserAsync(
+                order.UserId,
+                new CreateNotificationRequest
+                {
+                    Type = "order",
+                    Title = $"Order {order.OrderNumber} placed",
+                    Message = "We received your order and will update you as it progresses.",
+                    DataJson = $"{{\"orderId\":\"{order.Id}\",\"status\":\"{order.Status}\"}}"
+                },
+                cancellationToken);
+            await eventPublisher.PublishStaffEventAsync(
+                "newOrder",
+                new { orderId = order.Id, orderNumber = order.OrderNumber, status = order.Status },
+                cancellationToken);
+        }
+        catch
+        {
+            // Order placement should succeed even when notification delivery fails.
+        }
     }
 
     public async Task<PagedResponse<OrderResponse>> GetOrdersAsync(
@@ -343,6 +375,7 @@ internal sealed class ShoppingService(BigFitDbContext dbContext) : IShoppingServ
             order.TotalAmount,
             order.CurrencyCode,
             order.CreatedAt,
+            order.UpdatedAt,
             order.Items.Select(item => new OrderItemResponse(
                 item.Id,
                 item.ProductName,

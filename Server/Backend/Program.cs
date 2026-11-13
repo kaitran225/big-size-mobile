@@ -42,6 +42,8 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy(ApplicationRoles.Admin, policy => policy.RequireRole(ApplicationRoles.Admin))
     .AddPolicy(ApplicationRoles.CatalogManagement, policy => policy
+        .RequireRole(ApplicationRoles.Admin, ApplicationRoles.StoreStaff))
+    .AddPolicy(ApplicationRoles.OrderFulfillment, policy => policy
         .RequireRole(ApplicationRoles.Admin, ApplicationRoles.StoreStaff));
 builder.Services.AddRateLimiter(options =>
 {
@@ -140,6 +142,8 @@ app.MapShoppingEndpoints();
 app.MapPaymentEndpoints();
 app.MapAddressEndpoints();
 app.MapChatAssistantEndpoints();
+app.MapFulfillmentEndpoints();
+app.MapSecurityEndpoints();
 app.MapHub<NotificationHub>("/hubs/notifications").RequireAuthorization();
 
 app.Run();

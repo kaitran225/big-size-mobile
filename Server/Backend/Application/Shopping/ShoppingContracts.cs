@@ -77,4 +77,5 @@ public sealed record OrderResponse(
     decimal TotalAmount,
     string CurrencyCode,
     DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
     IReadOnlyList<OrderItemResponse> Items);

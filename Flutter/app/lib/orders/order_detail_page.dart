@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/checkout_models.dart';
 import '../models/store_product.dart';
-import '../services/shipment_board.dart';
+import '../services/order_shipment_mapper.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
@@ -22,20 +22,59 @@ class OrderDetailPage extends StatefulWidget {
 }
 
 class _OrderDetailPageState extends State<OrderDetailPage> {
+  late CustomerOrder _order;
   late Shipment _shipment;
 
   @override
   void initState() {
     super.initState();
-    _shipment = ShipmentBoard.instance.track(widget.order);
+    _order = widget.order;
+    _shipment = OrderShipmentMapper.shipmentForOrder(_order);
+    _refresh();
+    widget.api.realtime.orderStatusChanged.addListener(_onOrderStatusEvent);
+  }
+
+  @override
+  void dispose() {
+    widget.api.realtime.orderStatusChanged.removeListener(_onOrderStatusEvent);
+    super.dispose();
+  }
+
+  void _onOrderStatusEvent() {
+    final change = widget.api.realtime.orderStatusChanged.value;
+    if (change?.orderId == _order.id) {
+      _refresh();
+    }
+  }
+
+  Future<void> _refresh() async {
+    try {
+      final latest = await widget.api.getOrder(_order.id);
+      if (!mounted) return;
+      setState(() {
+        _order = latest;
+        _shipment = OrderShipmentMapper.shipmentForOrder(_order);
+      });
+    } catch (_) {
+      // Keep the last known order when refresh fails.
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final order = widget.order;
+    final order = _order;
     return Scaffold(
-      appBar: AppBar(title: Text(order.orderNumber)),
+      appBar: AppBar(
+        title: Text(order.orderNumber),
+        actions: [
+          IconButton(
+            tooltip: AppStrings.refresh,
+            onPressed: _refresh,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.lg,

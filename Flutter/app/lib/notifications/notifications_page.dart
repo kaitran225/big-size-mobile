@@ -23,6 +23,25 @@ class _NotificationsPageState extends State<NotificationsPage> {
   void initState() {
     super.initState();
     _reload();
+    widget.api.realtime.notificationCreated.addListener(_onRealtimeNotification);
+    widget.api.realtime.connected.addListener(_onConnectionChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.api.realtime.notificationCreated.removeListener(_onRealtimeNotification);
+    widget.api.realtime.connected.removeListener(_onConnectionChanged);
+    super.dispose();
+  }
+
+  void _onRealtimeNotification() {
+    if (widget.api.realtime.notificationCreated.value != null && mounted) {
+      setState(_reload);
+    }
+  }
+
+  void _onConnectionChanged() {
+    if (mounted) setState(() {});
   }
 
   void _reload() {
@@ -63,10 +82,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
         ),
       ],
       bottom: PreferredSize(
-        preferredSize: Size.fromHeight(34),
+        preferredSize: const Size.fromHeight(34),
         child: Padding(
-          padding: EdgeInsets.only(bottom: 10),
-          child: Text(AppStrings.pushNotConnectedNotice),
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Text(
+            widget.api.realtime.connected.value
+                ? AppStrings.pushConnectedNotice
+                : AppStrings.pushNotConnectedNotice,
+          ),
         ),
       ),
     ),

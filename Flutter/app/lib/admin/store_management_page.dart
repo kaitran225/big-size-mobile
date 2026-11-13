@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/widgets/app_info_note.dart';
 import '../shared/widgets/app_list_tile_card.dart';
@@ -9,8 +10,9 @@ import 'admin_products_page.dart';
 import 'admin_reviews_page.dart';
 
 class StoreManagementPage extends StatelessWidget {
-  const StoreManagementPage({super.key, required this.roles});
+  const StoreManagementPage({super.key, required this.api, required this.roles});
 
+  final StoreApi api;
   final List<String> roles;
 
   @override
@@ -38,7 +40,7 @@ class StoreManagementPage extends StatelessWidget {
                   icon: Icons.receipt_long_outlined,
                   title: AppStrings.ordersTitle,
                   subtitle: AppStrings.ordersDetail,
-                  onTap: () => _open(context, const AdminOrdersPage()),
+                  onTap: () => _open(context, AdminOrdersPage(api: api)),
                 ),
                 AppListTileCard(
                   icon: Icons.rate_review_outlined,

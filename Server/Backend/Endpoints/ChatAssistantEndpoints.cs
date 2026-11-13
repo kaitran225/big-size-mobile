@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using BigFit.Application.Abstractions;
 using BigFit.Application.Assistant;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -11,8 +12,19 @@ public static class ChatAssistantEndpoints
         endpoints.MapPost("/api/assistant/chat", async Task<Ok<ChatAssistantResponse>> (
             ChatAssistantRequest request,
             IChatAssistantService assistant,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
-                TypedResults.Ok(await assistant.AskAsync(request, cancellationToken)))
+        {
+            Guid? userId = null;
+            var subject = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? httpContext.User.FindFirstValue("sub");
+            if (Guid.TryParse(subject, out var parsed))
+            {
+                userId = parsed;
+            }
+
+            return TypedResults.Ok(await assistant.AskAsync(request, userId, cancellationToken));
+        })
         .WithTags(AssistantMessages.Tag)
         .WithName("AskBigFitAssistant")
         .WithSummary(AssistantMessages.Summary)

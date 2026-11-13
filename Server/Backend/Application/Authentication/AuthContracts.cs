@@ -55,6 +55,7 @@ public static class ApplicationRoles
     public const string StoreStaff = "StoreStaff";
     public const string Customer = "Customer";
     public const string CatalogManagement = Admin + "," + StoreStaff;
+    public const string OrderFulfillment = nameof(OrderFulfillment);
 }
 
 public sealed class AuthenticationOperationException(

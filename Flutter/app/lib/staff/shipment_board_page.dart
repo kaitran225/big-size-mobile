@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../models/checkout_models.dart';
 import '../orders/order_tracker.dart';
-import '../services/shipment_board.dart';
+import '../services/order_shipment_mapper.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
+import '../shared/formatters.dart';
 import '../shared/theme/app_theme.dart';
+import '../shared/widgets/app_snack_bar.dart';
 
-/// Staff view of every shipment leaving the warehouse.
+/// Staff view of every order in the fulfilment queue.
 class ShipmentBoardPage extends StatefulWidget {
   const ShipmentBoardPage({super.key, required this.api});
 
@@ -20,12 +22,23 @@ class ShipmentBoardPage extends StatefulWidget {
 class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
   bool _loading = true;
   String? _error;
+  List<StaffFulfillmentOrder> _orders = const [];
+  bool _includeDelivered = false;
 
   @override
   void initState() {
     super.initState();
     _load();
+    widget.api.realtime.staffQueueTick.addListener(_onStaffEvent);
   }
+
+  @override
+  void dispose() {
+    widget.api.realtime.staffQueueTick.removeListener(_onStaffEvent);
+    super.dispose();
+  }
+
+  void _onStaffEvent() => _load();
 
   Future<void> _load() async {
     setState(() {
@@ -33,16 +46,14 @@ class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
       _error = null;
     });
     try {
-      final session = await widget.api.loadSession();
-      final orders = await widget.api.getOrders();
-      for (final order in orders) {
-        ShipmentBoard.instance.track(
-          order,
-          customerName: session?.displayName ?? AppStrings.customerLabel,
-        );
-      }
+      final orders = await widget.api.getFulfillmentOrders(
+        includeDelivered: _includeDelivered,
+      );
       if (!mounted) return;
-      setState(() => _loading = false);
+      setState(() {
+        _orders = orders;
+        _loading = false;
+      });
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -54,17 +65,37 @@ class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
     }
   }
 
+  Future<void> _advance(StaffFulfillmentOrder order) async {
+    final action = OrderShipmentMapper.nextFulfillmentAction(order.status);
+    if (action == null) return;
+    try {
+      await widget.api.applyFulfillmentAction(orderId: order.id, action: action);
+      if (mounted) await _load();
+    } catch (error) {
+      if (!mounted) return;
+      showAppErrorSnackBar(context, error);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final shipments = ShipmentBoard.instance.shipments;
     return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.staffShipmentsTitle)),
+      appBar: AppBar(
+        title: Text(AppStrings.staffShipmentsTitle),
+        actions: [
+          IconButton(
+            tooltip: AppStrings.refresh,
+            onPressed: _loading ? null : _load,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
           ? Center(child: Text(_error!))
-          : shipments.isEmpty
+          : _orders.isEmpty
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xl),
@@ -82,39 +113,51 @@ class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
                 AppSpacing.lg,
                 AppSpacing.xxl,
               ),
-              itemCount: shipments.length + 1,
+              itemCount: _orders.length + 1,
               separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
               itemBuilder: (context, index) {
                 if (index == 0) {
-                  return Container(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.accentSoft,
-                      borderRadius: BorderRadius.circular(AppRadii.md),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.info_outline,
-                          size: 18,
-                          color: AppColors.accent,
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(AppStrings.showDeliveredOrders),
+                        value: _includeDelivered,
+                        onChanged: (value) {
+                          setState(() => _includeDelivered = value);
+                          _load();
+                        },
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentSoft,
+                          borderRadius: BorderRadius.circular(AppRadii.md),
                         ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Text(
-                            AppStrings.boardNote,
-                            style: theme.textTheme.bodySmall,
-                          ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              size: 18,
+                              color: AppColors.accent,
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Text(
+                                AppStrings.boardNote,
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   );
                 }
                 return _ShipmentCard(
-                  shipment: shipments[index - 1],
-                  onAdvance: () => setState(() {
-                    ShipmentBoard.instance.advance(shipments[index - 1]);
-                  }),
+                  order: _orders[index - 1],
+                  onAdvance: () => _advance(_orders[index - 1]),
                 );
               },
             ),
@@ -123,14 +166,22 @@ class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
 }
 
 class _ShipmentCard extends StatelessWidget {
-  const _ShipmentCard({required this.shipment, required this.onAdvance});
+  const _ShipmentCard({required this.order, required this.onAdvance});
 
-  final Shipment shipment;
+  final StaffFulfillmentOrder order;
   final VoidCallback onAdvance;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final stage = OrderShipmentMapper.stageForStatus(order.status);
+    final action = OrderShipmentMapper.nextFulfillmentAction(order.status);
+  final actionLabel = switch (action) {
+    'accept' => AppStrings.fulfillmentAccept,
+    'ship' => AppStrings.fulfillmentShip,
+    'complete' => AppStrings.fulfillmentComplete,
+    _ => AppStrings.advanceStatus,
+  };
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -141,7 +192,7 @@ class _ShipmentCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    shipment.orderNumber,
+                    order.orderNumber,
                     style: theme.textTheme.titleMedium,
                   ),
                 ),
@@ -151,17 +202,17 @@ class _ShipmentCard extends StatelessWidget {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: shipment.isDelivered
+                    color: order.isDelivered
                         ? AppColors.brandSoft
                         : AppColors.accentSoft,
                     borderRadius: BorderRadius.circular(AppRadii.pill),
                   ),
                   child: Text(
-                    ShipmentTracker.stageLabel(shipment.stage),
+                    AppStrings.orderStatus(order.status),
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
-                      color: shipment.isDelivered
+                      color: order.isDelivered
                           ? AppColors.brand
                           : AppColors.accent,
                     ),
@@ -171,26 +222,28 @@ class _ShipmentCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              '${AppStrings.customerLabel}: ${shipment.customerName}',
+              '${AppStrings.customerLabel}: ${order.customerName}',
               style: theme.textTheme.bodySmall,
             ),
             Text(
-              '${AppStrings.courier}: ${shipment.courier} · '
-              '${shipment.trackingNumber}',
+              formatPrice(order.totalAmount, order.currencyCode),
               style: theme.textTheme.bodySmall,
             ),
+            if (order.paymentMethod != null)
+              Text(
+                '${AppStrings.paymentTitle}: ${order.paymentMethod} · ${order.paymentStatus ?? ""}',
+                style: theme.textTheme.bodySmall,
+              ),
             const SizedBox(height: AppSpacing.lg),
-            ShipmentTracker(stage: shipment.stage),
+            ShipmentTracker(stage: stage),
             const SizedBox(height: AppSpacing.lg),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: shipment.isDelivered ? null : onAdvance,
+                onPressed: action == null ? null : onAdvance,
                 icon: const Icon(Icons.trending_up),
                 label: Text(
-                  shipment.isDelivered
-                      ? AppStrings.stageDelivered
-                      : AppStrings.advanceStatus,
+                  order.isDelivered ? AppStrings.stageDelivered : actionLabel,
                 ),
               ),
             ),

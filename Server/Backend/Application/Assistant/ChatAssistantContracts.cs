@@ -27,5 +27,15 @@ public sealed record ChatAssistantRequest
     public IReadOnlyList<ChatMessageItem>? History { get; init; }
 }
 
+/// <summary>Optional action chip for the Flutter client.</summary>
+public sealed record ChatAssistantSuggestion(
+    string Type,
+    Guid ProductVariantId,
+    string ProductName,
+    string Size,
+    string Label);
+
 /// <summary>Answer from the BigFit catalogue assistant.</summary>
-public sealed record ChatAssistantResponse(string Answer);
+public sealed record ChatAssistantResponse(
+    string Answer,
+    IReadOnlyList<ChatAssistantSuggestion> Suggestions);

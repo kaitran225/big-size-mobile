@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using BigFit.Application.Abstractions;
 using BigFit.Application.Assistant;
+using BigFit.Application.Shopping;
 using BigFit.Domain.Entities;
 using BigFit.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,7 @@ internal sealed class ChatAssistantService(
     HttpClient httpClient,
     IConfiguration configuration,
     BigFitDbContext dbContext,
+    IShoppingService shopping,
     ILogger<ChatAssistantService> logger) : IChatAssistantService
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -27,13 +29,16 @@ internal sealed class ChatAssistantService(
 
     public async Task<ChatAssistantResponse> AskAsync(
         ChatAssistantRequest request,
+        Guid? userId,
         CancellationToken cancellationToken)
     {
+        var variantSuggestions = new List<VariantSuggestion>();
         var apiKey = ReadApiKey();
         if (string.IsNullOrWhiteSpace(apiKey) ||
             apiKey.StartsWith("replace-", StringComparison.OrdinalIgnoreCase))
         {
-            return GenerateFallbackResponse(request);
+            await LoadVariantSuggestionsAsync(request, variantSuggestions, cancellationToken);
+            return GenerateFallbackResponse(request, variantSuggestions);
         }
 
         var baseUrl = configuration["Ai:OpenAiCompatible:BaseUrl"]
@@ -59,11 +64,34 @@ internal sealed class ChatAssistantService(
             categoryName,
             request.Message,
             cancellationToken);
+        variantSuggestions = await LoadVariantSuggestionsForProductsAsync(products, cancellationToken);
+
+        object? userCart = null;
+        if (userId is not null)
+        {
+            var cart = await shopping.GetCartAsync(userId.Value, cancellationToken);
+            userCart = new
+            {
+                ItemCount = cart.Items.Count,
+                Total = cart.Items.Sum(item => item.LineTotal),
+                CurrencyCode = cart.Items.FirstOrDefault()?.CurrencyCode,
+                Items = cart.Items.Take(12).Select(item => new
+                {
+                    item.ProductName,
+                    item.Size,
+                    item.Color,
+                    item.Quantity,
+                    item.UnitPrice,
+                    item.LineTotal
+                })
+            };
+        }
 
         var contextJson = JsonSerializer.Serialize(new
         {
             UserGender = userGender,
             UserCategory = categoryName,
+            UserCart = userCart,
             AvailableCategories = categories,
             AvailableProducts = products
         }, JsonOptions);
@@ -86,7 +114,7 @@ internal sealed class ChatAssistantService(
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         httpRequest.Content = new StringContent(payload, Encoding.UTF8, "application/json");
 
-        return await SendRequestAsync(httpRequest, request, cancellationToken);
+        return await SendRequestAsync(httpRequest, request, variantSuggestions, cancellationToken);
     }
 
     private string? ReadApiKey() =>
@@ -217,6 +245,7 @@ internal sealed class ChatAssistantService(
     private async Task<ChatAssistantResponse> SendRequestAsync(
         HttpRequestMessage httpRequest,
         ChatAssistantRequest request,
+        IReadOnlyList<VariantSuggestion> variantSuggestions,
         CancellationToken cancellationToken)
     {
         try
@@ -242,7 +271,9 @@ internal sealed class ChatAssistantService(
                 throw CreateUnavailableException(request, AssistantMessages.ProviderEmptyResponse(request.Language));
             }
 
-            return new ChatAssistantResponse(answer.Trim());
+            return new ChatAssistantResponse(
+                answer.Trim(),
+                BuildSuggestions(answer.Trim(), request, variantSuggestions));
         }
         catch (HttpRequestException exception)
         {
@@ -282,7 +313,102 @@ internal sealed class ChatAssistantService(
     private static bool IsCommonStopword(string word) =>
         word is "cho" or "minh" or "mình" or "tôi" or "ban" or "bạn" or "hoi" or "hỏi" or "can" or "cần" or "co" or "có" or "khong" or "không" or "nhé" or "nha" or "xem";
 
-    private static ChatAssistantResponse GenerateFallbackResponse(ChatAssistantRequest request)
+    private async Task LoadVariantSuggestionsAsync(
+        ChatAssistantRequest request,
+        List<VariantSuggestion> target,
+        CancellationToken cancellationToken)
+    {
+        var userGender = ShouldUseGenderContext(request) ? request.Gender : null;
+        var categoryName = string.IsNullOrWhiteSpace(request.Category)
+            ? null
+            : request.Category.Trim();
+        var products = await LoadProductsAsync(
+            userGender,
+            categoryName,
+            request.Message,
+            cancellationToken);
+        target.AddRange(await LoadVariantSuggestionsForProductsAsync(products, cancellationToken));
+    }
+
+    private async Task<List<VariantSuggestion>> LoadVariantSuggestionsForProductsAsync(
+        IReadOnlyList<ProductContext> products,
+        CancellationToken cancellationToken)
+    {
+        var names = products.Select(product => product.Name).Distinct().ToArray();
+        if (names.Length == 0)
+        {
+            return [];
+        }
+
+        return await dbContext.ProductVariants.AsNoTracking()
+            .Where(variant => names.Contains(variant.Product.Name) && variant.StockQuantity > 0)
+            .OrderBy(variant => variant.Product.Name)
+            .ThenBy(variant => variant.Size)
+            .Take(6)
+            .Select(variant => new VariantSuggestion(
+                variant.Id,
+                variant.Product.Name,
+                variant.Size,
+                variant.Color))
+            .ToListAsync(cancellationToken);
+    }
+
+    private static IReadOnlyList<ChatAssistantSuggestion> BuildSuggestions(
+        string answer,
+        ChatAssistantRequest request,
+        IReadOnlyList<VariantSuggestion> variants)
+    {
+        if (variants.Count == 0)
+        {
+            return [];
+        }
+
+        var answerLower = answer.ToLowerInvariant();
+        foreach (var variant in variants)
+        {
+            if (answerLower.Contains(variant.ProductName.ToLowerInvariant()))
+            {
+                return
+                [
+                    new ChatAssistantSuggestion(
+                        "add_to_cart",
+                        variant.Id,
+                        variant.ProductName,
+                        variant.Size,
+                        AssistantSuggestionLabel(request.Language, variant))
+                ];
+            }
+        }
+
+        var wantsRecommendation = request.Message.Contains("recommend", StringComparison.OrdinalIgnoreCase)
+            || request.Message.Contains("suggest", StringComparison.OrdinalIgnoreCase)
+            || request.Message.Contains("gợi ý", StringComparison.OrdinalIgnoreCase)
+            || request.Message.Contains("nên mua", StringComparison.OrdinalIgnoreCase);
+        if (!wantsRecommendation)
+        {
+            return [];
+        }
+
+        var first = variants[0];
+        return
+        [
+            new ChatAssistantSuggestion(
+                "add_to_cart",
+                first.Id,
+                first.ProductName,
+                first.Size,
+                AssistantSuggestionLabel(request.Language, first))
+        ];
+    }
+
+    private static string AssistantSuggestionLabel(string language, VariantSuggestion variant) =>
+        language == "vi"
+            ? $"Thêm {variant.ProductName} cỡ {variant.Size}"
+            : $"Add {variant.ProductName} size {variant.Size}";
+
+    private static ChatAssistantResponse GenerateFallbackResponse(
+        ChatAssistantRequest request,
+        IReadOnlyList<VariantSuggestion> variantSuggestions)
     {
         var msg = request.Message.ToLowerInvariant();
         var isEnglish = request.Language == "en";
@@ -292,27 +418,29 @@ internal sealed class ChatAssistantService(
             : new[] { "code", "python", "java", "lập trình", "toán", "thời tiết", "chính trị", "game", "phim", "bài tập" };
         if (outOfScopeWords.Any(w => msg.Contains(w)))
         {
-            return new ChatAssistantResponse(
-                AssistantMessages.OutOfScopeFallback(request.Language));
+            return WrapFallback(AssistantMessages.OutOfScopeFallback(request.Language), request, variantSuggestions);
         }
 
         if (msg.Contains("size") || msg.Contains("nặng") || msg.Contains("cao") || msg.Contains("kg") ||
             (isEnglish && (msg.Contains("height") || msg.Contains("weight") || msg.Contains("fit"))))
         {
-            return new ChatAssistantResponse(
-                AssistantMessages.SizeGuideFallback(request.Language));
+            return WrapFallback(AssistantMessages.SizeGuideFallback(request.Language), request, variantSuggestions);
         }
 
         if (msg.Contains("đổi") || msg.Contains("trả") || msg.Contains("ship") || msg.Contains("vận chuyển") ||
             (isEnglish && (msg.Contains("exchange") || msg.Contains("return") || msg.Contains("shipping") || msg.Contains("delivery"))))
         {
-            return new ChatAssistantResponse(
-                AssistantMessages.PoliciesFallback(request.Language));
+            return WrapFallback(AssistantMessages.PoliciesFallback(request.Language), request, variantSuggestions);
         }
 
-        return new ChatAssistantResponse(
-            AssistantMessages.GeneralFallback(request.Language));
+        return WrapFallback(AssistantMessages.GeneralFallback(request.Language), request, variantSuggestions);
     }
+
+    private static ChatAssistantResponse WrapFallback(
+        string answer,
+        ChatAssistantRequest request,
+        IReadOnlyList<VariantSuggestion> variantSuggestions) =>
+        new(answer, BuildSuggestions(answer, request, variantSuggestions));
 
     private static ChatAssistantUnavailableException CreateUnavailableException(
         ChatAssistantRequest request,
@@ -343,4 +471,10 @@ internal sealed class ChatAssistantService(
         int AvailableUnits,
         string[] Sizes,
         string[] Colors);
+
+    private sealed record VariantSuggestion(
+        Guid Id,
+        string ProductName,
+        string Size,
+        string Color);
 }

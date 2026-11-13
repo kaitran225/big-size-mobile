@@ -124,3 +124,49 @@ class PaymentSession {
     );
   }
 }
+
+/// Order row on the staff fulfilment queue.
+class StaffFulfillmentOrder {
+  const StaffFulfillmentOrder({
+    required this.id,
+    required this.orderNumber,
+    required this.status,
+    required this.totalAmount,
+    required this.currencyCode,
+    required this.customerName,
+    required this.customerEmail,
+    required this.paymentMethod,
+    required this.paymentStatus,
+    required this.itemCount,
+    required this.updatedAt,
+  });
+
+  final String id;
+  final String orderNumber;
+  final String status;
+  final double totalAmount;
+  final String currencyCode;
+  final String customerName;
+  final String customerEmail;
+  final String? paymentMethod;
+  final String? paymentStatus;
+  final int itemCount;
+  final DateTime updatedAt;
+
+  factory StaffFulfillmentOrder.fromJson(Map<String, dynamic> json) =>
+      StaffFulfillmentOrder(
+        id: json['id'] as String,
+        orderNumber: json['orderNumber'] as String,
+        status: json['status'] as String,
+        totalAmount: (json['totalAmount'] as num).toDouble(),
+        currencyCode: json['currencyCode'] as String,
+        customerName: json['customerDisplayName'] as String,
+        customerEmail: json['customerEmail'] as String,
+        paymentMethod: json['paymentMethod'] as String?,
+        paymentStatus: json['paymentStatus'] as String?,
+        itemCount: (json['items'] as List<dynamic>).length,
+        updatedAt: DateTime.parse(json['updatedAt'] as String),
+      );
+
+  bool get isDelivered => status.toLowerCase() == 'delivered';
+}

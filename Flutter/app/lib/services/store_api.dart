@@ -9,6 +9,7 @@ import '../assistant/assistant_chat_strings.dart';
 import '../models/checkout_models.dart';
 import '../models/store_product.dart';
 import '../shared/app_strings.dart';
+import 'notification_realtime_service.dart';
 
 class StoreApiException implements Exception {
   const StoreApiException(this.message);
@@ -47,6 +48,7 @@ class StoreApi {
 
   final http.Client _client;
   final FlutterSecureStorage _secureStorage;
+  final NotificationRealtimeService realtime = NotificationRealtimeService();
   Uri _baseUri;
   Uri? _sessionBaseUri;
   String? _accessToken;
@@ -193,6 +195,11 @@ class StoreApi {
     await _send('DELETE', '/addresses/$id');
   }
 
+  Future<CustomerOrder> getOrder(String orderId) async {
+    final response = await _send('GET', '/orders/$orderId');
+    return CustomerOrder.fromJson(response as Map<String, dynamic>);
+  }
+
   Future<List<CustomerOrder>> getOrders({int page = 1}) async {
     final response = await _send(
       'GET',
@@ -251,6 +258,40 @@ class StoreApi {
     return PaymentSession.fromJson(response as Map<String, dynamic>);
   }
 
+  Future<List<StaffFulfillmentOrder>> getFulfillmentOrders({
+    bool includeDelivered = false,
+    int page = 1,
+  }) async {
+    final response = await _send(
+      'GET',
+      '/fulfillment/orders',
+      query: {
+        'page': '$page',
+        'pageSize': '50',
+        'includeDelivered': '$includeDelivered',
+      },
+    );
+    final items = (response as Map<String, dynamic>)['items'] as List<dynamic>;
+    return items
+        .map(
+          (item) =>
+              StaffFulfillmentOrder.fromJson(item as Map<String, dynamic>),
+        )
+        .toList(growable: false);
+  }
+
+  Future<StaffFulfillmentOrder> applyFulfillmentAction({
+    required String orderId,
+    required String action,
+  }) async {
+    final response = await _send(
+      'PATCH',
+      '/fulfillment/orders/$orderId',
+      body: {'action': action},
+    );
+    return StaffFulfillmentOrder.fromJson(response as Map<String, dynamic>);
+  }
+
   Future<CustomerOrder> createOrder({String? shippingAddressId}) async {
     final response = await _send(
       'POST',
@@ -278,6 +319,52 @@ class StoreApi {
 
   Future<void> deleteNotification(String id) async {
     await _send('DELETE', '/notifications/$id');
+  }
+
+  Future<String?> requestEmailVerification() async {
+    final response = await _send('POST', '/security/email/request-verification');
+    final map = response as Map<String, dynamic>;
+    return map['devPreview'] as String?;
+  }
+
+  Future<void> requestPasswordReset(String email) async {
+    await _send('POST', '/security/password/request-reset', body: {'email': email});
+  }
+
+  Future<void> completePasswordReset({
+    required String token,
+    required String newPassword,
+  }) async {
+    await _send(
+      'POST',
+      '/security/password/reset',
+      body: {'token': token, 'newPassword': newPassword},
+    );
+  }
+
+  Future<String?> requestOtp({
+    required String email,
+    required String purpose,
+  }) async {
+    final response = await _send(
+      'POST',
+      '/security/otp/request',
+      body: {'email': email, 'purpose': purpose},
+    );
+    return (response as Map<String, dynamic>)['devPreview'] as String?;
+  }
+
+  Future<bool> verifyOtp({
+    required String email,
+    required String purpose,
+    required String code,
+  }) async {
+    final response = await _send(
+      'POST',
+      '/security/otp/verify',
+      body: {'email': email, 'purpose': purpose, 'code': code},
+    );
+    return (response as Map<String, dynamic>)['verified'] as bool? ?? false;
   }
 
   Future<ChatReply> askAssistant({
@@ -310,6 +397,7 @@ class StoreApi {
     );
     final session = AuthSession.fromJson(response as Map<String, dynamic>);
     await _saveSession(session, sessionBaseUri);
+    await _connectRealtime(session, sessionBaseUri);
     return session;
   }
 
@@ -331,6 +419,7 @@ class StoreApi {
     );
     final session = AuthSession.fromJson(response as Map<String, dynamic>);
     await _saveSession(session, sessionBaseUri);
+    await _connectRealtime(session, sessionBaseUri);
     return session;
   }
 
@@ -351,15 +440,18 @@ class StoreApi {
         ? _baseUri
         : _normalizeBaseUri(sessionBaseUrl);
     _accessToken = token;
-    return AuthSession(
+    final session = AuthSession(
       accessToken: token,
       email: email,
       displayName: displayName,
       roles: (jsonDecode(roles) as List<dynamic>).cast<String>(),
     );
+    await _connectRealtime(session, _sessionBaseUri!);
+    return session;
   }
 
   Future<void> signOut() async {
+    await realtime.disconnect();
     _accessToken = null;
     _sessionBaseUri = null;
     await _secureStorage.delete(key: _tokenKey);
@@ -367,6 +459,14 @@ class StoreApi {
     await _secureStorage.delete(key: _nameKey);
     await _secureStorage.delete(key: _rolesKey);
     await _secureStorage.delete(key: _sessionBaseUrlKey);
+  }
+
+  Future<void> _connectRealtime(AuthSession session, Uri sessionBaseUri) async {
+    await realtime.connect(
+      apiBaseUri: sessionBaseUri,
+      accessToken: session.accessToken,
+      roles: session.roles,
+    );
   }
 
   Future<void> _saveSession(AuthSession session, Uri sessionBaseUri) async {

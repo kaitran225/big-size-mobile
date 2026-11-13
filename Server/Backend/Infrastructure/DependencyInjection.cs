@@ -3,6 +3,8 @@ using BigFit.Application.Authentication;
 using BigFit.Infrastructure.Identity;
 using BigFit.Infrastructure.Assistant;
 using BigFit.Infrastructure.Notifications;
+using BigFit.Infrastructure.Email;
+using BigFit.Infrastructure.Security;
 using BigFit.Infrastructure.Shopping;
 using BigFit.Infrastructure.Payments;
 using BigFit.Infrastructure.Addresses;
@@ -117,6 +119,18 @@ public static class DependencyInjection
         services.AddScoped<IDatabaseHealthCheck, DatabaseHealthCheck>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IShoppingService, ShoppingService>();
+        services.AddScoped<IOrderFulfillmentService, OrderFulfillmentService>();
+        if (configuration.GetValue("Email:Enabled", false))
+        {
+            services.AddSingleton<IEmailSender, SmtpEmailSender>();
+        }
+        else
+        {
+            services.AddSingleton<IEmailSender, LoggingEmailSender>();
+        }
+
+        services.AddScoped<IEmailVerificationService, EmailVerificationService>();
+        services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IPaymentService, SePayPaymentService>();
         services.AddHttpClient(nameof(SePayPaymentService), client =>
             client.Timeout = TimeSpan.FromSeconds(20));

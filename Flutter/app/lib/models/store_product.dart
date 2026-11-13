@@ -339,6 +339,7 @@ class CustomerOrder {
     required this.totalAmount,
     required this.currencyCode,
     required this.createdAt,
+    required this.updatedAt,
     required this.items,
   });
 
@@ -350,9 +351,12 @@ class CustomerOrder {
   final double totalAmount;
   final String currencyCode;
   final DateTime createdAt;
+  final DateTime updatedAt;
   final List<OrderItem> items;
 
-  factory CustomerOrder.fromJson(Map<String, dynamic> json) => CustomerOrder(
+  factory CustomerOrder.fromJson(Map<String, dynamic> json) {
+    final created = DateTime.parse(json['createdAt'] as String);
+  return CustomerOrder(
     id: json['id'] as String,
     orderNumber: json['orderNumber'] as String,
     status: json['status'] as String,
@@ -360,10 +364,27 @@ class CustomerOrder {
     shippingAmount: (json['shippingAmount'] as num).toDouble(),
     totalAmount: (json['totalAmount'] as num).toDouble(),
     currencyCode: json['currencyCode'] as String,
-    createdAt: DateTime.parse(json['createdAt'] as String),
+    createdAt: created,
+    updatedAt: json['updatedAt'] != null
+        ? DateTime.parse(json['updatedAt'] as String)
+        : created,
     items: (json['items'] as List<dynamic>)
         .map((item) => OrderItem.fromJson(item as Map<String, dynamic>))
         .toList(growable: false),
+  );
+  }
+
+  CustomerOrder copyWith({String? status, DateTime? updatedAt}) => CustomerOrder(
+    id: id,
+    orderNumber: orderNumber,
+    status: status ?? this.status,
+    subtotal: subtotal,
+    shippingAmount: shippingAmount,
+    totalAmount: totalAmount,
+    currencyCode: currencyCode,
+    createdAt: createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    items: items,
   );
 }
 
@@ -402,11 +423,48 @@ class StoreNotification {
       );
 }
 
+class ChatSuggestion {
+  const ChatSuggestion({
+    required this.type,
+    required this.productVariantId,
+    required this.productName,
+    required this.size,
+    required this.label,
+  });
+
+  final String type;
+  final String productVariantId;
+  final String productName;
+  final String size;
+  final String label;
+
+  factory ChatSuggestion.fromJson(Map<String, dynamic> json) => ChatSuggestion(
+    type: json['type'] as String,
+    productVariantId: json['productVariantId'] as String,
+    productName: json['productName'] as String,
+    size: json['size'] as String,
+    label: json['label'] as String,
+  );
+}
+
 class ChatReply {
-  const ChatReply({required this.answer});
+  const ChatReply({required this.answer, this.suggestions = const []});
 
   final String answer;
+  final List<ChatSuggestion> suggestions;
 
-  factory ChatReply.fromJson(Map<String, dynamic> json) =>
-      ChatReply(answer: json['answer'] as String);
+  factory ChatReply.fromJson(Map<String, dynamic> json) {
+    final raw = json['suggestions'];
+    final suggestions = raw is List
+        ? raw
+            .map(
+              (item) => ChatSuggestion.fromJson(item as Map<String, dynamic>),
+            )
+            .toList(growable: false)
+        : const <ChatSuggestion>[];
+    return ChatReply(
+      answer: json['answer'] as String,
+      suggestions: suggestions,
+    );
+  }
 }

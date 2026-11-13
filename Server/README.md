@@ -28,6 +28,16 @@ Architecture boundaries remain grouped in the project:
    Swagger UI is available at `/swagger` (and `/` redirects there). The raw
    OpenAPI document is available at `/openapi/v1.json`.
 
+### Email, OTP, fulfilment, and realtime
+
+- **Email / OTP** — set `Email__Enabled=true` and SMTP variables from
+  `.env.example`. When disabled, verification links and OTP codes are written to
+  application logs for demos.
+- **Staff orders** — `GET/PATCH /api/fulfillment/orders` (Admin or StoreStaff).
+  Actions: `accept`, `ship`, `complete`.
+- **SignalR** — hub at `/hubs/notifications?access_token={jwt}`; events
+  `notificationCreated`, `orderStatusChanged`, and staff `newOrder`.
+
 ### SePay sandbox
 
 Catalog prices stay in EUR. Bank Hub converts the order total to VND with

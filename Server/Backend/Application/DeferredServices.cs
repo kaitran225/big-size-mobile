@@ -3,6 +3,7 @@ using BigFit.Application.Addresses;
 using BigFit.Application.Catalog;
 using BigFit.Application.Notifications;
 using BigFit.Application.Payments;
+using BigFit.Application.Security;
 using BigFit.Application.Shopping;
 
 namespace BigFit.Application.Abstractions;
@@ -20,6 +21,22 @@ public interface IShoppingService
     Task<OrderResponse> CreateOrderAsync(Guid userId, CreateOrderRequest request, CancellationToken cancellationToken);
     Task<OrderResponse?> GetOrderAsync(Guid userId, Guid orderId, CancellationToken cancellationToken);
     Task<PagedResponse<OrderResponse>> GetOrdersAsync(Guid userId, int page, int pageSize, CancellationToken cancellationToken);
+}
+
+/// <summary>Staff order queue and status transitions.</summary>
+public interface IOrderFulfillmentService
+{
+    Task<PagedResponse<StaffOrderResponse>> GetQueueAsync(
+        int page,
+        int pageSize,
+        bool includeDelivered,
+        CancellationToken cancellationToken);
+
+    Task<StaffOrderResponse?> ApplyActionAsync(
+        Guid orderId,
+        string action,
+        Guid staffUserId,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>Delivery-address operations scoped to the authenticated user.</summary>
@@ -77,7 +94,9 @@ public interface INotificationService
 public interface IChatAssistantService
 {
     Task<ChatAssistantResponse> AskAsync(
-        ChatAssistantRequest request, CancellationToken cancellationToken);
+        ChatAssistantRequest request,
+        Guid? userId,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>Publishes notification changes to connected clients.</summary>
@@ -86,13 +105,31 @@ public interface INotificationEventPublisher
     Task PublishCreatedAsync(Guid userId, UserNotificationResponse notification, CancellationToken cancellationToken);
     Task PublishReadAsync(Guid userId, Guid notificationId, CancellationToken cancellationToken);
     Task PublishDeletedAsync(Guid userId, Guid notificationId, CancellationToken cancellationToken);
+    Task PublishOrderStatusChangedAsync(
+        Guid userId,
+        OrderStatusChangedEvent change,
+        CancellationToken cancellationToken);
+    Task PublishStaffEventAsync(string eventName, object payload, CancellationToken cancellationToken);
 }
 
-/// <summary>Extension point for email verification and password-reset delivery.</summary>
-public interface IEmailVerificationService;
+/// <summary>Email verification and password-reset tokens.</summary>
+public interface IEmailVerificationService
+{
+    Task<RequestEmailVerificationResponse> RequestVerificationAsync(
+        Guid userId, CancellationToken cancellationToken);
+    Task<bool> ConfirmEmailAsync(string token, CancellationToken cancellationToken);
+    Task<bool> RequestPasswordResetAsync(string email, CancellationToken cancellationToken);
+    Task<bool> CompletePasswordResetAsync(
+        string token, string newPassword, CancellationToken cancellationToken);
+}
 
-/// <summary>Extension point for expiring, rate-limited one-time codes.</summary>
-public interface IOtpService;
+/// <summary>Expiring, rate-limited one-time passcodes.</summary>
+public interface IOtpService
+{
+    Task<OtpRequestResponse> RequestAsync(
+        Guid? userId, RequestOtpRequest request, CancellationToken cancellationToken);
+    Task<OtpVerifyResponse> VerifyAsync(VerifyOtpRequest request, CancellationToken cancellationToken);
+}
 
 /// <summary>Extension point for delivery addresses and map-provider integration.</summary>
 public interface IMapLocationService;

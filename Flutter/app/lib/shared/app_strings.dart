@@ -269,6 +269,10 @@ abstract final class AppStrings {
     'Live push updates are not connected yet',
     'Chưa kết nối cập nhật thông báo trực tiếp',
   );
+  static String get pushConnectedNotice => _text(
+    'Live push connected',
+    'Đã kết nối thông báo trực tiếp',
+  );
   static String get notificationsEmpty =>
       _text('You are all caught up.', 'Bạn đã xem hết thông báo.');
 
@@ -336,35 +340,67 @@ abstract final class AppStrings {
   static String get securityHeadline =>
       _text('Protect your BigFit account', 'Bảo vệ tài khoản BigFit của bạn');
   static String get securityIntro => _text(
-    'These flows are ready for email and OTP service wiring.',
-    'Các luồng này đã sẵn sàng để tích hợp email và OTP.',
+    'Verify your email, reset your password, or confirm a one-time passcode.',
+    'Xác minh email, đặt lại mật khẩu hoặc xác nhận mã OTP.',
   );
   static String get verifyEmail => _text('Verify your email', 'Xác minh email');
   static String get verifyEmailDescription => _text(
     'Confirm your email address with a one-time link.',
     'Xác nhận địa chỉ email bằng liên kết dùng một lần.',
   );
-  static String get emailServicePending =>
-      _text('Email service pending', 'Dịch vụ email đang chờ tích hợp');
+  static String get emailServiceReady =>
+      _text('API ready — wire SMTP on the server', 'API sẵn sàng — cấu hình SMTP trên server');
   static String get resetPassword =>
       _text('Reset password', 'Đặt lại mật khẩu');
   static String get resetPasswordDescription => _text(
     'Request a secure password reset email.',
     'Yêu cầu email đặt lại mật khẩu an toàn.',
   );
-  static String get resetApiPending =>
-      _text('Reset API pending', 'API đặt lại mật khẩu đang chờ tích hợp');
+  static String get resetApiReady =>
+      _text('Reset via email token', 'Đặt lại qua token email');
   static String get otpTitle =>
       _text('One-time passcode', 'Mã xác minh một lần');
   static String get otpDescription => _text(
     'Enter a time-limited code sent to your email.',
     'Nhập mã có thời hạn được gửi đến email của bạn.',
   );
-  static String get otpApiPending =>
-      _text('OTP API pending', 'API OTP đang chờ tích hợp');
-  static String get securityPreviewNotice => _text(
-    'UI preview only. Email delivery, OTP verification, retry limits, and password reset are not active.',
-    'Chỉ là bản xem trước giao diện. Gửi email, xác minh OTP, giới hạn thử lại và đặt lại mật khẩu chưa hoạt động.',
+  static String get otpApiReady =>
+      _text('Email OTP with retry limits', 'OTP email có giới hạn thử lại');
+  static String get securityEmailLoggingNotice => _text(
+    'When SMTP is off, links and codes appear in server logs and dev hints here.',
+    'Khi tắt SMTP, liên kết và mã hiện trong log server và gợi ý dev tại đây.',
+  );
+  static String get sendVerificationEmail =>
+      _text('Send verification email', 'Gửi email xác minh');
+  static String get verificationEmailSent =>
+      _text('Verification email requested', 'Đã yêu cầu email xác minh');
+  static String devEmailLinkHint(String link) => _text(
+    'Dev link (SMTP off): $link',
+    'Liên kết dev (tắt SMTP): $link',
+  );
+  static String get requestResetEmail =>
+      _text('Request reset email', 'Yêu cầu email đặt lại');
+  static String get resetEmailSent => _text(
+    'If the email exists, reset instructions were sent.',
+    'Nếu email tồn tại, hướng dẫn đặt lại đã được gửi.',
+  );
+  static String get enterResetToken =>
+      _text('Enter the token from your email', 'Nhập token từ email');
+  static String get resetTokenLabel => _text('Reset token', 'Token đặt lại');
+  static String get newPasswordLabel => _text('New password', 'Mật khẩu mới');
+  static String get saveNewPassword =>
+      _text('Save new password', 'Lưu mật khẩu mới');
+  static String get resetPasswordSuccess =>
+      _text('Password updated', 'Đã cập nhật mật khẩu');
+  static String get sendOtp => _text('Send code', 'Gửi mã');
+  static String get otpSent => _text('Code sent', 'Đã gửi mã');
+  static String get otpCodeLabel => _text('One-time code', 'Mã một lần');
+  static String get verifyOtp => _text('Verify code', 'Xác minh mã');
+  static String get otpVerified => _text('Code accepted', 'Mã hợp lệ');
+  static String get otpInvalid => _text('Code was not accepted', 'Mã không hợp lệ');
+  static String devOtpHint(String code) => _text(
+    'Dev code (SMTP off): $code',
+    'Mã dev (tắt SMTP): $code',
   );
 
   // Feature hub -----------------------------------------------------------
@@ -602,9 +638,17 @@ abstract final class AppStrings {
   static String get markDelivered =>
       _text('Mark delivered', 'Đánh dấu đã giao');
   static String get boardNote => _text(
-    'Shipment states are held on the device for this demo.',
-    'Trạng thái giao hàng được lưu trên thiết bị trong bản dùng thử này.',
+    'Status updates are saved on the server and customers receive notifications.',
+    'Trạng thái được lưu trên server và khách hàng nhận thông báo.',
   );
+  static String get showDeliveredOrders =>
+      _text('Show delivered orders', 'Hiển thị đơn đã giao');
+  static String get fulfillmentAccept =>
+      _text('Accept order', 'Tiếp nhận đơn');
+  static String get fulfillmentShip =>
+      _text('Mark shipped', 'Đánh dấu đã gửi');
+  static String get fulfillmentComplete =>
+      _text('Mark delivered', 'Đánh dấu đã giao');
   static String get noShipments =>
       _text('No shipments on the board', 'Không có đơn giao hàng nào');
   static String get customerLabel => _text('Customer', 'Khách hàng');

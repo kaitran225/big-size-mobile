@@ -240,7 +240,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _MenuRow(
           icon: Icons.security_outlined,
           label: AppStrings.accountSecurity,
-          onTap: () => _open(const SecurityPage()),
+          onTap: () => _open(SecurityPage(api: widget.api)),
         ),
         const Divider(indent: AppSpacing.lg, endIndent: AppSpacing.lg),
         if (_isStaff) ...[
@@ -249,7 +249,12 @@ class _ProfilePageState extends State<ProfilePage> {
             icon: Icons.storefront_outlined,
             label: AppStrings.storeManagementTitle,
             onTap: () =>
-                _open(StoreManagementPage(roles: _session?.roles ?? const [])),
+                _open(
+                  StoreManagementPage(
+                    api: widget.api,
+                    roles: _session?.roles ?? const [],
+                  ),
+                ),
           ),
           const Divider(indent: AppSpacing.lg, endIndent: AppSpacing.lg),
           _MenuRow(

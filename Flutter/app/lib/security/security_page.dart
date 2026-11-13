@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/widgets/app_info_note.dart';
 import '../shared/widgets/app_list_tile_card.dart';
@@ -9,7 +10,9 @@ import 'otp_entry_page.dart';
 import 'password_reset_page.dart';
 
 class SecurityPage extends StatelessWidget {
-  const SecurityPage({super.key});
+  const SecurityPage({super.key, required this.api});
+
+  final StoreApi api;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -26,9 +29,9 @@ class SecurityPage extends StatelessWidget {
           title: AppStrings.verifyEmail,
           subtitle: AppStrings.descriptionWithStatus(
             AppStrings.verifyEmailDescription,
-            AppStrings.emailServicePending,
+            AppStrings.emailServiceReady,
           ),
-          onTap: () => _open(context, const EmailVerificationPage()),
+          onTap: () => _open(context, EmailVerificationPage(api: api)),
           isThreeLine: true,
         ),
         AppListTileCard(
@@ -36,9 +39,9 @@ class SecurityPage extends StatelessWidget {
           title: AppStrings.resetPassword,
           subtitle: AppStrings.descriptionWithStatus(
             AppStrings.resetPasswordDescription,
-            AppStrings.resetApiPending,
+            AppStrings.resetApiReady,
           ),
-          onTap: () => _open(context, const PasswordResetPage()),
+          onTap: () => _open(context, PasswordResetPage(api: api)),
           isThreeLine: true,
         ),
         AppListTileCard(
@@ -46,13 +49,13 @@ class SecurityPage extends StatelessWidget {
           title: AppStrings.otpTitle,
           subtitle: AppStrings.descriptionWithStatus(
             AppStrings.otpDescription,
-            AppStrings.otpApiPending,
+            AppStrings.otpApiReady,
           ),
-          onTap: () => _open(context, const OtpEntryPage()),
+          onTap: () => _open(context, OtpEntryPage(api: api)),
           isThreeLine: true,
         ),
         const SizedBox(height: 12),
-        AppInfoNote(text: AppStrings.securityPreviewNotice),
+        AppInfoNote(text: AppStrings.securityEmailLoggingNotice),
       ],
     ),
   );

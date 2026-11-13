@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../shared/app_strings.dart';
-import '../shared/widgets/not_implemented_view.dart';
+import '../services/store_api.dart';
+import '../staff/shipment_board_page.dart';
 
-/// Placeholder for the order fulfilment management screen.
+/// Staff order fulfilment entry point from admin tools.
 class AdminOrdersPage extends StatelessWidget {
-  const AdminOrdersPage({super.key});
+  const AdminOrdersPage({super.key, required this.api});
+
+  final StoreApi api;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(AppStrings.ordersTitle)),
-    body: NotImplementedView(title: AppStrings.ordersTitle),
-  );
+  Widget build(BuildContext context) => ShipmentBoardPage(api: api);
 }
