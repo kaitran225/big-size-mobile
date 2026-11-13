@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../map/map_point_picker.dart';
 import '../models/store_product.dart';
+import '../services/geocoding_service.dart';
 import '../shared/app_strings.dart';
 import '../shared/theme/app_theme.dart';
 import '../shared/widgets/app_dialog.dart';
@@ -100,6 +101,7 @@ class _AddressEditorState extends State<AddressEditor> {
                     _longitude = lng;
                   });
                 },
+                onAddressResolved: _applyResolvedAddress,
               ),
               const SizedBox(height: AppSpacing.md),
               for (final entry in _fields.entries)
@@ -138,6 +140,32 @@ class _AddressEditorState extends State<AddressEditor> {
       ),
     ),
   );
+
+  final _autoFields = <String, String>{};
+
+  /// Fills the form from the map pin, leaving anything the user typed alone.
+  void _applyResolvedAddress(GeocodedAddress resolved) {
+    final values = <String, String?>{
+      'addressLine': resolved.addressLine,
+      'city': resolved.city,
+      'province': resolved.province,
+      'postalCode': resolved.postalCode,
+      'countryCode': resolved.countryCode,
+    };
+    setState(() {
+      for (final entry in values.entries) {
+        final value = entry.value?.trim() ?? '';
+        if (value.isEmpty) continue;
+        final controller = _fields[entry.key];
+        if (controller == null) continue;
+        final current = controller.text.trim();
+        final auto = _autoFields[entry.key];
+        if (current.isNotEmpty && current != auto) continue;
+        controller.text = value;
+        _autoFields[entry.key] = value;
+      }
+    });
+  }
 
   String _addressFieldLabel(String key) => switch (key) {
     'label' => AppStrings.fieldAddressLabel,

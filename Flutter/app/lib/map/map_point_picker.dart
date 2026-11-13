@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import '../services/geocoding_service.dart';
 import '../shared/app_strings.dart';
 import '../shared/theme/app_theme.dart';
 
@@ -9,6 +12,7 @@ class MapPointPicker extends StatefulWidget {
   const MapPointPicker({
     super.key,
     required this.onPointChanged,
+    this.onAddressResolved,
     this.initialLatitude,
     this.initialLongitude,
     this.height = 280,
@@ -16,6 +20,9 @@ class MapPointPicker extends StatefulWidget {
   });
 
   final void Function(double latitude, double longitude) onPointChanged;
+
+  /// Fires with the reverse-geocoded address for the selected point.
+  final ValueChanged<GeocodedAddress>? onAddressResolved;
   final double? initialLatitude;
   final double? initialLongitude;
   final double height;
@@ -28,7 +35,10 @@ class MapPointPicker extends StatefulWidget {
 class _MapPointPickerState extends State<MapPointPicker> {
   late MapController _mapController;
   late LatLng _currentCenter;
+  final _geocoding = GeocodingService();
+  Timer? _geocodeDebounce;
   bool _isLocating = false;
+  bool _isResolving = false;
 
   @override
   void initState() {
@@ -45,6 +55,28 @@ class _MapPointPickerState extends State<MapPointPicker> {
         widget.autoLocateOnStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _locateMe());
     }
+  }
+
+  @override
+  void dispose() {
+    _geocodeDebounce?.cancel();
+    super.dispose();
+  }
+
+  /// Nominatim allows one call per second, so coalesce rapid pin moves.
+  void _scheduleGeocode(double latitude, double longitude) {
+    if (widget.onAddressResolved == null) return;
+    _geocodeDebounce?.cancel();
+    _geocodeDebounce = Timer(const Duration(milliseconds: 600), () async {
+      if (!mounted) return;
+      setState(() => _isResolving = true);
+      final resolved = await _geocoding.reverse(latitude, longitude);
+      if (!mounted) return;
+      setState(() => _isResolving = false);
+      if (resolved != null) {
+        widget.onAddressResolved!(resolved);
+      }
+    });
   }
 
   Future<void> _locateMe() async {
@@ -71,6 +103,7 @@ class _MapPointPickerState extends State<MapPointPicker> {
           });
           _mapController.move(newCenter, 16.0);
           widget.onPointChanged(newCenter.latitude, newCenter.longitude);
+          _scheduleGeocode(newCenter.latitude, newCenter.longitude);
         }
         return;
       }
@@ -101,6 +134,7 @@ class _MapPointPickerState extends State<MapPointPicker> {
                     _currentCenter = point;
                   });
                   widget.onPointChanged(point.latitude, point.longitude);
+                  _scheduleGeocode(point.latitude, point.longitude);
                 },
               ),
               children: [
@@ -173,9 +207,27 @@ class _MapPointPickerState extends State<MapPointPicker> {
                   borderRadius: BorderRadius.circular(AppRadii.pill),
                   border: Border.all(color: AppColors.hairline),
                 ),
-                child: Text(
-                  '${_currentCenter.latitude.toStringAsFixed(5)}, ${_currentCenter.longitude.toStringAsFixed(5)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isResolving) ...[
+                      const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Text(
+                      _isResolving
+                          ? AppStrings.resolvingAddress
+                          : '${_currentCenter.latitude.toStringAsFixed(5)}, ${_currentCenter.longitude.toStringAsFixed(5)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

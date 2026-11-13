@@ -236,6 +236,12 @@ abstract final class AppStrings {
   );
   static String get myLocationTooltip =>
       _text('Get my current location', 'Lấy vị trí hiện tại của tôi');
+  static String get resolvingAddress =>
+      _text('Finding the address…', 'Đang tìm địa chỉ…');
+  static String get addressFilledFromMap => _text(
+    'Address filled from the map. Adjust anything that looks wrong.',
+    'Đã điền địa chỉ từ bản đồ. Hãy chỉnh lại nếu chưa đúng.',
+  );
   static String continueWithSelectedAddress(String label) => _text(
     'Continue with selected address ($label)',
     'Tiếp tục với địa chỉ đã chọn ($label)',
@@ -747,6 +753,7 @@ abstract final class AppStrings {
       _text('Switch to cash on delivery', 'Chuyển sang thanh toán khi nhận hàng');
   static String get backToBag =>
       _text('Review bag', 'Kiểm tra túi hàng');
+  static String get back => _text('Back', 'Quay lại');
   static String get errorSession => _text(
     'Could not read the saved sign-in session.',
     'Không thể đọc phiên đăng nhập đã lưu.',

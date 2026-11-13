@@ -7,6 +7,7 @@ import '../models/store_product.dart';
 import '../orders/order_detail_page.dart';
 import '../payment/payment_result_page.dart';
 import '../payment/sepay_checkout_page.dart';
+import '../services/geocoding_service.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
@@ -40,6 +41,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   };
 
   CheckoutStep _step = CheckoutStep.contact;
+  final _autoAddress = <String, String>{};
   Cart? _cart;
   List<CustomerAddress> _addresses = [];
   CustomerAddress? _selectedAddress;
@@ -502,6 +504,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   void _selectAddress(CustomerAddress address) {
     setState(() {
+      _autoAddress.clear();
       _selectedAddress = address;
       _latitude = address.latitude;
       _longitude = address.longitude;
@@ -516,40 +519,100 @@ class _CheckoutPageState extends State<CheckoutPage> {
     });
   }
 
+  /// Fills the address form from the map pin without clobbering manual edits.
+  void _applyResolvedAddress(GeocodedAddress resolved) {
+    final values = <String, String?>{
+      'addressLine': resolved.addressLine,
+      'city': resolved.city,
+      'province': resolved.province,
+      'postalCode': resolved.postalCode,
+      'countryCode': resolved.countryCode,
+    };
+    var filled = false;
+    setState(() {
+      for (final entry in values.entries) {
+        final value = entry.value?.trim() ?? '';
+        if (value.isEmpty) continue;
+        final controller = _addressControllers[entry.key];
+        if (controller == null) continue;
+        final current = controller.text.trim();
+        final auto = _autoAddress[entry.key];
+        if (current.isNotEmpty && current != auto) continue;
+        controller.text = value;
+        _autoAddress[entry.key] = value;
+        filled = true;
+      }
+    });
+    if (filled) {
+      showAppSnackBar(context, AppStrings.addressFilledFromMap);
+    }
+  }
+
+  bool get _hasPreviousStep =>
+      _step == CheckoutStep.address || _step == CheckoutStep.payment;
+
+  /// Steps back through the checkout instead of leaving it.
+  void _goToPreviousStep() {
+    if (_busy) return;
+    setState(() {
+      _step = switch (_step) {
+        CheckoutStep.payment => CheckoutStep.address,
+        CheckoutStep.address => CheckoutStep.contact,
+        _ => CheckoutStep.contact,
+      };
+    });
+  }
+
+  void _handleBack() {
+    if (_hasPreviousStep) {
+      _goToPreviousStep();
+      return;
+    }
+    Navigator.of(context).maybePop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(AppStrings.checkoutTitle),
-        leading: IconButton(
-          tooltip: AppStrings.cancel,
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.arrow_back),
+    return PopScope(
+      canPop: !_hasPreviousStep,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _goToPreviousStep();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(AppStrings.checkoutTitle),
+          leading: IconButton(
+            tooltip: _hasPreviousStep ? AppStrings.back : AppStrings.cancel,
+            onPressed: _handleBack,
+            icon: const Icon(Icons.arrow_back),
+          ),
         ),
-      ),
-      body: _busy && _cart == null
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null && _cart == null
-          ? Center(child: Text(_error!))
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                AppSpacing.xxl,
+        body: _busy && _cart == null
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null && _cart == null
+            ? Center(child: Text(_error!))
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                  AppSpacing.lg,
+                  AppSpacing.xxl,
+                ),
+                children: [
+                  _buildStepper(theme),
+                  const SizedBox(height: AppSpacing.xl),
+                  switch (_step) {
+                    CheckoutStep.contact => _buildContactStep(),
+                    CheckoutStep.address => _buildAddressStep(),
+                    CheckoutStep.payment => _buildPaymentStep(),
+                    CheckoutStep.done => _buildDoneStep(),
+                  },
+                ],
               ),
-              children: [
-                _buildStepper(theme),
-                const SizedBox(height: AppSpacing.xl),
-                switch (_step) {
-                  CheckoutStep.contact => _buildContactStep(),
-                  CheckoutStep.address => _buildAddressStep(),
-                  CheckoutStep.payment => _buildPaymentStep(),
-                  CheckoutStep.done => _buildDoneStep(),
-                },
-              ],
-            ),
+      ),
     );
   }
 
@@ -768,6 +831,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               _latitude = latitude;
               _longitude = longitude;
             }),
+            onAddressResolved: _applyResolvedAddress,
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
