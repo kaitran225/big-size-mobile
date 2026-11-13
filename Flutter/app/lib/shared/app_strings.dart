@@ -234,34 +234,22 @@ abstract final class AppStrings {
     'Map location (tap or drag to place pin)',
     'Vị trí trên bản đồ (chạm hoặc vuốt để chọn ghim)',
   );
-  static String get myLocationTooltip => _text(
-    'Get my current location',
-    'Lấy vị trí hiện tại của tôi',
-  );
+  static String get myLocationTooltip =>
+      _text('Get my current location', 'Lấy vị trí hiện tại của tôi');
   static String continueWithSelectedAddress(String label) => _text(
     'Continue with selected address ($label)',
     'Tiếp tục với địa chỉ đã chọn ($label)',
   );
-  static String get orEnterNewAddress => _text(
-    'Or enter new address details',
-    'Hoặc nhập thông tin địa chỉ mới',
-  );
-  static String get saveNewAddressAndContinue => _text(
-    'Save new address & continue',
-    'Lưu địa chỉ mới & tiếp tục',
-  );
-  static String get trackingDeliveredSuccess => _text(
-    'Package delivered successfully',
-    'Đã giao hàng thành công',
-  );
-  static String get trackingDriverOnTheWay => _text(
-    'Driver is delivering to you',
-    'Tài xế đang giao hàng đến bạn',
-  );
-  static String get trackingLoadingRoute => _text(
-    'Loading road route...',
-    'Đang tải lộ trình đường đi...',
-  );
+  static String get orEnterNewAddress =>
+      _text('Or enter new address details', 'Hoặc nhập thông tin địa chỉ mới');
+  static String get saveNewAddressAndContinue =>
+      _text('Save new address & continue', 'Lưu địa chỉ mới & tiếp tục');
+  static String get trackingDeliveredSuccess =>
+      _text('Package delivered successfully', 'Đã giao hàng thành công');
+  static String get trackingDriverOnTheWay =>
+      _text('Driver is delivering to you', 'Tài xế đang giao hàng đến bạn');
+  static String get trackingLoadingRoute =>
+      _text('Loading road route...', 'Đang tải lộ trình đường đi...');
 
   // Notifications ---------------------------------------------------------
 
@@ -269,10 +257,8 @@ abstract final class AppStrings {
     'Live push updates are not connected yet',
     'Chưa kết nối cập nhật thông báo trực tiếp',
   );
-  static String get pushConnectedNotice => _text(
-    'Live push connected',
-    'Đã kết nối thông báo trực tiếp',
-  );
+  static String get pushConnectedNotice =>
+      _text('Live push connected', 'Đã kết nối thông báo trực tiếp');
   static String get notificationsEmpty =>
       _text('You are all caught up.', 'Bạn đã xem hết thông báo.');
 
@@ -348,8 +334,10 @@ abstract final class AppStrings {
     'Confirm your email address with a one-time link.',
     'Xác nhận địa chỉ email bằng liên kết dùng một lần.',
   );
-  static String get emailServiceReady =>
-      _text('API ready — wire SMTP on the server', 'API sẵn sàng — cấu hình SMTP trên server');
+  static String get emailServiceReady => _text(
+    'API ready — wire SMTP on the server',
+    'API sẵn sàng — cấu hình SMTP trên server',
+  );
   static String get resetPassword =>
       _text('Reset password', 'Đặt lại mật khẩu');
   static String get resetPasswordDescription => _text(
@@ -374,10 +362,8 @@ abstract final class AppStrings {
       _text('Send verification email', 'Gửi email xác minh');
   static String get verificationEmailSent =>
       _text('Verification email requested', 'Đã yêu cầu email xác minh');
-  static String devEmailLinkHint(String link) => _text(
-    'Dev link (SMTP off): $link',
-    'Liên kết dev (tắt SMTP): $link',
-  );
+  static String devEmailLinkHint(String link) =>
+      _text('Dev link (SMTP off): $link', 'Liên kết dev (tắt SMTP): $link');
   static String get requestResetEmail =>
       _text('Request reset email', 'Yêu cầu email đặt lại');
   static String get resetEmailSent => _text(
@@ -397,11 +383,10 @@ abstract final class AppStrings {
   static String get otpCodeLabel => _text('One-time code', 'Mã một lần');
   static String get verifyOtp => _text('Verify code', 'Xác minh mã');
   static String get otpVerified => _text('Code accepted', 'Mã hợp lệ');
-  static String get otpInvalid => _text('Code was not accepted', 'Mã không hợp lệ');
-  static String devOtpHint(String code) => _text(
-    'Dev code (SMTP off): $code',
-    'Mã dev (tắt SMTP): $code',
-  );
+  static String get otpInvalid =>
+      _text('Code was not accepted', 'Mã không hợp lệ');
+  static String devOtpHint(String code) =>
+      _text('Dev code (SMTP off): $code', 'Mã dev (tắt SMTP): $code');
 
   // Feature hub -----------------------------------------------------------
 
@@ -643,10 +628,10 @@ abstract final class AppStrings {
   );
   static String get showDeliveredOrders =>
       _text('Show delivered orders', 'Hiển thị đơn đã giao');
-  static String get fulfillmentAccept =>
-      _text('Accept order', 'Tiếp nhận đơn');
-  static String get fulfillmentShip =>
-      _text('Mark shipped', 'Đánh dấu đã gửi');
+  static String get fulfillmentAccept => _text('Accept order', 'Tiếp nhận đơn');
+  static String get fulfillmentVerifyAndAccept =>
+      _text('Verify payment & accept', 'Xác nhận thanh toán và tiếp nhận');
+  static String get fulfillmentShip => _text('Mark shipped', 'Đánh dấu đã gửi');
   static String get fulfillmentComplete =>
       _text('Mark delivered', 'Đánh dấu đã giao');
   static String get noShipments =>

@@ -16,6 +16,9 @@ internal sealed class OrderFulfillmentService(
     INotificationEventPublisher eventPublisher) : IOrderFulfillmentService
 {
     private const string CodProvider = "Cod";
+    private const string SePayProvider = "SePay";
+    private const string CodMethod = "cod";
+    private const string BankMethod = "bankTransfer";
 
     public async Task<PagedResponse<StaffOrderResponse>> GetQueueAsync(
         int page,
@@ -120,23 +123,45 @@ internal sealed class OrderFulfillmentService(
         CustomerOrder order,
         CancellationToken cancellationToken)
     {
-        return order.Status switch
+        if (order.Status == "Confirmed")
         {
-            "Confirmed" => "Processing",
-            "Pending" => await CanAcceptCodAsync(order.Id, cancellationToken)
-                ? "Processing"
-                : null,
-            _ => null
-        };
-    }
+            return "Processing";
+        }
 
-    private async Task<bool> CanAcceptCodAsync(Guid orderId, CancellationToken cancellationToken) =>
-        await dbContext.Payments.AsNoTracking().AnyAsync(
-            payment =>
-                payment.OrderId == orderId &&
-                payment.Provider == CodProvider &&
-                payment.Method == "cod",
-            cancellationToken);
+        if (order.Status != "Pending")
+        {
+            return null;
+        }
+
+        var payment = await dbContext.Payments
+            .Where(item => item.OrderId == order.Id)
+            .OrderByDescending(item => item.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (payment is null)
+        {
+            return null;
+        }
+
+        if (payment.Provider == CodProvider && payment.Method == CodMethod)
+        {
+            return "Processing";
+        }
+
+        if (payment.Provider != SePayProvider ||
+            payment.Method != BankMethod ||
+            payment.Status is not ("Pending" or "Succeeded"))
+        {
+            return null;
+        }
+
+        if (payment.Status == "Pending")
+        {
+            payment.Status = "Succeeded";
+            payment.CompletedAt = DateTimeOffset.UtcNow;
+        }
+
+        return "Processing";
+    }
 
     private async Task NotifyCustomerAsync(
         CustomerOrder order,

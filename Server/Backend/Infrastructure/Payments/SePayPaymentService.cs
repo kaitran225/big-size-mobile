@@ -134,6 +134,10 @@ internal sealed class SePayPaymentService(
         {
             return Map(payment, null, TransferFields(order, payment, null));
         }
+        if (payment.Status != "Pending")
+        {
+            throw new DataConflictException(ApiMessages.PaymentAttemptNotPending);
+        }
 
         var settings = ReadSettings();
         var account = await LoadLinkedAccountAsync(settings, cancellationToken);
@@ -172,6 +176,10 @@ internal sealed class SePayPaymentService(
             item => item.Id == order.Id, cancellationToken);
         var trackedPayment = await dbContext.Payments.SingleAsync(
             item => item.Id == payment.Id, cancellationToken);
+        if (trackedPayment.Status != "Pending")
+        {
+            throw new DataConflictException(ApiMessages.PaymentAttemptNotPending);
+        }
         await MarkTransferSucceededAsync(trackedOrder, trackedPayment, transactionId, cancellationToken);
         return Map(trackedPayment, null, TransferFields(trackedOrder, trackedPayment, account));
     }
@@ -521,10 +529,12 @@ internal sealed class SePayPaymentService(
         SepayIpnPayload payload,
         CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(payload.PaymentCode))
+        var paymentCode = payload.PaymentCode?.Trim();
+        if (!string.IsNullOrWhiteSpace(paymentCode))
         {
             var byCode = await dbContext.Orders.SingleOrDefaultAsync(
-                item => item.OrderNumber == payload.PaymentCode,
+                item => item.OrderNumber == paymentCode &&
+                    (item.Status == "Pending" || item.Status == "Confirmed"),
                 cancellationToken);
             if (byCode is not null)
             {
@@ -532,18 +542,16 @@ internal sealed class SePayPaymentService(
             }
         }
 
-        if (string.IsNullOrWhiteSpace(payload.Content))
+        var content = payload.Content?.Trim();
+        if (string.IsNullOrWhiteSpace(content))
         {
             return null;
         }
 
-        var candidates = await dbContext.Orders
-            .Where(item => item.Status == "Pending" || item.Status == "Confirmed")
-            .ToListAsync(cancellationToken);
-        return candidates
-            .Where(item => payload.Content.Contains(item.OrderNumber, StringComparison.Ordinal))
-            .OrderByDescending(item => item.OrderNumber.Length)
-            .FirstOrDefault();
+        return await dbContext.Orders.SingleOrDefaultAsync(
+            item => item.OrderNumber == content &&
+                (item.Status == "Pending" || item.Status == "Confirmed"),
+            cancellationToken);
     }
 
     private async Task<LinkedBankAccount> LoadLinkedAccountAsync(

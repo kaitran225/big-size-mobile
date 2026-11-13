@@ -89,6 +89,8 @@ public static class ApiMessages
         "The order was not found or can no longer be paid.";
     public const string PaymentAlreadyCompleted =
         "This order already has a completed payment.";
+    public const string PaymentAttemptNotPending =
+        "This payment attempt is no longer pending. Start a new payment attempt.";
     public const string PaymentNotFound =
         "The payment attempt was not found.";
     public const string UnsupportedPaymentResult =

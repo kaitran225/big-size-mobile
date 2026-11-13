@@ -69,7 +69,10 @@ class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
     final action = OrderShipmentMapper.nextFulfillmentAction(order.status);
     if (action == null) return;
     try {
-      await widget.api.applyFulfillmentAction(orderId: order.id, action: action);
+      await widget.api.applyFulfillmentAction(
+        orderId: order.id,
+        action: action,
+      );
       if (mounted) await _load();
     } catch (error) {
       if (!mounted) return;
@@ -176,12 +179,18 @@ class _ShipmentCard extends StatelessWidget {
     final theme = Theme.of(context);
     final stage = OrderShipmentMapper.stageForStatus(order.status);
     final action = OrderShipmentMapper.nextFulfillmentAction(order.status);
-  final actionLabel = switch (action) {
-    'accept' => AppStrings.fulfillmentAccept,
-    'ship' => AppStrings.fulfillmentShip,
-    'complete' => AppStrings.fulfillmentComplete,
-    _ => AppStrings.advanceStatus,
-  };
+    final isPendingBankTransfer =
+        order.status == 'Pending' &&
+        order.paymentMethod == 'bankTransfer' &&
+        order.paymentStatus == 'Pending';
+    final actionLabel = isPendingBankTransfer
+        ? AppStrings.fulfillmentVerifyAndAccept
+        : switch (action) {
+            'accept' => AppStrings.fulfillmentAccept,
+            'ship' => AppStrings.fulfillmentShip,
+            'complete' => AppStrings.fulfillmentComplete,
+            _ => AppStrings.advanceStatus,
+          };
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),

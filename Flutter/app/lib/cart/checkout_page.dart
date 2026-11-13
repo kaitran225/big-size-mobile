@@ -57,7 +57,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
   static const _sandboxAccountNumber = '0123456789';
   static const _sandboxAccountHolder = 'NGUYEN VAN A';
   static const _eurToVndRate = 27000;
-  static const _offeredMethods = [PaymentMethod.cod, PaymentMethod.bankTransfer];
+  static const _offeredMethods = [
+    PaymentMethod.cod,
+    PaymentMethod.bankTransfer,
+  ];
 
   @override
   void initState() {
@@ -90,7 +93,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       setState(() {
         _cart = results[0] as Cart;
         _addresses = results[1] as List<CustomerAddress>;
-        final defaultAddr = _addresses.where((a) => a.isDefault).firstOrNull ??
+        final defaultAddr =
+            _addresses.where((a) => a.isDefault).firstOrNull ??
             _addresses.firstOrNull;
         if (defaultAddr != null) {
           _selectAddress(defaultAddr);
@@ -214,8 +218,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
         return;
       }
 
-      final order = _order ??
-          await widget.api.createOrder(shippingAddressId: address.id);
+      final order =
+          _order ?? await widget.api.createOrder(shippingAddressId: address.id);
       _order = order;
       final payment = await widget.api.createPayment(
         orderId: order.id,
@@ -236,7 +240,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
     try {
       order ??= await widget.api.createOrder(shippingAddressId: address.id);
       _order = order;
-      if (payment == null || !payment.awaitsTransfer) {
+      if (payment == null ||
+          !payment.awaitsTransfer ||
+          payment.status != 'Pending') {
         payment = await widget.api.createPayment(
           orderId: order.id,
           method: PaymentMethod.bankTransfer.name,
@@ -245,7 +251,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
       }
     } catch (error) {
       if (!mounted) return;
+      setState(() => _busy = false);
       _showError(error);
+      return;
     }
     if (!mounted) return;
     final session = _transferSession(payment, order);
@@ -262,47 +270,48 @@ class _CheckoutPageState extends State<CheckoutPage> {
       await _finishDisplayedTransfer(session, realOrder);
       return;
     }
-    if (realPayment == null || realPayment.id.isEmpty || realOrder == null) {
+    if (realPayment.id.isEmpty) {
       return;
     }
-    if (result != 'success') {
-      try {
-        final reported = await widget.api.reportPaymentResult(
-          orderId: realOrder.id,
-          paymentId: realPayment.id,
-          result: result == 'error' ? 'error' : 'cancel',
-        );
-        if (!mounted) return;
-        if (reported.status == 'Succeeded') {
-          await _complete(reported);
-          return;
-        }
-        setState(() {
-          _payment = reported;
-          _awaitingConfirmation = false;
-          _busy = false;
-        });
-        await Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => PaymentResultPage(
-              approved: false,
-              method: _method,
-              amount: reported.amount,
-              currencyCode: reported.currencyCode,
-              reference: reported.providerReference ?? '',
-              orderNumber: realOrder.orderNumber,
-            ),
-          ),
-        );
-      } catch (error) {
-        if (!mounted) return;
-        setState(() => _busy = false);
-        _showError(error);
+    try {
+      final reported = await widget.api.reportPaymentResult(
+        orderId: realOrder.id,
+        paymentId: realPayment.id,
+        result: result == 'error' ? 'error' : 'cancel',
+      );
+      if (!mounted) return;
+      if (reported.status == 'Succeeded') {
+        await _complete(reported);
+        return;
       }
+      setState(() {
+        _payment = reported;
+        _awaitingConfirmation = false;
+        _busy = false;
+      });
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PaymentResultPage(
+            approved: false,
+            method: _method,
+            amount: reported.amount,
+            currencyCode: reported.currencyCode,
+            reference: reported.providerReference ?? '',
+            orderNumber: realOrder.orderNumber,
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      _showError(error);
     }
   }
 
-  PaymentSession _transferSession(PaymentSession? payment, CustomerOrder? order) {
+  PaymentSession _transferSession(
+    PaymentSession? payment,
+    CustomerOrder? order,
+  ) {
     if (payment != null && payment.awaitsTransfer) {
       final fields = payment.checkoutFields;
       final hasAccount =
@@ -362,10 +371,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Uri.https(
       'img.vietqr.io',
       'image/$_sandboxBankBin-$_sandboxAccountNumber-compact2.png',
-      {
-        'accountName': _sandboxAccountHolder,
-        'amount': '$amountVnd',
-      },
+      {'accountName': _sandboxAccountHolder, 'amount': '$amountVnd'},
     ).toString();
   }
 
@@ -387,20 +393,40 @@ class _CheckoutPageState extends State<CheckoutPage> {
     PaymentSession session,
     CustomerOrder? order,
   ) async {
-    if (order != null) {
-      try {
-        final latest = await widget.api.latestPayment(order.id);
-        if (!mounted) return;
-        if (latest.status == 'Succeeded') {
-          await _complete(latest);
-          return;
-        }
-      } catch (_) {
-        // The sandbox confirmation still finishes checkout.
-      }
+    if (order == null) {
+      if (!mounted) return;
+      setState(() {
+        _payment = session;
+        _awaitingConfirmation = true;
+        _paymentError = AppStrings.paymentWaitingBody;
+        _busy = false;
+      });
+      return;
     }
-    if (!mounted) return;
-    await _complete(session);
+
+    try {
+      final latest = await widget.api.latestPayment(order.id);
+      if (!mounted) return;
+      if (latest.status == 'Succeeded') {
+        await _complete(latest);
+        return;
+      }
+      setState(() {
+        _payment = latest;
+        _awaitingConfirmation = true;
+        _paymentError = AppStrings.paymentWaitingBody;
+        _busy = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _payment = session;
+        _awaitingConfirmation = true;
+        _paymentError = AppStrings.paymentWaitingBody;
+        _busy = false;
+      });
+      _showError(error);
+    }
   }
 
   Future<void> _complete(PaymentSession payment) async {
@@ -575,7 +601,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 onPressed: () => setState(() => _step = CheckoutStep.address),
                 icon: const Icon(Icons.arrow_forward),
                 label: Text(
-                  AppStrings.continueWithSelectedAddress(_selectedAddress!.label),
+                  AppStrings.continueWithSelectedAddress(
+                    _selectedAddress!.label,
+                  ),
                 ),
               ),
             ),
@@ -585,7 +613,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
         _sectionCard(
           ExpansionTile(
             title: Text(
-              _addresses.isEmpty ? AppStrings.newContact : AppStrings.orEnterNewAddress,
+              _addresses.isEmpty
+                  ? AppStrings.newContact
+                  : AppStrings.orEnterNewAddress,
               style: theme.textTheme.titleMedium,
             ),
             initiallyExpanded: _addresses.isEmpty,
@@ -643,7 +673,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 child: FilledButton(
                   onPressed: _busy ? null : _saveNewContact,
                   child: Text(
-                    _busy ? AppStrings.pleaseWait : AppStrings.saveNewAddressAndContinue,
+                    _busy
+                        ? AppStrings.pleaseWait
+                        : AppStrings.saveNewAddressAndContinue,
                   ),
                 ),
               ),

@@ -57,7 +57,7 @@ class _SePayCheckoutPageState extends State<SePayCheckoutPage> {
 
   Future<void> _simulate() async {
     if (widget.payment.id.isEmpty) {
-      _finish('success');
+      setState(() => _error = AppStrings.errorRequestFailed);
       return;
     }
     setState(() {
@@ -74,20 +74,11 @@ class _SePayCheckoutPageState extends State<SePayCheckoutPage> {
       await _refresh();
     } catch (error) {
       if (!mounted) return;
-      if (_isNotFound(error)) {
-        _finish('success');
-        return;
-      }
       setState(() {
         _busy = false;
         _error = error.toString();
       });
     }
-  }
-
-  bool _isNotFound(Object error) {
-    final message = error.toString().toLowerCase();
-    return message.contains('not found') || message.contains('404');
   }
 
   void _finish(String result) {
@@ -124,13 +115,19 @@ class _SePayCheckoutPageState extends State<SePayCheckoutPage> {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Text(AppStrings.waitingForBankHub, style: theme.textTheme.titleMedium),
+          Text(
+            AppStrings.waitingForBankHub,
+            style: theme.textTheme.titleMedium,
+          ),
           if (qrUrl != null) ...[
             const SizedBox(height: 24),
             Center(child: sandboxQrImage(qrUrl)),
           ],
           const SizedBox(height: 24),
-          Text('$amount ${widget.payment.currencyCode}', style: theme.textTheme.headlineSmall),
+          Text(
+            '$amount ${widget.payment.currencyCode}',
+            style: theme.textTheme.headlineSmall,
+          ),
           const SizedBox(height: 16),
           _detail(theme, AppStrings.bankCodeLabel, bankCode),
           _detail(theme, AppStrings.accountNumberLabel, accountNumber),
@@ -144,7 +141,9 @@ class _SePayCheckoutPageState extends State<SePayCheckoutPage> {
           FilledButton(
             onPressed: _busy ? null : _simulate,
             child: Text(
-              _busy ? AppStrings.processingPayment : AppStrings.simulateSandboxPayment,
+              _busy
+                  ? AppStrings.processingPayment
+                  : AppStrings.simulateSandboxPayment,
             ),
           ),
         ],
@@ -175,10 +174,10 @@ class _SePayCheckoutPageState extends State<SePayCheckoutPage> {
     required String accountHolder,
   }) {
     if (bankBin.isEmpty || accountNumber.isEmpty) return null;
-    return Uri.https('img.vietqr.io', 'image/$bankBin-$accountNumber-compact2.png', {
-      'amount': amount,
-      'addInfo': content,
-      'accountName': accountHolder,
-    }).toString();
+    return Uri.https(
+      'img.vietqr.io',
+      'image/$bankBin-$accountNumber-compact2.png',
+      {'amount': amount, 'addInfo': content, 'accountName': accountHolder},
+    ).toString();
   }
 }
