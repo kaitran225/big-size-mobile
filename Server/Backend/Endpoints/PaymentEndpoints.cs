@@ -78,6 +78,15 @@ public static class PaymentEndpoints
             .WithName("GetSePayBankAccount")
             .WithSummary(ApiMessages.SummaryGetSePayBankAccount);
 
+        endpoints.MapGet("/api/payments/sepay/status", async Task<Ok<SepaySandboxStatusResponse>> (
+            IPaymentService payments,
+            CancellationToken cancellationToken) =>
+                TypedResults.Ok(await payments.GetSandboxStatusAsync(cancellationToken)))
+            .RequireAuthorization()
+            .WithTags(ApiMessages.TagPayments)
+            .WithName("GetSePaySandboxStatus")
+            .WithSummary(ApiMessages.SummaryGetSePaySandboxStatus);
+
         var sepay = endpoints.MapGroup("/api/payments/sepay")
             .WithTags(ApiMessages.TagPayments)
             .AllowAnonymous();

@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -25,6 +27,8 @@ internal sealed class SePayPaymentService(
     private const string CodMethod = "cod";
     private const string BankMethod = "bankTransfer";
     private const string GatewayMethod = "gateway";
+    private const int DefaultTokenTtlSeconds = 600;
+    private const int MinimumTokenTtlSeconds = 60;
     private static readonly SemaphoreSlim TokenLock = new(1, 1);
     private static string? CachedToken;
     private static DateTimeOffset TokenExpiresAt;
@@ -141,46 +145,119 @@ internal sealed class SePayPaymentService(
 
         var settings = ReadSettings();
         var account = await LoadLinkedAccountAsync(settings, cancellationToken);
-        var token = await AccessTokenAsync(settings, cancellationToken);
-        using var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            $"{settings.ApiBaseUrl}/v1/transaction/create")
-        {
-            Content = JsonContent.Create(new
+        using var response = await SendAuthorizedAsync(
+            settings,
+            token =>
             {
-                bank_account_xid = account.Xid,
-                transfer_type = "credit",
-                amount = (long)decimal.Round(payment.Amount, 0, MidpointRounding.AwayFromZero),
-                transaction_content = order.OrderNumber
-            })
-        };
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        using var response = await SendProviderRequestAsync(request, cancellationToken);
+                var request = new HttpRequestMessage(
+                    HttpMethod.Post,
+                    $"{settings.ApiBaseUrl}/v1/transaction/create")
+                {
+                    Content = JsonContent.Create(new
+                    {
+                        bank_account_xid = account.Xid,
+                        transfer_type = "credit",
+                        amount = (long)decimal.Round(payment.Amount, 0, MidpointRounding.AwayFromZero),
+                        transaction_content = order.OrderNumber
+                    })
+                };
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                return request;
+            },
+            cancellationToken);
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             logger.LogWarning(
-                "Bank Hub sandbox transaction create failed with status {StatusCode}.",
-                (int)response.StatusCode);
-            throw new PaymentProviderUnavailableException(ApiMessages.PaymentProviderUnavailable);
+                "Bank Hub sandbox transaction create failed with status {StatusCode}: {Body}",
+                (int)response.StatusCode,
+                Truncate(body, 400));
+            throw new PaymentProviderUnavailableException(ApiMessages.SandboxSimulationFailed);
         }
 
-        var transactionId = await ReadTransactionIdAsync(response, cancellationToken);
+        var transactionId = ReadTransactionId(body);
         if (string.IsNullOrWhiteSpace(transactionId))
         {
-            logger.LogWarning("Bank Hub sandbox transaction create returned no transaction id.");
-            throw new PaymentProviderUnavailableException(ApiMessages.PaymentProviderUnavailable);
+            logger.LogWarning("Bank Hub sandbox transaction create returned no transaction id: {Body}", Truncate(body, 400));
+            throw new PaymentProviderUnavailableException(ApiMessages.SandboxSimulationFailed);
         }
+
+        // SePay posts the credit to the IPN within a second or two. Give it a moment first so the
+        // demo really goes through the callback and not just this request.
+        var confirmedByIpn = await WaitForIpnAsync(payment.Id, TimeSpan.FromSeconds(3), cancellationToken);
+        dbContext.ChangeTracker.Clear();
 
         var trackedOrder = await dbContext.Orders.SingleAsync(
             item => item.Id == order.Id, cancellationToken);
         var trackedPayment = await dbContext.Payments.SingleAsync(
             item => item.Id == payment.Id, cancellationToken);
-        if (trackedPayment.Status != "Pending")
+        if (trackedPayment.Status is "Failed" or "Cancelled")
         {
             throw new DataConflictException(ApiMessages.PaymentAttemptNotPending);
         }
-        await MarkTransferSucceededAsync(trackedOrder, trackedPayment, transactionId, cancellationToken);
+
+        if (trackedPayment.Status == "Pending")
+        {
+            if (!confirmedByIpn)
+            {
+                logger.LogInformation(
+                    ApiMessages.SandboxIpnMissingLog,
+                    order.OrderNumber,
+                    transactionId);
+            }
+
+            await MarkTransferSucceededAsync(trackedOrder, trackedPayment, transactionId, cancellationToken);
+        }
+        else
+        {
+            logger.LogInformation(
+                ApiMessages.SandboxIpnConfirmedLog,
+                order.OrderNumber,
+                transactionId);
+        }
+
         return Map(trackedPayment, null, TransferFields(trackedOrder, trackedPayment, account));
+    }
+
+    public async Task<SepaySandboxStatusResponse> GetSandboxStatusAsync(CancellationToken cancellationToken)
+    {
+        var clientId = ClientId();
+        var clientSecret = ClientSecret();
+        var ipnKey = configuration["Payments:SePay:IpnSecretKey"];
+        var publicBaseUrl = configuration["Payments:SePay:PublicBaseUrl"]?.TrimEnd('/');
+        var status = new SepaySandboxStatusResponse(
+            !string.IsNullOrWhiteSpace(clientId) &&
+                !string.IsNullOrWhiteSpace(clientSecret) &&
+                !string.IsNullOrWhiteSpace(ipnKey),
+            !string.IsNullOrWhiteSpace(clientId),
+            !string.IsNullOrWhiteSpace(clientSecret),
+            !string.IsNullOrWhiteSpace(ipnKey),
+            !string.IsNullOrWhiteSpace(configuration["Payments:SePay:BankAccountXid"]),
+            ApiBaseUrl(),
+            string.IsNullOrWhiteSpace(publicBaseUrl)
+                ? null
+                : $"{publicBaseUrl}/api/payments/sepay/ipn",
+            null,
+            null,
+            null,
+            null,
+            null);
+
+        try
+        {
+            var account = await LoadLinkedAccountAsync(ReadSettings(), cancellationToken);
+            return status with
+            {
+                LinkedBankAccountXid = account.Xid,
+                BankCode = account.BankCode,
+                AccountNumber = account.AccountNumber,
+                AccountHolderName = account.AccountHolderName
+            };
+        }
+        catch (PaymentProviderUnavailableException exception)
+        {
+            return status with { Error = exception.Message };
+        }
     }
 
     public async Task<SepayBankAccountResponse> GetLinkedBankAccountAsync(
@@ -547,22 +624,41 @@ internal sealed class SePayPaymentService(
             return null;
         }
 
-        return await dbContext.Orders.SingleOrDefaultAsync(
+        var exact = await dbContext.Orders.SingleOrDefaultAsync(
             item => item.OrderNumber == content &&
                 (item.Status == "Pending" || item.Status == "Confirmed"),
             cancellationToken);
+        if (exact is not null)
+        {
+            return exact;
+        }
+
+        // Real transfers carry the order number inside bank text, so fall back to a containment match.
+        // Only accept an unambiguous hit to avoid confirming the wrong order.
+        var matches = await dbContext.Orders
+            .Where(item => (item.Status == "Pending" || item.Status == "Confirmed") &&
+                content.Contains(item.OrderNumber))
+            .OrderByDescending(item => item.CreatedAt)
+            .Take(2)
+            .ToListAsync(cancellationToken);
+        return matches.Count == 1 ? matches[0] : null;
     }
 
     private async Task<LinkedBankAccount> LoadLinkedAccountAsync(
         SePaySettings settings,
         CancellationToken cancellationToken)
     {
-        var token = await AccessTokenAsync(settings, cancellationToken);
-        using var request = new HttpRequestMessage(
-            HttpMethod.Get,
-            $"{settings.ApiBaseUrl}/v1/bank-account?page=1&per_page=20");
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        using var response = await SendProviderRequestAsync(request, cancellationToken);
+        using var response = await SendAuthorizedAsync(
+            settings,
+            token =>
+            {
+                var request = new HttpRequestMessage(
+                    HttpMethod.Get,
+                    $"{settings.ApiBaseUrl}/v1/bank-account?page=1&per_page=20");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                return request;
+            },
+            cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             logger.LogWarning(
@@ -581,7 +677,8 @@ internal sealed class SePayPaymentService(
             foreach (var account in data.EnumerateArray())
             {
                 var mapped = MapAccount(account);
-                if (mapped is null)
+                if (mapped is null ||
+                    string.Equals(ReadJsonString(account, "active"), "0", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -596,7 +693,7 @@ internal sealed class SePayPaymentService(
         }
 
         return configured ?? first ??
-            throw new PaymentProviderUnavailableException(ApiMessages.PaymentProviderUnavailable);
+            throw new PaymentProviderUnavailableException(ApiMessages.BankAccountNotLinked);
     }
 
     private static LinkedBankAccount? MapAccount(JsonElement account)
@@ -615,12 +712,14 @@ internal sealed class SePayPaymentService(
             ReadJsonString(account, "account_holder_name") ?? "");
     }
 
-    private static async Task<string?> ReadTransactionIdAsync(
-        HttpResponseMessage response,
-        CancellationToken cancellationToken)
+    private static string? ReadTransactionId(string body)
     {
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
+        }
+
+        using var document = JsonDocument.Parse(body);
         var root = document.RootElement;
         if (root.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Object)
         {
@@ -633,6 +732,34 @@ internal sealed class SePayPaymentService(
 
         return ReadJsonString(root, "transaction_id");
     }
+
+    /// <summary>Waits for the IPN to flip a pending payment so the demo exercises the callback.</summary>
+    private async Task<bool> WaitForIpnAsync(
+        Guid paymentId,
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
+    {
+        var deadline = DateTimeOffset.UtcNow.Add(timeout);
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            dbContext.ChangeTracker.Clear();
+            var status = await dbContext.Payments.AsNoTracking()
+                .Where(item => item.Id == paymentId)
+                .Select(item => item.Status)
+                .SingleOrDefaultAsync(cancellationToken);
+            if (status == "Succeeded")
+            {
+                return true;
+            }
+
+            await Task.Delay(250, cancellationToken);
+        }
+
+        return false;
+    }
+
+    private static string Truncate(string value, int length) =>
+        value.Length <= length ? value : value[..length];
 
     private static string? ReadJsonString(JsonElement element, string name)
     {
@@ -649,12 +776,15 @@ internal sealed class SePayPaymentService(
         };
     }
 
-    private async Task<string> AccessTokenAsync(SePaySettings settings, CancellationToken cancellationToken)
+    private async Task<string> AccessTokenAsync(
+        SePaySettings settings,
+        bool forceRefresh,
+        CancellationToken cancellationToken)
     {
         await TokenLock.WaitAsync(cancellationToken);
         try
         {
-            if (CachedToken is not null && DateTimeOffset.UtcNow < TokenExpiresAt)
+            if (!forceRefresh && CachedToken is not null && DateTimeOffset.UtcNow < TokenExpiresAt)
             {
                 return CachedToken;
             }
@@ -662,8 +792,14 @@ internal sealed class SePayPaymentService(
             var credentials = Convert.ToBase64String(
                 Encoding.UTF8.GetBytes($"{settings.ClientId}:{settings.ClientSecret}"));
             using var request = new HttpRequestMessage(HttpMethod.Post, $"{settings.ApiBaseUrl}/v1/token");
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
             using var response = await SendProviderRequestAsync(request, cancellationToken);
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                logger.LogWarning("Bank Hub rejected the configured client id and client secret.");
+                throw new PaymentProviderUnavailableException(ApiMessages.SePayInvalidCredentials);
+            }
+
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogWarning(
@@ -680,14 +816,45 @@ internal sealed class SePayPaymentService(
                 throw new PaymentProviderUnavailableException(ApiMessages.PaymentProviderUnavailable);
             }
 
+            var ttl = ReadTokenTtl(document.RootElement) ?? DefaultTokenTtlSeconds;
             CachedToken = token;
-            TokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(45);
+            TokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(
+                Math.Max(MinimumTokenTtlSeconds, ttl - 60));
             return token;
         }
         finally
         {
             TokenLock.Release();
         }
+    }
+
+    /// <summary>Sends a Bank Hub request and refreshes the access token once when it expired.</summary>
+    private async Task<HttpResponseMessage> SendAuthorizedAsync(
+        SePaySettings settings,
+        Func<string, HttpRequestMessage> buildRequest,
+        CancellationToken cancellationToken)
+    {
+        var token = await AccessTokenAsync(settings, false, cancellationToken);
+        var response = await SendProviderRequestAsync(buildRequest(token), cancellationToken);
+        if (response.StatusCode != HttpStatusCode.Unauthorized)
+        {
+            return response;
+        }
+
+        response.Dispose();
+        token = await AccessTokenAsync(settings, true, cancellationToken);
+        return await SendProviderRequestAsync(buildRequest(token), cancellationToken);
+    }
+
+    private static int? ReadTokenTtl(JsonElement root)
+    {
+        if (root.TryGetProperty("ttl", out var ttl) && ttl.ValueKind == JsonValueKind.Number &&
+            ttl.TryGetInt32(out var seconds))
+        {
+            return seconds;
+        }
+
+        return null;
     }
 
     private static string? ReadToken(JsonElement root)
@@ -739,22 +906,16 @@ internal sealed class SePayPaymentService(
 
     private SePaySettings ReadSettings()
     {
-        var clientId = configuration["Payments:SePay:ClientId"] ?? configuration["Payments:SePay:MerchantId"];
-        var clientSecret = configuration["Payments:SePay:ClientSecret"] ?? configuration["Payments:SePay:SecretKey"];
+        var clientId = ClientId();
+        var clientSecret = ClientSecret();
+        var apiBaseUrl = ApiBaseUrl();
         var publicBaseUrl = configuration["Payments:SePay:PublicBaseUrl"]?.TrimEnd('/');
-        var apiBaseUrl = configuration["Payments:SePay:ApiBaseUrl"]?.TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(apiBaseUrl))
-        {
-            apiBaseUrl = "https://bankhub-api-sandbox.sepay.vn";
-        }
-
         if (string.IsNullOrWhiteSpace(clientId) ||
             string.IsNullOrWhiteSpace(clientSecret) ||
             string.IsNullOrWhiteSpace(configuration["Payments:SePay:IpnSecretKey"]) ||
-            !Uri.TryCreate(publicBaseUrl, UriKind.Absolute, out var publicUri) ||
-            (publicUri.Scheme != Uri.UriSchemeHttps && publicUri.Scheme != Uri.UriSchemeHttp))
+            !Uri.TryCreate(apiBaseUrl, UriKind.Absolute, out _))
         {
-            throw new PaymentProviderUnavailableException(ApiMessages.PaymentProviderUnavailable);
+            throw new PaymentProviderUnavailableException(ApiMessages.SePayNotConfigured);
         }
 
         var rateText = configuration["Payments:SePay:EurToVndRate"];
@@ -766,10 +927,21 @@ internal sealed class SePayPaymentService(
             apiBaseUrl,
             clientId,
             clientSecret,
-            publicBaseUrl!,
+            string.IsNullOrWhiteSpace(publicBaseUrl) ? string.Empty : publicBaseUrl,
             configuration["Payments:SePay:BankAccountXid"],
             rate);
     }
+
+    private string? ClientId() =>
+        configuration["Payments:SePay:ClientId"] ?? configuration["Payments:SePay:MerchantId"];
+
+    private string? ClientSecret() =>
+        configuration["Payments:SePay:ClientSecret"] ?? configuration["Payments:SePay:SecretKey"];
+
+    private string ApiBaseUrl() =>
+        configuration["Payments:SePay:ApiBaseUrl"]?.TrimEnd('/') is { Length: > 0 } configured
+            ? configured
+            : "https://bankhub-api-sandbox.sepay.vn";
 
     private static decimal ToVnd(CustomerOrder order, decimal eurToVndRate)
     {

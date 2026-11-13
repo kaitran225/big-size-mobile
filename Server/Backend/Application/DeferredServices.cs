@@ -73,6 +73,9 @@ public interface IPaymentService
 
     Task<SepayBankAccountResponse> GetLinkedBankAccountAsync(CancellationToken cancellationToken);
 
+    /// <summary>Reports which sandbox settings are present and whether Bank Hub answers with them.</summary>
+    Task<SepaySandboxStatusResponse> GetSandboxStatusAsync(CancellationToken cancellationToken);
+
     /// <summary>
     /// Applies an IPN. Returns false when the caller secret does not match.
     /// </summary>

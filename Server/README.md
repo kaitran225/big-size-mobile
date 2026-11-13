@@ -40,29 +40,65 @@ Architecture boundaries remain grouped in the project:
 
 ### SePay sandbox
 
-Catalog prices stay in EUR. Bank Hub converts the order total to VND with
-`Payments:SePay:EurToVndRate` (default 27000). Cash on delivery does not call
-SePay. Bank transfer and card stay pending until a sandbox credit IPN arrives.
+The backend runs on Render (`https://big-fit-pgm-store.onrender.com`) and the
+Flutter app talks to it, so SePay must call the **public** domain. Nothing in
+this flow works against `localhost`.
 
-The public origin is `https://big-fit-pgm-store.onrender.com`. SePay cannot
-call `localhost`. On the Bank Hub sandbox page, set Notify URL to
-`https://big-fit-pgm-store.onrender.com/api/payments/sepay/ipn` and Notify API
-Key to the same value as `IpnSecretKey`.
+Endpoints used (verified against `https://developer.sepay.vn/en/bankhub`):
 
-Set the sandbox secrets without committing them. On Render, set
-`Payments__SePay__ClientId`, `Payments__SePay__ClientSecret`,
-`Payments__SePay__IpnSecretKey`, and `Payments__SePay__BankAccountXid`.
-`Payments__SePay__PublicBaseUrl` and `Payments__SePay__ApiBaseUrl` are already
-in `render.yaml`. Locally, from `Server`:
+| Step | Bank Hub API | Used by |
+| --- | --- | --- |
+| Access token | `POST {ApiBaseUrl}/v1/token`, Basic `client_id:client_secret`, returns `access_token` + `ttl` | every sandbox call |
+| Linked accounts | `GET {ApiBaseUrl}/v1/bank-account?page=1&per_page=20` → `data[].{xid,bank_code,bank_bin,account_number,account_holder_name,active}` | checkout transfer details |
+| Mock credit (sandbox only) | `POST {ApiBaseUrl}/v1/transaction/create` with `bank_account_xid`, `transfer_type: "credit"`, `amount`, `transaction_content` | the app's demo button |
+| IPN callback | SePay posts the flat balance-change payload to `{PublicBaseUrl}/api/payments/sepay/ipn` with header `Authorization: Apikey {NotifyApiKey}` | payment confirmation |
 
-```powershell
-dotnet user-secrets set "Payments:SePay:ClientId" "629b5ae57f6bb4cc793242465f94575bc8bd33eda30365dc1a72a11e5ab0cb46" --project Backend
-dotnet user-secrets set "Payments:SePay:ClientSecret" "YOUR_BANK_HUB_CLIENT_SECRET" --project Backend
-dotnet user-secrets set "Payments:SePay:IpnSecretKey" "YOUR_NOTIFY_API_KEY" --project Backend
-dotnet user-secrets set "Payments:SePay:PublicBaseUrl" "https://big-fit-pgm-store.onrender.com" --project Backend
-dotnet user-secrets set "Payments:SePay:BankAccountXid" "YOUR_LINKED_ACCOUNT_XID" --project Backend
+`ApiBaseUrl` is `https://bankhub-api-sandbox.sepay.vn`. Catalog prices stay in
+EUR; the order total is converted to VND with `Payments:SePay:EurToVndRate`
+(default 27000). Cash on delivery never calls SePay.
+
+**Configured on Render** (sync: false in `render.yaml`, so set them in the
+dashboard): `Payments__SePay__ClientId`, `Payments__SePay__ClientSecret`,
+`Payments__SePay__IpnSecretKey`, and optionally
+`Payments__SePay__BankAccountXid`. `Payments__SePay__PublicBaseUrl` and
+`Payments__SePay__ApiBaseUrl` already ship in `render.yaml`.
+
+**Configured on the SePay Bank Hub sandbox page**: Notify URL =
+`https://big-fit-pgm-store.onrender.com/api/payments/sepay/ipn`, Notify API Key
+= the same value as `Payments__SePay__IpnSecretKey`.
+
+Check the deployment without guessing:
+
+```
+GET https://big-fit-pgm-store.onrender.com/api/payments/sepay/status   (Bearer JWT)
 ```
 
-The app shows the VND amount, bank code, and transfer content, then a demo
-button creates a sandbox credit. SePay posts that credit to the IPN. A repeated
-`transaction_id` does not overwrite a payment that already succeeded.
+It reports `configured`, which of `hasClientId` / `hasClientSecret` /
+`hasIpnSecretKey` / `hasBankAccountXid` are present, the exact Notify URL to
+paste into SePay, the linked account it can reach, and an `error` naming the
+broken step (settings missing, credentials rejected, or no active account).
+It never returns secrets.
+
+Demo flow: checkout with bank transfer → the app shows the VND amount, bank,
+account number, transfer content (the order number) and a VietQR code → the
+"S simulate sandbox payment" button asks Bank Hub to create a matching credit →
+SePay posts the IPN → the backend matches the order by `content` (exact, then
+substring), compares the amount, marks the payment `Succeeded` and confirms the
+order. The simulate request waits up to 3s for that IPN and only falls back to
+confirming locally (with a warning log) if the callback never arrives, so a
+misconfigured Notify URL shows up in the logs instead of silently passing.
+
+Sandbox test account for linking (from the SePay docs): MBBank, phone
+`0000000001`, holder `NGUYEN VAN A`, CCCD `001234567890`, account
+`0123456789`, OTP `12345678`. A repeated `transaction_id` never overwrites a
+payment that already succeeded.
+
+Locally, if you ever run the backend, set the same keys with user secrets from
+`Server`:
+
+```powershell
+dotnet user-secrets set "Payments:SePay:ClientId" "YOUR_BANK_HUB_CLIENT_ID" --project Backend
+dotnet user-secrets set "Payments:SePay:ClientSecret" "YOUR_BANK_HUB_CLIENT_SECRET" --project Backend
+dotnet user-secrets set "Payments:SePay:IpnSecretKey" "YOUR_NOTIFY_API_KEY" --project Backend
+dotnet user-secrets set "Payments:SePay:BankAccountXid" "YOUR_LINKED_ACCOUNT_XID" --project Backend
+```

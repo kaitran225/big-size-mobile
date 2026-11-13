@@ -215,6 +215,10 @@ Content-Type: application/json
   "result": "cancel"
 }
 
+### Check the Bank Hub sandbox wiring (no secrets returned)
+GET {{app_HostAddress}}/api/payments/sepay/status
+Authorization: Bearer ***
+
 ### Ask Bank Hub sandbox to post a matching credit. Confirmation still arrives by IPN.
 POST {{app_HostAddress}}/api/orders/{{orderId}}/payments/{{paymentId}}/simulate
 Authorization: Bearer {{customerToken}}

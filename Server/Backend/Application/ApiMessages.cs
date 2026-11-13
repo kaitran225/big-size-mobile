@@ -102,9 +102,11 @@ public static class ApiMessages
     public const string UnsupportedCheckoutCurrency =
         "SePay checkout only supports EUR or VND orders.";
     public const string SePayNotConfigured =
-        "Bank Hub sandbox is not configured. Set Payments:SePay client id, client secret, IPN secret, and public base URL.";
+        "Bank Hub sandbox is not configured. Set Payments:SePay ClientId, ClientSecret, and IpnSecretKey.";
+    public const string SePayInvalidCredentials =
+        "Bank Hub rejected the sandbox client id and client secret. Check Payments:SePay ClientId and ClientSecret.";
     public const string BankAccountNotLinked =
-        "No Bank Hub sandbox account is linked. Set Payments:SePay:BankAccountXid after linking MBBank 0123456789.";
+        "No active Bank Hub sandbox account is linked. Link a sandbox account, then set Payments:SePay:BankAccountXid.";
     public const string SandboxSimulationFailed =
         "The Bank Hub sandbox could not create the test transaction.";
     public const string PaymentReceivedTitle = "Payment received";
@@ -197,6 +199,10 @@ public static class ApiMessages
         "Payment {PaymentId} for order {OrderNumber} marked {Status}.";
     public const string SePayNotificationFailedLog =
         "Payment notification for order {OrderNumber} could not be saved.";
+    public const string SandboxIpnConfirmedLog =
+        "Sandbox credit {TransactionId} for order {OrderNumber} was confirmed by the IPN.";
+    public const string SandboxIpnMissingLog =
+        "Sandbox credit {TransactionId} for order {OrderNumber} was confirmed locally because no IPN arrived. Check the Bank Hub notify URL and key.";
 
     // ---------------------------------------------------------------------
     // OpenAPI tags
@@ -308,6 +314,8 @@ public static class ApiMessages
         "Create a Bank Hub sandbox credit that matches this payment";
     public const string SummaryGetSePayBankAccount =
         "Get the linked Bank Hub account shown at checkout";
+    public const string SummaryGetSePaySandboxStatus =
+        "Report which Bank Hub sandbox settings are present and whether an account is reachable";
     public const string SummarySePayIpn =
         "Receive a SePay sandbox IPN and update the payment";
     public const string SummarySePayReturn =
