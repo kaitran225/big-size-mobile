@@ -570,6 +570,10 @@ abstract final class AppStrings {
       _text('Transfer content', 'Nội dung chuyển khoản');
   static String get simulateSandboxPayment =>
       _text('Simulate sandbox transfer', 'Mô phỏng giao dịch sandbox');
+  static String get sandboxScanNote => _text(
+    'Scanning the QR alone does not confirm payment. In this sandbox, use the button below to simulate a completed transfer; the app moves on only after the backend confirms it.',
+    'Chỉ quét mã QR chưa xác nhận thanh toán. Trong sandbox này, hãy dùng nút bên dưới để mô phỏng giao dịch hoàn tất; ứng dụng chỉ tiếp tục sau khi backend xác nhận.',
+  );
   static String get waitingForBankHub => _text(
     'Waiting for the Bank Hub sandbox to confirm this transfer.',
     'Đang chờ Bank Hub sandbox xác nhận giao dịch.',
@@ -639,14 +643,12 @@ abstract final class AppStrings {
   static String get showDeliveredOrders =>
       _text('Show delivered orders', 'Hiển thị đơn đã giao');
   static String get fulfillmentAccept => _text('Accept order', 'Tiếp nhận đơn');
-  static String get fulfillmentVerifyAndAccept =>
-      _text('Verify payment & accept', 'Xác nhận thanh toán và tiếp nhận');
-  static String get verifyPaymentPrompt => _text(
-    'Confirm that the transfer is visible in the bank account before accepting this order.',
-    'Vui lòng xác nhận đã thấy giao dịch trong tài khoản ngân hàng trước khi tiếp nhận đơn.',
+  static String get fulfillmentWaitingForPayment =>
+      _text('Waiting for payment', 'Đang chờ thanh toán');
+  static String get fulfillmentPaymentPending => _text(
+    'Waiting for SePay to confirm this transfer. The order cannot be accepted yet.',
+    'Đang chờ SePay xác nhận giao dịch. Chưa thể tiếp nhận đơn hàng.',
   );
-  static String get verifyPaymentConfirmation =>
-      _text('I verified the payment', 'Tôi đã xác minh thanh toán');
   static String get fulfillmentReject => _text('Reject order', 'Từ chối đơn');
   static String get rejectionDialogTitle =>
       _text('Reject this order?', 'Từ chối đơn hàng này?');

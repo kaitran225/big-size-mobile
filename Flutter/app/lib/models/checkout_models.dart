@@ -177,10 +177,9 @@ class StaffFulfillmentOrder {
       (status == 'Pending' &&
           ((paymentMethod == 'cod' && paymentStatus == 'Pending') ||
               (paymentMethod == 'bankTransfer' &&
-                  (paymentStatus == 'Pending' ||
-                      paymentStatus == 'Succeeded'))));
+                  paymentStatus == 'Succeeded')));
   bool get canReject =>
       status == 'Pending' && paymentStatus != 'Succeeded';
-  bool get needsPaymentVerification =>
+  bool get awaitingBankConfirmation =>
       paymentMethod == 'bankTransfer' && paymentStatus == 'Pending';
 }

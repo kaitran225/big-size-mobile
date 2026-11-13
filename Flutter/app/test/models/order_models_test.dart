@@ -19,8 +19,8 @@ void main() {
       'rejectionReason': null,
     });
 
-    expect(pendingTransfer.needsPaymentVerification, isTrue);
-    expect(pendingTransfer.canAccept, isTrue);
+    expect(pendingTransfer.awaitingBankConfirmation, isTrue);
+    expect(pendingTransfer.canAccept, isFalse);
     expect(pendingTransfer.canReject, isTrue);
 
     final paidTransfer = StaffFulfillmentOrder.fromJson({

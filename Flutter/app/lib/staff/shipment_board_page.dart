@@ -69,27 +69,7 @@ class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
   Future<void> _advance(StaffFulfillmentOrder order) async {
     final action = OrderShipmentMapper.nextFulfillmentAction(order.status);
     if (action == null) return;
-    if (order.needsPaymentVerification) {
-      final verified = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          icon: const Icon(Icons.account_balance_outlined),
-          title: Text(AppStrings.fulfillmentVerifyAndAccept),
-          content: Text(AppStrings.verifyPaymentPrompt),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(AppStrings.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(AppStrings.verifyPaymentConfirmation),
-            ),
-          ],
-        ),
-      );
-      if (verified != true || !mounted) return;
-    }
+    if (action == 'accept' && !order.canAccept) return;
     await _applyAction(order, action);
   }
 
@@ -294,9 +274,9 @@ class _ShipmentCard extends StatelessWidget {
     final theme = Theme.of(context);
     final stage = OrderShipmentMapper.stageForStatus(order.status);
     final action = OrderShipmentMapper.nextFulfillmentAction(order.status);
-    final isPendingBankTransfer = order.needsPaymentVerification;
+    final isPendingBankTransfer = order.awaitingBankConfirmation;
     final actionLabel = isPendingBankTransfer
-        ? AppStrings.fulfillmentVerifyAndAccept
+        ? AppStrings.fulfillmentWaitingForPayment
         : switch (action) {
             'accept' => AppStrings.fulfillmentAccept,
             'ship' => AppStrings.fulfillmentShip,
@@ -367,7 +347,9 @@ class _ShipmentCard extends StatelessWidget {
             if (action == 'accept' && !order.canAccept) ...[
               const SizedBox(height: AppSpacing.sm),
               Text(
-                AppStrings.acceptUnavailable,
+                order.awaitingBankConfirmation
+                    ? AppStrings.fulfillmentPaymentPending
+                    : AppStrings.acceptUnavailable,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColors.inkMuted,
                 ),

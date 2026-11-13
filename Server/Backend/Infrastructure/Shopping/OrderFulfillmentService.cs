@@ -169,15 +169,9 @@ internal sealed class OrderFulfillmentService(
 
         if (payment.Provider != SePayProvider ||
             payment.Method != BankMethod ||
-            payment.Status is not ("Pending" or "Succeeded"))
+            payment.Status != "Succeeded")
         {
             return null;
-        }
-
-        if (payment.Status == "Pending")
-        {
-            payment.Status = "Succeeded";
-            payment.CompletedAt = DateTimeOffset.UtcNow;
         }
 
         return "Processing";

@@ -7,7 +7,7 @@ import '../models/checkout_models.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 
-/// Shows the transfer amount and waits until the Bank Hub IPN confirms it.
+/// Shows transfer details and advances only after the backend confirms payment.
 class SePayCheckoutPage extends StatefulWidget {
   const SePayCheckoutPage({
     super.key,
@@ -65,11 +65,15 @@ class _SePayCheckoutPageState extends State<SePayCheckoutPage> {
       _error = null;
     });
     try {
-      await widget.api.simulatePayment(
+      final payment = await widget.api.simulatePayment(
         orderId: widget.payment.orderId,
         paymentId: widget.payment.id,
       );
       if (!mounted) return;
+      if (payment.status == 'Succeeded') {
+        _finish('success');
+        return;
+      }
       setState(() => _busy = false);
       await _refresh();
     } catch (error) {
@@ -118,6 +122,11 @@ class _SePayCheckoutPageState extends State<SePayCheckoutPage> {
           Text(
             AppStrings.waitingForBankHub,
             style: theme.textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            AppStrings.sandboxScanNote,
+            style: theme.textTheme.bodySmall,
           ),
           if (qrUrl != null) ...[
             const SizedBox(height: 24),
