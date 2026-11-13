@@ -5,27 +5,28 @@ import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
 import '../shared/theme/app_theme.dart';
 
-/// Result of a sandbox payment attempt, shown after the provider callback.
+/// Result shown after SePay redirects back or cash on delivery is recorded.
 class PaymentResultPage extends StatelessWidget {
   const PaymentResultPage({
     super.key,
-    required this.result,
+    required this.approved,
     required this.method,
     required this.amount,
     required this.currencyCode,
+    this.reference = '',
     this.orderNumber,
   });
 
-  final SandboxPaymentResult result;
+  final bool approved;
   final PaymentMethod method;
   final double amount;
   final String currencyCode;
+  final String reference;
   final String? orderNumber;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final approved = result.approved;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -84,11 +85,11 @@ class PaymentResultPage extends StatelessWidget {
                       value: orderNumber!,
                     ),
                   ],
-                  if (result.reference.isNotEmpty) ...[
+                  if (reference.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.sm),
                     _ResultRow(
                       label: AppStrings.paymentReference,
-                      value: result.reference,
+                      value: reference,
                     ),
                   ],
                 ],

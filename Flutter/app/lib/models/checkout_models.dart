@@ -50,15 +50,77 @@ class Shipment {
   );
 }
 
-/// The outcome of a sandbox payment attempt.
-class SandboxPaymentResult {
-  const SandboxPaymentResult({
-    required this.approved,
-    required this.reference,
-    required this.message,
+/// The linked SePay sandbox account shown during checkout.
+class LinkedBankAccount {
+  const LinkedBankAccount({
+    required this.bankCode,
+    required this.bankBin,
+    required this.accountNumber,
+    required this.accountHolderName,
   });
 
-  final bool approved;
-  final String reference;
-  final String message;
+  final String bankCode;
+  final String bankBin;
+  final String accountNumber;
+  final String accountHolderName;
+
+  factory LinkedBankAccount.fromJson(Map<String, dynamic> json) =>
+      LinkedBankAccount(
+        bankCode: json['bankCode'] as String? ?? '',
+        bankBin: json['bankBin'] as String? ?? '',
+        accountNumber: json['accountNumber'] as String? ?? '',
+        accountHolderName: json['accountHolderName'] as String? ?? '',
+      );
+}
+
+/// A payment attempt returned by the BigFit API.
+class PaymentSession {
+  const PaymentSession({
+    required this.id,
+    required this.orderId,
+    required this.provider,
+    required this.method,
+    required this.status,
+    required this.amount,
+    required this.currencyCode,
+    this.providerReference,
+    this.checkoutUrl,
+    this.checkoutFields = const {},
+  });
+
+  final String id;
+  final String orderId;
+  final String provider;
+  final String method;
+  final String status;
+  final double amount;
+  final String currencyCode;
+  final String? providerReference;
+  final String? checkoutUrl;
+  final Map<String, String> checkoutFields;
+
+  bool get awaitsTransfer =>
+      checkoutFields['transferContent']?.isNotEmpty == true;
+
+  factory PaymentSession.fromJson(Map<String, dynamic> json) {
+    final rawFields = json['checkoutFields'];
+    final fields = <String, String>{};
+    if (rawFields is Map) {
+      for (final entry in rawFields.entries) {
+        fields['${entry.key}'] = '${entry.value}';
+      }
+    }
+    return PaymentSession(
+      id: json['id'] as String,
+      orderId: json['orderId'] as String,
+      provider: json['provider'] as String,
+      method: json['method'] as String,
+      status: json['status'] as String,
+      amount: (json['amount'] as num).toDouble(),
+      currencyCode: json['currencyCode'] as String,
+      providerReference: json['providerReference'] as String?,
+      checkoutUrl: json['checkoutUrl'] as String?,
+      checkoutFields: fields,
+    );
+  }
 }

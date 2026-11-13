@@ -137,6 +137,7 @@ app.MapCategoryEndpoints();
 app.MapProductEndpoints();
 app.MapNotificationEndpoints();
 app.MapShoppingEndpoints();
+app.MapPaymentEndpoints();
 app.MapAddressEndpoints();
 app.MapChatAssistantEndpoints();
 app.MapHub<NotificationHub>("/hubs/notifications").RequireAuthorization();

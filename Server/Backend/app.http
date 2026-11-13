@@ -1,5 +1,7 @@
 @app_HostAddress = http://localhost:5047
 @customerToken = replace-with-customer-jwt
+@orderId = replace-with-order-id
+@paymentId = replace-with-payment-id
 
 ### Check PostgreSQL connectivity
 GET {{app_HostAddress}}/api/health/database
@@ -181,3 +183,78 @@ Content-Type: application/json
 ### List delivery addresses
 GET {{app_HostAddress}}/api/addresses
 Authorization: Bearer {{customerToken}}
+
+### Start a SePay sandbox card payment for an existing pending order
+POST {{app_HostAddress}}/api/orders/{{orderId}}/payments
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "method": "gateway"
+}
+
+### Bank transfer uses "bankTransfer". Cash on delivery uses "cod".
+POST {{app_HostAddress}}/api/orders/{{orderId}}/payments
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "method": "bankTransfer"
+}
+
+### Poll the latest payment. SePay success arrives through the IPN.
+GET {{app_HostAddress}}/api/orders/{{orderId}}/payments/latest
+Authorization: Bearer {{customerToken}}
+
+### Record a customer cancel or error. Do not use this for success.
+POST {{app_HostAddress}}/api/orders/{{orderId}}/payments/{{paymentId}}/result
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "result": "cancel"
+}
+
+### Ask Bank Hub sandbox to post a matching credit. Confirmation still arrives by IPN.
+POST {{app_HostAddress}}/api/orders/{{orderId}}/payments/{{paymentId}}/simulate
+Authorization: Bearer {{customerToken}}
+
+### Bank Hub balance-change IPN. Authorization must be "Apikey" plus the Notify API Key.
+POST {{app_HostAddress}}/api/payments/sepay/ipn
+Content-Type: application/json
+Authorization: Apikey replace-with-notify-api-key
+
+{
+  "gateway": "MBBank",
+  "transaction_date": "2026-11-03 20:00:00",
+  "account_number": "0123456789",
+  "content": "replace-with-order-number",
+  "transfer_type": "credit",
+  "amount": 27000,
+  "transaction_id": "sandbox-transaction-id"
+}
+
+### Older checkout IPN. The X-Secret-Key must match Payments:SePay:IpnSecretKey.
+POST {{app_HostAddress}}/api/payments/sepay/ipn
+Content-Type: application/json
+X-Secret-Key: replace-with-ipn-secret
+
+{
+  "timestamp": 1757058220,
+  "notification_type": "ORDER_PAID",
+  "order": {
+    "order_invoice_number": "replace-with-order-number",
+    "order_currency": "VND",
+    "order_amount": "27000",
+    "order_status": "CAPTURED"
+  },
+  "transaction": {
+    "id": "sandbox-transaction-id",
+    "transaction_id": "sandbox-transaction-id",
+    "transaction_status": "APPROVED",
+    "transaction_amount": "27000"
+  }
+}
+
+### Browser page SePay redirects to. It does not change the order.
+GET {{app_HostAddress}}/api/payments/sepay/return?result=success

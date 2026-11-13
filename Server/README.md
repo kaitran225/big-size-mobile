@@ -27,3 +27,32 @@ Architecture boundaries remain grouped in the project:
 6. Deploy and confirm Render's `/api/health/database` health check succeeds.
    Swagger UI is available at `/swagger` (and `/` redirects there). The raw
    OpenAPI document is available at `/openapi/v1.json`.
+
+### SePay sandbox
+
+Catalog prices stay in EUR. Bank Hub converts the order total to VND with
+`Payments:SePay:EurToVndRate` (default 27000). Cash on delivery does not call
+SePay. Bank transfer and card stay pending until a sandbox credit IPN arrives.
+
+The public origin is `https://big-fit-pgm-store.onrender.com`. SePay cannot
+call `localhost`. On the Bank Hub sandbox page, set Notify URL to
+`https://big-fit-pgm-store.onrender.com/api/payments/sepay/ipn` and Notify API
+Key to the same value as `IpnSecretKey`.
+
+Set the sandbox secrets without committing them. On Render, set
+`Payments__SePay__ClientId`, `Payments__SePay__ClientSecret`,
+`Payments__SePay__IpnSecretKey`, and `Payments__SePay__BankAccountXid`.
+`Payments__SePay__PublicBaseUrl` and `Payments__SePay__ApiBaseUrl` are already
+in `render.yaml`. Locally, from `Server`:
+
+```powershell
+dotnet user-secrets set "Payments:SePay:ClientId" "629b5ae57f6bb4cc793242465f94575bc8bd33eda30365dc1a72a11e5ab0cb46" --project Backend
+dotnet user-secrets set "Payments:SePay:ClientSecret" "YOUR_BANK_HUB_CLIENT_SECRET" --project Backend
+dotnet user-secrets set "Payments:SePay:IpnSecretKey" "YOUR_NOTIFY_API_KEY" --project Backend
+dotnet user-secrets set "Payments:SePay:PublicBaseUrl" "https://big-fit-pgm-store.onrender.com" --project Backend
+dotnet user-secrets set "Payments:SePay:BankAccountXid" "YOUR_LINKED_ACCOUNT_XID" --project Backend
+```
+
+The app shows the VND amount, bank code, and transfer content, then a demo
+button creates a sandbox credit. SePay posts that credit to the IPN. A repeated
+`transaction_id` does not overwrite a payment that already succeeded.
