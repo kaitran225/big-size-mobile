@@ -9,6 +9,7 @@ import '../profile/profile_page.dart';
 import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/widgets/app_snack_bar.dart';
+import '../staff/staff_workspace_page.dart';
 import '../shared/widgets/empty_state_view.dart';
 import '../shared/widgets/error_state_view.dart';
 import 'product_details_page.dart';
@@ -31,6 +32,9 @@ class _StorefrontPageState extends State<StorefrontPage> {
   List<StoreProduct> _products = [];
 
   AuthSession? _session;
+
+  /// Staff can drop into the shopper storefront on demand; the workspace stays home.
+  bool _staffShopperMode = false;
 
   String _gender = 'Women';
   String? _categoryId;
@@ -210,12 +214,19 @@ class _StorefrontPageState extends State<StorefrontPage> {
 
       if (session == null) {
         _cartCount = 0;
+        _staffShopperMode = false;
       }
     });
 
     if (session != null) {
       _refreshCartCount();
     }
+  }
+
+  /// Leaves the workspace, mirroring the profile page's sign-out.
+  Future<void> _signOut() async {
+    await widget.api.signOut();
+    _syncSession(null);
   }
 
   Future<bool> _ensureSignedIn() async {
@@ -227,7 +238,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
 
     if (session == null || !mounted) return false;
 
-    setState(() => _session = session);
+    _syncSession(session);
 
     return true;
   }
@@ -271,6 +282,19 @@ class _StorefrontPageState extends State<StorefrontPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final session = _session;
+    if (session != null && session.usesWorkspace && !_staffShopperMode) {
+      return StaffWorkspacePage(
+        api: widget.api,
+        session: session,
+        onShopAsCustomer: () => setState(() {
+          _staffShopperMode = true;
+          _selectedTab = 0;
+        }),
+        onSignOut: _signOut,
+      );
+    }
+
     return Scaffold(
       appBar: _selectedTab == 0
           ? AppBar(
@@ -289,6 +313,12 @@ class _StorefrontPageState extends State<StorefrontPage> {
               ),
 
               actions: [
+                if (_staffShopperMode)
+                  IconButton(
+                    tooltip: AppStrings.backToWorkspace,
+                    onPressed: () => setState(() => _staffShopperMode = false),
+                    icon: const Icon(Icons.dashboard_outlined, size: 22),
+                  ),
                 IconButton(
                   tooltip: AppStrings.shoppingBagTooltip(_cartCount),
                   onPressed: () => _showBag(context),

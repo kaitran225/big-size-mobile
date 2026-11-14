@@ -1,6 +1,8 @@
 ﻿using BigFit.Application.Abstractions;
 using BigFit.Application.Authentication;
+using BigFit.Application.Catalog;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace BigFit.Infrastructure.Identity;
 
@@ -70,6 +72,48 @@ internal sealed class AuthenticationService(
         }
 
         return new UserResponse(user.Id, user.Email!, user.DisplayName, ApplicationRoles.StoreStaff);
+    }
+
+    public async Task<PagedResponse<UserAccountResponse>> GetUsersAsync(
+        int page,
+        int pageSize,
+        string? search,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var query = userManager.Users.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(user =>
+                (user.Email != null && user.Email.Contains(term)) ||
+                user.DisplayName.Contains(term));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var users = await query
+            .OrderBy(user => user.DisplayName)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        var items = new List<UserAccountResponse>(users.Count);
+        foreach (var user in users)
+        {
+            var roles = await userManager.GetRolesAsync(user);
+            items.Add(new UserAccountResponse(
+                user.Id,
+                user.Email ?? string.Empty,
+                user.DisplayName,
+                roles.ToArray()));
+        }
+
+        return new PagedResponse<UserAccountResponse>(
+            items,
+            page,
+            pageSize,
+            totalCount,
+            (int)Math.Ceiling(totalCount / (double)pageSize));
     }
 
     private async Task<AuthResponse> CreateAuthResponseAsync(ApplicationUser user)

@@ -257,6 +257,8 @@ public static class ApiMessages
     public const string SummaryRegisterCustomer = "Register a customer account";
     public const string SummaryLogin = "Sign in and receive a JWT access token";
     public const string SummaryCreateStoreStaff = "Create a store staff account";
+    public const string SummaryGetUsers =
+        "List accounts with their roles for the administrator console";
     public const string SummaryGetProducts = "List and filter catalogue products";
     public const string SummaryGetProduct = "Get a product and its variants by ID";
     public const string SummaryCreateProduct =

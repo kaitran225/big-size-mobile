@@ -49,6 +49,13 @@ public sealed record AuthResponse(
 /// <summary>Identifies a newly provisioned store staff account.</summary>
 public sealed record UserResponse(Guid Id, string Email, string DisplayName, string Role);
 
+/// <summary>One account shown in the administrator's user list.</summary>
+public sealed record UserAccountResponse(
+    Guid Id,
+    string Email,
+    string DisplayName,
+    IReadOnlyList<string> Roles);
+
 public static class ApplicationRoles
 {
     public const string Admin = "Admin";

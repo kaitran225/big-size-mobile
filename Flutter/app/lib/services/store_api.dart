@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 import '../assistant/assistant_chat_strings.dart';
+import '../models/admin_models.dart';
 import '../models/checkout_models.dart';
 import '../models/store_product.dart';
 import '../shared/app_strings.dart';
@@ -485,6 +486,58 @@ class StoreApi {
       key: _sessionBaseUrlKey,
       value: sessionBaseUri.toString(),
     );
+  }
+
+  /// Accounts with their roles, for the administrator console.
+  Future<List<UserAccountSummary>> getUsers({String? search}) async {
+    final response = await _send(
+      'GET',
+      '/admin/users',
+      query: {
+        'page': '1',
+        'pageSize': '100',
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      },
+    );
+    final items = (response as Map<String, dynamic>)['items'] as List<dynamic>;
+    return items
+        .map((item) => UserAccountSummary.fromJson(item as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  /// Provisions a store staff account. Administrators only.
+  Future<void> createStaff({
+    required String email,
+    required String displayName,
+    required String temporaryPassword,
+  }) async {
+    await _send(
+      'POST',
+      '/admin/staff',
+      body: {
+        'email': email,
+        'displayName': displayName,
+        'temporaryPassword': temporaryPassword,
+      },
+    );
+  }
+
+  /// Catalogue including inactive products, for inventory review.
+  Future<List<StoreProduct>> getInventory({String? search}) async {
+    final response = await _send(
+      'GET',
+      '/products',
+      query: {
+        'includeInactive': 'true',
+        'page': '1',
+        'pageSize': '100',
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      },
+    );
+    final items = (response as Map<String, dynamic>)['items'] as List<dynamic>;
+    return items
+        .map((item) => StoreProduct.fromJson(item as Map<String, dynamic>))
+        .toList(growable: false);
   }
 
   Future<dynamic> _send(

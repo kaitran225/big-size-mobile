@@ -1,5 +1,6 @@
 ﻿using BigFit.Application.Abstractions;
 using BigFit.Application.Authentication;
+using BigFit.Application.Catalog;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace BigFit.Api.Endpoints;
@@ -44,6 +45,31 @@ public static class AuthenticationEndpoints
         .WithSummary(ApiMessages.SummaryCreateStoreStaff)
         .RequireAuthorization(ApplicationRoles.Admin)
         .RequireRateLimiting("authentication");
+
+        endpoints.MapGet("/api/admin/users", async Task<Results<Ok<PagedResponse<UserAccountResponse>>, BadRequest>> (
+            IAuthenticationService authentication,
+            int? page,
+            int? pageSize,
+            string? search,
+            CancellationToken cancellationToken) =>
+        {
+            var requestedPage = page ?? 1;
+            var requestedPageSize = pageSize ?? 50;
+            if (requestedPage < 1 || requestedPageSize is < 1 or > 100)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            return TypedResults.Ok(await authentication.GetUsersAsync(
+                requestedPage,
+                requestedPageSize,
+                search,
+                cancellationToken));
+        })
+        .WithTags(ApiMessages.TagAdministration)
+        .WithName("GetUsers")
+        .WithSummary(ApiMessages.SummaryGetUsers)
+        .RequireAuthorization(ApplicationRoles.Admin);
 
         return endpoints;
     }

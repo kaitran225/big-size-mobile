@@ -458,13 +458,77 @@ abstract final class AppStrings {
   static String get customerReviewsDetail =>
       _text('Moderate product feedback.', 'Kiểm duyệt phản hồi về sản phẩm.');
   static String get managementNotConnected => _text(
-    'Management endpoints are not connected. This screen does not change store data.',
-    'Các endpoint quản lý chưa được kết nối. Màn hình này không thay đổi dữ liệu cửa hàng.',
+    'Stock is shown read-only here. Orders are managed from the fulfilment board.',
+    'Tồn kho chỉ hiển thị để xem. Đơn hàng được xử lý ở bảng giao hàng.',
   );
   static String get storeManagementRestricted => _text(
     'Store management is available to Admin and Store Staff accounts.',
     'Chỉ tài khoản Admin và Nhân viên cửa hàng mới có thể quản lý cửa hàng.',
   );
+
+  // Staff workspace --------------------------------------------------------
+
+  static String get staffWorkspaceTitle =>
+      _text('Staff workspace', 'Khu làm việc nhân viên');
+  static String staffWorkspaceGreeting(String name, String role) => _text(
+    'Signed in as $name · $role',
+    'Đăng nhập với $name · $role',
+  );
+  static String get workspaceFulfilmentSection =>
+      _text('Fulfilment', 'Xử lý đơn hàng');
+  static String get workspaceManagementSection =>
+      _text('Management', 'Quản lý');
+  static String get workspaceStorefrontSection =>
+      _text('Storefront', 'Cửa hàng');
+  static String get ordersQueue => _text('Orders queue', 'Hàng đợi đơn hàng');
+  static String get ordersQueueDetail => _text(
+    'Accept, ship, complete, or reject incoming orders.',
+    'Nhận, giao, hoàn tất hoặc từ chối đơn hàng mới.',
+  );
+  static String get shopAsCustomer =>
+      _text('Shop as a customer', 'Mua hàng với tư cách khách');
+  static String get shopAsCustomerDetail => _text(
+    'Open the storefront with the bag, checkout, and the AI stylist.',
+    'Mở cửa hàng với giỏ hàng, thanh toán và trợ lý AI.',
+  );
+  static String get backToWorkspace =>
+      _text('Back to workspace', 'Quay lại khu làm việc');
+  static String get usersAndRoles =>
+      _text('Users & roles', 'Người dùng và vai trò');
+  static String get usersAndRolesDetail => _text(
+    'Review every account and give new staff a way in.',
+    'Xem tất cả tài khoản và tạo tài khoản cho nhân viên mới.',
+  );
+  static String get addStaffAccount =>
+      _text('Add staff account', 'Thêm tài khoản nhân viên');
+  static String get staffEmailLabel => _text('Work email', 'Email làm việc');
+  static String get staffDisplayNameLabel =>
+      _text('Display name', 'Tên hiển thị');
+  static String get staffTemporaryPasswordLabel =>
+      _text('Temporary password', 'Mật khẩu tạm thời');
+  static String get staffTemporaryPasswordHelp => _text(
+    'At least 12 characters. Share it with the staff member, who can change it after signing in.',
+    'Tối thiểu 12 ký tự. Hãy gửi cho nhân viên để đổi lại sau khi đăng nhập.',
+  );
+  static String staffAccountCreated(String email) =>
+      _text('Staff account created for $email.', 'Đã tạo tài khoản cho $email.');
+  static String get accountsEmpty =>
+      _text('No accounts match this search.', 'Không có tài khoản phù hợp.');
+  static String get searchAccounts =>
+      _text('Search by name or email', 'Tìm theo tên hoặc email');
+  static String get rolesLabel => _text('Roles', 'Vai trò');
+  static String get inventoryTitle =>
+      _text('Products & inventory', 'Sản phẩm và tồn kho');
+  static String inventoryStock(int total, int variants) => _text(
+    '$total in stock across $variants variants',
+    'Tồn $total trên $variants biến thể',
+  );
+  static String get inventoryInactive =>
+      _text('Inactive', 'Ngừng bán');
+  static String get outOfStock => _text('Out of stock', 'Hết hàng');
+  static String get searchProducts => _text('Search products', 'Tìm sản phẩm');
+  static String get inventoryEmpty =>
+      _text('No products returned.', 'Không có sản phẩm nào.');
 
   // Storefront redesign ---------------------------------------------------
 

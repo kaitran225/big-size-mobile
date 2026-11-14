@@ -55,6 +55,7 @@ class StoreProduct {
     required this.imageUrl,
     required this.categoryId,
     required this.variants,
+    this.isActive = true,
   });
 
   final String id;
@@ -67,6 +68,9 @@ class StoreProduct {
   final String? imageUrl;
   final String categoryId;
   final List<StoreVariant> variants;
+  final bool isActive;
+
+  int get totalStock => variants.fold(0, (sum, variant) => sum + variant.stockQuantity);
 
   int? get discountPercent =>
       isOnSale ? ((1 - currentPrice / price) * 100).round() : null;
@@ -88,6 +92,7 @@ class StoreProduct {
           (variant) => StoreVariant.fromJson(variant as Map<String, dynamic>),
         )
         .toList(growable: false),
+    isActive: json['isActive'] as bool? ?? true,
   );
 }
 
@@ -127,6 +132,14 @@ class AuthSession {
   final String email;
   final String displayName;
   final List<String> roles;
+
+  /// Store staff and administrators share the same workspace.
+  bool get isStaff => roles.any((role) => role.toLowerCase().contains('staff'));
+
+  bool get isAdmin => roles.any((role) => role.toLowerCase().contains('admin'));
+
+  /// Either role gets the workspace instead of the shopper tabs.
+  bool get usesWorkspace => isStaff || isAdmin;
 
   factory AuthSession.fromJson(Map<String, dynamic> json) => AuthSession(
     accessToken: json['accessToken'] as String,

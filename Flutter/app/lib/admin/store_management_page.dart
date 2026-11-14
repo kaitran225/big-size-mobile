@@ -7,7 +7,7 @@ import '../shared/widgets/app_list_tile_card.dart';
 import '../shared/widgets/app_section_header.dart';
 import 'admin_orders_page.dart';
 import 'admin_products_page.dart';
-import 'admin_reviews_page.dart';
+import 'admin_users_page.dart';
 
 class StoreManagementPage extends StatelessWidget {
   const StoreManagementPage({super.key, required this.api, required this.roles});
@@ -21,6 +21,7 @@ class StoreManagementPage extends StatelessWidget {
       final normalized = role.toLowerCase();
       return normalized.contains('admin') || normalized.contains('staff');
     });
+    final isAdmin = roles.any((role) => role.toLowerCase().contains('admin'));
 
     return Scaffold(
       appBar: AppBar(title: Text(AppStrings.storeManagementTitle)),
@@ -31,23 +32,24 @@ class StoreManagementPage extends StatelessWidget {
                 AppSectionHeader(text: AppStrings.managementOverview),
                 const SizedBox(height: 12),
                 AppListTileCard(
-                  icon: Icons.inventory_2_outlined,
-                  title: AppStrings.productsAndInventory,
-                  subtitle: AppStrings.productsAndInventoryDetail,
-                  onTap: () => _open(context, const AdminProductsPage()),
-                ),
-                AppListTileCard(
                   icon: Icons.receipt_long_outlined,
                   title: AppStrings.ordersTitle,
                   subtitle: AppStrings.ordersDetail,
                   onTap: () => _open(context, AdminOrdersPage(api: api)),
                 ),
                 AppListTileCard(
-                  icon: Icons.rate_review_outlined,
-                  title: AppStrings.customerReviews,
-                  subtitle: AppStrings.customerReviewsDetail,
-                  onTap: () => _open(context, const AdminReviewsPage()),
+                  icon: Icons.inventory_2_outlined,
+                  title: AppStrings.productsAndInventory,
+                  subtitle: AppStrings.productsAndInventoryDetail,
+                  onTap: () => _open(context, AdminProductsPage(api: api)),
                 ),
+                if (isAdmin)
+                  AppListTileCard(
+                    icon: Icons.group_outlined,
+                    title: AppStrings.usersAndRoles,
+                    subtitle: AppStrings.usersAndRolesDetail,
+                    onTap: () => _open(context, AdminUsersPage(api: api)),
+                  ),
                 const SizedBox(height: 12),
                 AppInfoNote(
                   text: AppStrings.managementNotConnected,
