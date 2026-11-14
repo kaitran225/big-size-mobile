@@ -1,4 +1,5 @@
-﻿using BigFit.Application.Abstractions;
+﻿using System.Security.Claims;
+using BigFit.Application.Abstractions;
 using BigFit.Application.Authentication;
 using BigFit.Application.Catalog;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -71,6 +72,50 @@ public static class AuthenticationEndpoints
         .WithSummary(ApiMessages.SummaryGetUsers)
         .RequireAuthorization(ApplicationRoles.Admin);
 
+        endpoints.MapPut("/api/admin/users/{userId:guid}", async Task<Results<Ok<UserAccountResponse>, NotFound>> (
+            Guid userId,
+            UpdateUserRequest request,
+            IAuthenticationService authentication,
+            ClaimsPrincipal user,
+            CancellationToken cancellationToken) =>
+        {
+            var updated = await authentication.UpdateUserAsync(
+                userId,
+                request,
+                GetUserId(user),
+                cancellationToken);
+            return updated is null ? TypedResults.NotFound() : TypedResults.Ok(updated);
+        })
+        .WithTags(ApiMessages.TagAdministration)
+        .WithName("UpdateUser")
+        .WithSummary(ApiMessages.SummaryUpdateUser)
+        .RequireAuthorization(ApplicationRoles.Admin);
+
+        endpoints.MapDelete("/api/admin/users/{userId:guid}",
+            async Task<Results<NoContent, NotFound>> (
+                Guid userId,
+                IAuthenticationService authentication,
+                ClaimsPrincipal user,
+                CancellationToken cancellationToken) =>
+                await authentication.DeleteUserAsync(
+                    userId,
+                    GetUserId(user),
+                    cancellationToken)
+                    ? TypedResults.NoContent()
+                    : TypedResults.NotFound())
+            .WithTags(ApiMessages.TagAdministration)
+            .WithName("DeleteUser")
+            .WithSummary(ApiMessages.SummaryDeleteUser)
+            .RequireAuthorization(ApplicationRoles.Admin);
+
         return endpoints;
+    }
+
+    private static Guid GetUserId(ClaimsPrincipal user)
+    {
+        var subject = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.FindFirstValue("sub");
+        return Guid.TryParse(subject, out var userId)
+            ? userId
+            : throw new InvalidOperationException(ApiMessages.AuthenticatedTokenWithoutUserId);
     }
 }

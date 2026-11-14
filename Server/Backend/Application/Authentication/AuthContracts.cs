@@ -56,6 +56,19 @@ public sealed record UserAccountResponse(
     string DisplayName,
     IReadOnlyList<string> Roles);
 
+/// <summary>Administrator edit of an account: name, roles, optional password reset.</summary>
+public sealed record UpdateUserRequest
+{
+    [Required, MinLength(2), MaxLength(120)]
+    public required string DisplayName { get; init; }
+
+    [Required]
+    public required IReadOnlyList<string> Roles { get; init; }
+
+    [MinLength(12), MaxLength(128)]
+    public string? NewPassword { get; init; }
+}
+
 public static class ApplicationRoles
 {
     public const string Admin = "Admin";

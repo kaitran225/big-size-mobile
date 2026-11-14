@@ -18,4 +18,17 @@ public interface IAuthenticationService
         int pageSize,
         string? search,
         CancellationToken cancellationToken);
+
+    /// <summary>Updates one account. Returns null when the account does not exist.</summary>
+    Task<UserAccountResponse?> UpdateUserAsync(
+        Guid userId,
+        UpdateUserRequest request,
+        Guid currentUserId,
+        CancellationToken cancellationToken);
+
+    /// <summary>Deletes one account. Returns false when the account does not exist.</summary>
+    Task<bool> DeleteUserAsync(
+        Guid userId,
+        Guid currentUserId,
+        CancellationToken cancellationToken);
 }

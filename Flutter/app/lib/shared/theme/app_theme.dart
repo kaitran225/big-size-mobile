@@ -25,6 +25,9 @@ abstract final class AppColors {
   static const Color success = Color(0xFF1F7A4C);
   static const Color danger = Color(0xFFB3261E);
   static const Color warning = Color(0xFFB26A00);
+
+  /// Sale price and discount badge. Deliberately red so markdowns read at a glance.
+  static const Color sale = Color(0xFFC62828);
 }
 
 /// Shared spacing tokens.

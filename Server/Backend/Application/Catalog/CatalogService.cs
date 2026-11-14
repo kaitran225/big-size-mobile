@@ -1,5 +1,6 @@
 ﻿using BigFit.Application.Abstractions;
 using BigFit.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace BigFit.Application.Catalog;
 
@@ -142,10 +143,35 @@ public sealed class CatalogService(ICatalogRepository repository) : ICatalogServ
         product.ImageUrl = request.ImageUrl;
         product.IsActive = request.IsActive;
         product.CategoryId = request.CategoryId;
-        product.Variants.Clear();
-        foreach (var variant in request.Variants)
+
+        // Sync by SKU instead of clearing: existing variants keep their ids, so
+        // cart lines and order history stay valid.
+        var requested = request.Variants
+            .GroupBy(variant => variant.Sku.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.Last())
+            .ToList();
+        var removed = product.Variants
+            .Where(variant => !requested.Any(candidate =>
+                string.Equals(candidate.Sku.Trim(), variant.Sku, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+        foreach (var variant in removed)
         {
-            product.Variants.Add(Map(variant));
+            product.Variants.Remove(variant);
+        }
+
+        foreach (var variantRequest in requested)
+        {
+            var existing = product.Variants.FirstOrDefault(variant =>
+                string.Equals(variant.Sku, variantRequest.Sku.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (existing is null)
+            {
+                product.Variants.Add(Map(variantRequest));
+                continue;
+            }
+
+            existing.Size = variantRequest.Size.Trim();
+            existing.Color = variantRequest.Color.Trim();
+            existing.StockQuantity = variantRequest.StockQuantity;
         }
 
         await repository.SaveChangesAsync(cancellationToken);
@@ -161,7 +187,16 @@ public sealed class CatalogService(ICatalogRepository repository) : ICatalogServ
         }
 
         repository.RemoveProduct(product);
-        await repository.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await repository.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception)
+        {
+            // A variant still sits in a cart; the FK is restrict, so keep the row.
+            throw new DataConflictException(ApiMessages.ProductInUse, exception);
+        }
+
         return true;
     }
 

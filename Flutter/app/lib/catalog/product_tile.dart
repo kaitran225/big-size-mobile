@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/store_product.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
+import '../shared/theme/app_theme.dart';
 
 class ProductTile extends StatefulWidget {
   const ProductTile({super.key, required this.product, required this.onTap});
@@ -83,7 +84,7 @@ class _ProductTileState extends State<ProductTile> {
                           horizontal: 7,
                           vertical: 5,
                         ),
-                        color: Colors.black,
+                        color: AppColors.sale,
                         child: Text(
                           AppStrings.discountBadge(product.discountPercent),
                           style: const TextStyle(

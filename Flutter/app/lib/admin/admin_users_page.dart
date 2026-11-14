@@ -85,6 +85,64 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     }
   }
 
+  Future<void> _editUser(UserAccountSummary user) async {
+    final result = await showDialog<Map<String, Object?>>(
+      context: context,
+      builder: (_) => _EditUserDialog(user: user),
+    );
+    if (result == null) return;
+    try {
+      await widget.api.saveUser(
+        id: user.id,
+        displayName: result['displayName']! as String,
+        roles: (result['roles']! as List<dynamic>).cast<String>(),
+        newPassword: result['newPassword'] as String?,
+      );
+      if (!mounted) return;
+      await _load();
+    } catch (error) {
+      if (!mounted) return;
+      showAppErrorSnackBar(
+        context,
+        error,
+        fallback: AppStrings.errorRequestFailed,
+      );
+    }
+  }
+
+  Future<void> _deleteUser(UserAccountSummary user) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(AppStrings.deleteUserTitle),
+        content: Text(AppStrings.deleteUserBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(AppStrings.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(AppStrings.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await widget.api.deleteUser(user.id);
+      if (!mounted) return;
+      await _load();
+    } catch (error) {
+      if (!mounted) return;
+      showAppErrorSnackBar(
+        context,
+        error,
+        fallback: AppStrings.errorRequestFailed,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,6 +234,25 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               ],
             ),
             isThreeLine: true,
+            trailing: PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'edit') {
+                  _editUser(user);
+                } else {
+                  _deleteUser(user);
+                }
+              },
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Text(AppStrings.editUser),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Text(AppStrings.delete),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -290,6 +367,127 @@ class _StaffAccountDialogState extends State<_StaffAccountDialog> {
               'email': _email.text.trim(),
               'displayName': _displayName.text.trim(),
               'temporaryPassword': _password.text,
+            });
+          },
+          child: Text(AppStrings.save),
+        ),
+      ],
+    );
+  }
+}
+
+/// Edits display name, roles, and optionally resets the password.
+class _EditUserDialog extends StatefulWidget {
+  const _EditUserDialog({required this.user});
+
+  final UserAccountSummary user;
+
+  @override
+  State<_EditUserDialog> createState() => _EditUserDialogState();
+}
+
+class _EditUserDialogState extends State<_EditUserDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _displayName;
+  final _password = TextEditingController();
+  late final Set<String> _roles;
+
+  static const _roleOptions = ['Customer', 'StoreStaff', 'Admin'];
+
+  @override
+  void initState() {
+    super.initState();
+    _displayName = TextEditingController(text: widget.user.displayName);
+    _roles = widget.user.roles.toSet();
+  }
+
+  @override
+  void dispose() {
+    _displayName.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  String _roleLabel(String role) => switch (role) {
+    'Admin' => AppStrings.roleAdmin,
+    'StoreStaff' => AppStrings.roleStoreStaff,
+    _ => AppStrings.roleCustomer,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(AppStrings.editUser),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _displayName,
+                decoration: InputDecoration(
+                  labelText: AppStrings.staffDisplayNameLabel,
+                ),
+                validator: (value) => (value == null || value.trim().length < 2)
+                    ? AppStrings.required
+                    : null,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(AppStrings.rolesLabel),
+              for (final role in _roleOptions)
+                CheckboxListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(_roleLabel(role)),
+                  value: _roles.contains(role),
+                  onChanged: (checked) => setState(() {
+                    if (checked == true) {
+                      _roles.add(role);
+                    } else {
+                      _roles.remove(role);
+                    }
+                  }),
+                ),
+              const SizedBox(height: AppSpacing.sm),
+              TextFormField(
+                controller: _password,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: AppStrings.newPasswordLabel,
+                  helperText: AppStrings.staffTemporaryPasswordHelp,
+                  helperMaxLines: 2,
+                ),
+                validator: (value) {
+                  final text = value ?? '';
+                  if (text.isEmpty) return null;
+                  return text.length < 12
+                      ? AppStrings.staffTemporaryPasswordHelp
+                      : null;
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(AppStrings.cancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (!_formKey.currentState!.validate()) return;
+            if (_roles.isEmpty) {
+              showAppSnackBar(context, AppStrings.rolesLabel);
+              return;
+            }
+
+            Navigator.pop(context, <String, Object?>{
+              'displayName': _displayName.text.trim(),
+              'roles': _roles.toList(growable: false),
+              'newPassword': _password.text.isEmpty ? null : _password.text,
             });
           },
           child: Text(AppStrings.save),

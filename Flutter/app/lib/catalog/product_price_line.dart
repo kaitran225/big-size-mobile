@@ -3,6 +3,7 @@
 import '../models/store_product.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
+import '../shared/theme/app_theme.dart';
 
 /// Price row that shows the current price, the original price, and the
 /// discount for a product on sale.
@@ -19,7 +20,7 @@ class ProductPriceLine extends StatelessWidget {
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w800,
-          color: product.isOnSale ? const Color(0xFFB43B31) : Colors.black87,
+          color: product.isOnSale ? AppColors.sale : Colors.black87,
         ),
       ),
       if (product.isOnSale) ...[
@@ -35,7 +36,7 @@ class ProductPriceLine extends StatelessWidget {
         Text(
           AppStrings.discountText(product.discountPercent),
           style: const TextStyle(
-            color: Color(0xFFB43B31),
+            color: AppColors.sale,
             fontWeight: FontWeight.w700,
           ),
         ),

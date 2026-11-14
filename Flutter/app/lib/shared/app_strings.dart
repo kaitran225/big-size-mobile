@@ -547,13 +547,53 @@ abstract final class AppStrings {
       _text('No delivery address on this order.', 'Đơn hàng chưa có địa chỉ giao.');
 
   // Staff order review -----------------------------------------------------
-
   static String get orderReviewTitle => _text('Order review', 'Duyệt đơn hàng');
   static String get reviewOrder => _text('Review order', 'Xem đơn hàng');
   static String get reviewNote => _text(
     'Check the items, payment, and delivery address before you accept or reject this order.',
     'Kiểm tra sản phẩm, thanh toán và địa chỉ giao trước khi nhận hoặc từ chối đơn.',
   );
+
+  // Admin CRUD -------------------------------------------------------------
+
+  static String get newProduct => _text('New product', 'Sản phẩm mới');
+  static String get editProduct => _text('Edit product', 'Sửa sản phẩm');
+  static String get productNameLabel => _text('Product name', 'Tên sản phẩm');
+  static String get productDescriptionLabel =>
+      _text('Description', 'Mô tả');
+  static String get priceLabel => _text('Price', 'Giá');
+  static String get salePriceLabel => _text('Sale price', 'Giá khuyến mãi');
+  static String get currencyLabel => _text('Currency', 'Tiền tệ');
+  static String get imageUrlLabel => _text('Image URL', 'URL ảnh');
+  static String get categoryFieldLabel => _text('Category', 'Danh mục');
+  static String get activeLabel => _text('Visible in the store', 'Hiển thị trong cửa hàng');
+  static String get variantsLabel => _text('Variants', 'Biến thể');
+  static String get addVariant => _text('Add variant', 'Thêm biến thể');
+  static String get editVariant => _text('Edit variant', 'Sửa biến thể');
+  static String get skuLabel => _text('SKU', 'Mã SKU');
+  static String get sizeLabel => _text('Size', 'Kích cỡ');
+  static String get colorLabel => _text('Colour', 'Màu');
+  static String get stockLabel => _text('Stock', 'Tồn kho');
+  static String get noVariants => _text(
+    'No variants yet. Add at least one so the product can be bought.',
+    'Chưa có biến thể. Thêm ít nhất một biến thể để có thể bán.',
+  );
+  static String get deleteProductTitle =>
+      _text('Delete this product?', 'Xóa sản phẩm này?');
+  static String get deleteProductBody => _text(
+    'This removes the product and its variants. Products already in a cart cannot be deleted — mark them inactive instead.',
+    'Thao tác này xóa sản phẩm và các biến thể. Sản phẩm đang có trong giỏ không thể xóa — hãy chuyển sang ngừng bán.',
+  );
+  static String get editUser => _text('Edit account', 'Sửa tài khoản');
+  static String get deleteUserTitle =>
+      _text('Delete this account?', 'Xóa tài khoản này?');
+  static String get deleteUserBody => _text(
+    'The account is removed permanently. Accounts with orders cannot be deleted — remove their staff roles instead.',
+    'Tài khoản sẽ bị xóa vĩnh viễn. Tài khoản đã có đơn hàng không thể xóa — hãy bỏ vai trò nhân viên thay thế.',
+  );
+  static String get roleCustomer => _text('Customer', 'Khách hàng');
+  static String get roleStoreStaff => _text('Store staff', 'Nhân viên cửa hàng');
+  static String get roleAdmin => _text('Admin', 'Quản trị viên');
 
   // Storefront redesign ---------------------------------------------------
 

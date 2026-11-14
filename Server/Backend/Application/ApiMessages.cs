@@ -259,6 +259,9 @@ public static class ApiMessages
     public const string SummaryCreateStoreStaff = "Create a store staff account";
     public const string SummaryGetUsers =
         "List accounts with their roles for the administrator console";
+    public const string SummaryUpdateUser =
+        "Update an account's display name, roles, and optional password";
+    public const string SummaryDeleteUser = "Delete an account";
     public const string SummaryGetProducts = "List and filter catalogue products";
     public const string SummaryGetProduct = "Get a product and its variants by ID";
     public const string SummaryCreateProduct =
@@ -396,6 +399,19 @@ public static class ApiMessages
 
     public static string AccountRollbackFailed(string errors) =>
         $"Account setup failed and its incomplete user could not be removed: {errors}";
+
+    public const string InvalidRoleAssignment =
+        "Roles must be Admin, StoreStaff, or Customer.";
+    public const string CannotRemoveOwnAdminRole =
+        "You cannot remove your own Admin role.";
+    public const string CannotDeleteOwnAccount =
+        "You cannot delete the account you are signed in with.";
+    public const string AccountHasOrders =
+        "This account has orders, so it cannot be deleted. Remove its staff roles instead.";
+    public const string AccountDeleteFailed =
+        "The account could not be deleted.";
+    public const string ProductInUse =
+        "This product is in a customer's cart, so it cannot be deleted. Mark it inactive instead.";
 
     public static string QuantityNoLongerAvailable(string productName) =>
         $"{productName} is no longer available in the requested quantity. Update your cart and try again.";

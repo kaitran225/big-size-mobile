@@ -5,8 +5,9 @@ import '../services/store_api.dart';
 import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
 import '../shared/theme/app_theme.dart';
+import 'admin_product_editor_page.dart';
 
-/// Read-only inventory view: every product, its variants, and its stock.
+/// Inventory view with full product CRUD: list, create, edit, and delete.
 class AdminProductsPage extends StatefulWidget {
   const AdminProductsPage({super.key, required this.api});
 
@@ -59,6 +60,20 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
     }
   }
 
+  Future<void> _openEditor([StoreProduct? product]) async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => AdminProductEditorPage(
+          api: widget.api,
+          product: product,
+        ),
+      ),
+    );
+    if (changed == true && mounted) {
+      await _load();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,6 +86,11 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
             icon: const Icon(Icons.refresh),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _openEditor(),
+        icon: const Icon(Icons.add),
+        label: Text(AppStrings.newProduct),
       ),
       body: Column(
         children: [
@@ -110,14 +130,17 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
       itemCount: _products.length,
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
         final product = _products[index];
         final outOfStock = product.totalStock <= 0;
         return Card(
-          child: Padding(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppRadii.lg),
+            onTap: () => _openEditor(product),
+            child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,6 +196,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                   ],
                 ),
               ],
+            ),
             ),
           ),
         );

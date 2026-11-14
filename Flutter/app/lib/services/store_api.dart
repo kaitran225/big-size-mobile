@@ -540,6 +540,73 @@ class StoreApi {
         .toList(growable: false);
   }
 
+  /// Every category, for the admin product form.
+  Future<List<StoreCategory>> getAllCategories() async {
+    final response = await _send('GET', '/categories');
+    return (response as List<dynamic>)
+        .map((item) => StoreCategory.fromJson(item as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  /// Creates or replaces a product with its variants.
+  Future<StoreProduct> saveProduct({
+    String? id,
+    required String name,
+    String? description,
+    required double price,
+    double? salePrice,
+    required String currencyCode,
+    String? imageUrl,
+    required String categoryId,
+    required bool isActive,
+    required List<Map<String, Object?>> variants,
+  }) async {
+    final body = <String, Object?>{
+      'name': name,
+      'description': description,
+      'price': price,
+      'salePrice': salePrice,
+      'currencyCode': currencyCode,
+      'imageUrl': imageUrl,
+      'categoryId': categoryId,
+      'isActive': isActive,
+      'variants': variants,
+    };
+    final response = await _send(
+      id == null ? 'POST' : 'PUT',
+      id == null ? '/products' : '/products/$id',
+      body: body,
+    );
+    return StoreProduct.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<void> deleteProduct(String id) async {
+    await _send('DELETE', '/products/$id');
+  }
+
+  /// Creates or updates an account. Administrators only.
+  Future<UserAccountSummary> saveUser({
+    required String id,
+    required String displayName,
+    required List<String> roles,
+    String? newPassword,
+  }) async {
+    final response = await _send(
+      'PUT',
+      '/admin/users/$id',
+      body: {
+        'displayName': displayName,
+        'roles': roles,
+        if (newPassword != null && newPassword.isNotEmpty) 'newPassword': newPassword,
+      },
+    );
+    return UserAccountSummary.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<void> deleteUser(String id) async {
+    await _send('DELETE', '/admin/users/$id');
+  }
+
   Future<dynamic> _send(
     String method,
     String path, {
