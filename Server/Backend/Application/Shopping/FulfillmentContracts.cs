@@ -21,7 +21,8 @@ public sealed record StaffOrderResponse(
     string CustomerEmail,
     string? PaymentMethod,
     string? PaymentStatus,
-    IReadOnlyList<OrderItemResponse> Items);
+    IReadOnlyList<OrderItemResponse> Items,
+    ShipmentAddress? ShippingAddress);
 
 /// <summary>Request to advance an order through fulfilment.</summary>
 public sealed record FulfillmentActionRequest : IValidatableObject

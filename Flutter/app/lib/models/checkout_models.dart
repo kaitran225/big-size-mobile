@@ -1,3 +1,5 @@
+import 'store_product.dart';
+
 /// The stages a shopper moves through while checking out.
 enum CheckoutStep { contact, address, payment, done }
 
@@ -140,6 +142,8 @@ class StaffFulfillmentOrder {
     required this.itemCount,
     required this.updatedAt,
     required this.rejectionReason,
+    this.items = const [],
+    this.shippingAddress,
   });
 
   final String id;
@@ -154,6 +158,8 @@ class StaffFulfillmentOrder {
   final int itemCount;
   final DateTime updatedAt;
   final String? rejectionReason;
+  final List<OrderItem> items;
+  final ShipmentAddress? shippingAddress;
 
   factory StaffFulfillmentOrder.fromJson(Map<String, dynamic> json) =>
       StaffFulfillmentOrder(
@@ -169,6 +175,12 @@ class StaffFulfillmentOrder {
         itemCount: (json['items'] as List<dynamic>).length,
         updatedAt: DateTime.parse(json['updatedAt'] as String),
         rejectionReason: json['rejectionReason'] as String?,
+        items: (json['items'] as List<dynamic>? ?? const [])
+            .map((item) => OrderItem.fromJson(item as Map<String, dynamic>))
+            .toList(growable: false),
+        shippingAddress: ShipmentAddress.fromJson(
+          json['shippingAddress'] as Map<String, dynamic>?,
+        ),
       );
 
   bool get isDelivered => status.toLowerCase() == 'delivered';

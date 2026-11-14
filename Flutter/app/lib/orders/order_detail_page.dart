@@ -9,6 +9,7 @@ import '../shared/formatters.dart';
 import '../shared/theme/app_theme.dart';
 import 'delivery_tracking_map.dart';
 import 'order_tracker.dart';
+import 'shipment_tracker_page.dart';
 
 /// Order page with the shipment tracker for one placed order.
 class OrderDetailPage extends StatefulWidget {
@@ -159,7 +160,11 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: AppSpacing.md),
-            DeliveryTrackingMap(stage: _shipment.stage),
+            DeliveryTrackingMap(
+              stage: _shipment.stage,
+              destinationLatitude: order.shippingAddress?.latitude,
+              destinationLongitude: order.shippingAddress?.longitude,
+            ),
             const SizedBox(height: AppSpacing.md),
             Card(
               child: Padding(
@@ -187,6 +192,22 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     ShipmentTracker(stage: _shipment.stage),
                   ],
                 ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => ShipmentTrackerPage(
+                      api: widget.api,
+                      order: _order,
+                    ),
+                  ),
+                ),
+                icon: const Icon(Icons.map_outlined),
+                label: Text(AppStrings.trackShipment),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),

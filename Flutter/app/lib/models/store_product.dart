@@ -355,6 +355,7 @@ class CustomerOrder {
     required this.createdAt,
     required this.updatedAt,
     required this.items,
+    this.shippingAddress,
   });
 
   final String id;
@@ -368,6 +369,7 @@ class CustomerOrder {
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<OrderItem> items;
+  final ShipmentAddress? shippingAddress;
 
   factory CustomerOrder.fromJson(Map<String, dynamic> json) {
     final created = DateTime.parse(json['createdAt'] as String);
@@ -387,6 +389,9 @@ class CustomerOrder {
     items: (json['items'] as List<dynamic>)
         .map((item) => OrderItem.fromJson(item as Map<String, dynamic>))
         .toList(growable: false),
+    shippingAddress: ShipmentAddress.fromJson(
+      json['shippingAddress'] as Map<String, dynamic>?,
+    ),
   );
   }
 
@@ -402,7 +407,58 @@ class CustomerOrder {
     createdAt: createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     items: items,
+    shippingAddress: shippingAddress,
   );
+}
+
+/// Delivery address captured at checkout, with the coordinates the map needs.
+class ShipmentAddress {
+  const ShipmentAddress({
+    this.recipientName,
+    this.phoneNumber,
+    this.addressLine,
+    this.city,
+    this.province,
+    this.postalCode,
+    this.countryCode,
+    this.latitude,
+    this.longitude,
+  });
+
+  final String? recipientName;
+  final String? phoneNumber;
+  final String? addressLine;
+  final String? city;
+  final String? province;
+  final String? postalCode;
+  final String? countryCode;
+  final double? latitude;
+  final double? longitude;
+
+  bool get hasCoordinates => latitude != null && longitude != null;
+
+  String get formatted => [
+    if (addressLine != null && addressLine!.isNotEmpty) addressLine,
+    if (city != null && city!.isNotEmpty) city,
+    if (province != null && province!.isNotEmpty) province,
+    if (postalCode != null && postalCode!.isNotEmpty) postalCode,
+    if (countryCode != null && countryCode!.isNotEmpty) countryCode,
+  ].join(', ');
+
+  static ShipmentAddress? fromJson(Map<String, dynamic>? json) {
+    if (json == null) return null;
+    return ShipmentAddress(
+      recipientName: json['recipientName'] as String?,
+      phoneNumber: json['phoneNumber'] as String?,
+      addressLine: json['addressLine'] as String?,
+      city: json['city'] as String?,
+      province: json['province'] as String?,
+      postalCode: json['postalCode'] as String?,
+      countryCode: json['countryCode'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+    );
+  }
 }
 
 class StoreNotification {

@@ -79,4 +79,5 @@ public sealed record OrderResponse(
     string? RejectionReason,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    IReadOnlyList<OrderItemResponse> Items);
+    IReadOnlyList<OrderItemResponse> Items,
+    ShipmentAddress? ShippingAddress);

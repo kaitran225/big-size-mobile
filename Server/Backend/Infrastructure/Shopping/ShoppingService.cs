@@ -384,5 +384,6 @@ internal sealed class ShoppingService(
                 item.Color,
                 item.Quantity,
                 item.UnitPrice,
-                item.LineTotal)).ToArray());
+                item.LineTotal)).ToArray(),
+            ShipmentAddressSnapshot.Read(order.ShippingAddressSnapshot));
 }

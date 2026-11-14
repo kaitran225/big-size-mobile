@@ -8,6 +8,7 @@ import '../shared/app_strings.dart';
 import '../shared/formatters.dart';
 import '../shared/theme/app_theme.dart';
 import '../shared/widgets/app_snack_bar.dart';
+import 'staff_order_review_page.dart';
 
 /// Staff view of every order in the fulfilment queue.
 class ShipmentBoardPage extends StatefulWidget {
@@ -71,6 +72,18 @@ class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
     if (action == null) return;
     if (action == 'accept' && !order.canAccept) return;
     await _applyAction(order, action);
+  }
+
+  /// Opens the full review so staff can see items, payment, and address first.
+  Future<void> _review(StaffFulfillmentOrder order) async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => StaffOrderReviewPage(api: widget.api, order: order),
+      ),
+    );
+    if (changed == true && mounted) {
+      await _load();
+    }
   }
 
   Future<void> _reject(StaffFulfillmentOrder order) async {
@@ -249,6 +262,7 @@ class _ShipmentBoardPageState extends State<ShipmentBoardPage> {
                   busy: _activeOrderActions.contains(_orders[index - 1].id),
                   onAdvance: () => _advance(_orders[index - 1]),
                   onReject: () => _reject(_orders[index - 1]),
+                  onReview: () => _review(_orders[index - 1]),
                 );
               },
             ),
@@ -262,12 +276,14 @@ class _ShipmentCard extends StatelessWidget {
     required this.busy,
     required this.onAdvance,
     required this.onReject,
+    required this.onReview,
   });
 
   final StaffFulfillmentOrder order;
   final bool busy;
   final VoidCallback onAdvance;
   final VoidCallback onReject;
+  final VoidCallback onReview;
 
   @override
   Widget build(BuildContext context) {
@@ -368,29 +384,34 @@ class _ShipmentCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.lg),
             ShipmentTracker(stage: stage),
             const SizedBox(height: AppSpacing.lg),
-            Row(
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: [
-                if (action != null)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                onPressed: busy || (action == 'accept' && !order.canAccept)
-                    ? null
-                    : onAdvance,
-                icon: const Icon(Icons.trending_up),
-                label: Text(
-                  order.isDelivered ? AppStrings.stageDelivered : actionLabel,
+                OutlinedButton.icon(
+                  onPressed: busy ? null : onReview,
+                  icon: const Icon(Icons.visibility_outlined),
+                  label: Text(AppStrings.reviewOrder),
                 ),
+                if (action != null)
+                  OutlinedButton.icon(
+                    onPressed:
+                        busy || (action == 'accept' && !order.canAccept)
+                        ? null
+                        : onAdvance,
+                    icon: const Icon(Icons.trending_up),
+                    label: Text(
+                      order.isDelivered
+                          ? AppStrings.stageDelivered
+                          : actionLabel,
                     ),
                   ),
-                if (action == null) const Spacer(),
-                if (order.canReject) ...[
-                  const SizedBox(width: AppSpacing.sm),
+                if (order.canReject)
                   OutlinedButton.icon(
                     onPressed: busy ? null : onReject,
                     icon: const Icon(Icons.block_outlined),
                     label: Text(AppStrings.fulfillmentReject),
                   ),
-                ],
               ],
             ),
           ],

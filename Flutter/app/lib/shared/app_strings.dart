@@ -530,6 +530,31 @@ abstract final class AppStrings {
   static String get inventoryEmpty =>
       _text('No products returned.', 'Không có sản phẩm nào.');
 
+  // Shipment tracking ------------------------------------------------------
+
+  static String get shipmentTrackerTitle =>
+      _text('Shipment tracker', 'Theo dõi vận chuyển');
+  static String get trackShipment =>
+      _text('Track shipment', 'Theo dõi vận chuyển');
+  static String get deliveryAddressTitle =>
+      _text('Delivery address', 'Địa chỉ giao hàng');
+  static String get noMapPoint => _text(
+    'This address has no map point saved, so the route cannot be drawn.',
+    'Địa chỉ này chưa lưu điểm bản đồ nên không thể vẽ tuyến đường.',
+  );
+  static String get mapPointLabel => _text('Map point', 'Điểm bản đồ');
+  static String get noSavedContact =>
+      _text('No delivery address on this order.', 'Đơn hàng chưa có địa chỉ giao.');
+
+  // Staff order review -----------------------------------------------------
+
+  static String get orderReviewTitle => _text('Order review', 'Duyệt đơn hàng');
+  static String get reviewOrder => _text('Review order', 'Xem đơn hàng');
+  static String get reviewNote => _text(
+    'Check the items, payment, and delivery address before you accept or reject this order.',
+    'Kiểm tra sản phẩm, thanh toán và địa chỉ giao trước khi nhận hoặc từ chối đơn.',
+  );
+
   // Storefront redesign ---------------------------------------------------
 
   static String get promoHeadline => _text(
