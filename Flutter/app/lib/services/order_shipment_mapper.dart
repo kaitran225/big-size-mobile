@@ -8,7 +8,8 @@ abstract final class OrderShipmentMapper {
   ) {
     'confirmed' => ShipmentStage.confirmed,
     'processing' => ShipmentStage.packed,
-    'shipped' => ShipmentStage.outForDelivery,
+    'shipped' => ShipmentStage.shipped,
+    'outfordelivery' => ShipmentStage.outForDelivery,
     'delivered' => ShipmentStage.delivered,
     _ => ShipmentStage.placed,
   };

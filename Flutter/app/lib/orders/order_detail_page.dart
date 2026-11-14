@@ -113,7 +113,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                         ),
                       ),
                       _StatusChip(
-                        label: order.status,
+                        label: AppStrings.orderStatus(order.status),
                         rejected: order.rejectionReason != null,
                       ),
                     ],

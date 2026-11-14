@@ -75,6 +75,24 @@ class _AddressesPageState extends State<AddressesPage> {
   }
 
   Future<void> _deleteAddress(String id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(AppStrings.deleteAddressTitle),
+        content: Text(AppStrings.deleteAddressBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(AppStrings.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(AppStrings.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     try {
       await widget.api.deleteAddress(id);
       await _load();

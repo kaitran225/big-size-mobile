@@ -369,11 +369,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return (subtotal * _eurToVndRate).round();
   }
 
-  String _sandboxQrUrl(int amountVnd) {
+  String _sandboxQrUrl(
+    int amountVnd,
+    String? content, {
+    String? bankBin,
+    String? accountNumber,
+    String? accountHolder,
+  }) {
     return Uri.https(
       'img.vietqr.io',
-      'image/$_sandboxBankBin-$_sandboxAccountNumber-compact2.png',
-      {'accountName': _sandboxAccountHolder, 'amount': '$amountVnd'},
+      'image/${bankBin ?? _sandboxBankBin}-${accountNumber ?? _sandboxAccountNumber}-compact2.png',
+      {
+        'accountName': accountHolder ?? _sandboxAccountHolder,
+        'amount': '$amountVnd',
+        if (content != null && content.isNotEmpty) 'addInfo': content,
+      },
     ).toString();
   }
 
@@ -943,8 +953,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
         RadioGroup<PaymentMethod>(
           groupValue: _method,
           onChanged: (method) {
-            if (method == null) return;
-            setState(() => _method = method);
+            if (method == null || method == _method) return;
+            setState(() {
+              _method = method;
+              _awaitingConfirmation = false;
+              _paymentError = null;
+            });
           },
           child: Column(
             children: [
@@ -1007,21 +1021,55 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   Widget _buildBankAccountCard() {
     final theme = Theme.of(context);
-    final amountVnd = _scanAmountVnd(_cart);
+    final payment = _payment;
+    final session = payment != null && payment.awaitsTransfer ? payment : null;
+    final amountVnd = session != null && session.currencyCode == 'VND'
+        ? session.amount.round()
+        : _scanAmountVnd(_cart);
+    final content = session?.checkoutFields['transferContent'];
     return _sectionCard(
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(AppStrings.paymentBank, style: theme.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.md),
-          Center(child: sandboxQrImage(_sandboxQrUrl(amountVnd))),
-          const SizedBox(height: AppSpacing.md),
-          Center(
-            child: Text(
-              formatPrice(amountVnd.toDouble(), 'VND'),
-              style: theme.textTheme.titleMedium,
+          if (session != null) ...[
+            Center(
+              child: sandboxQrImage(
+                _sandboxQrUrl(
+                  amountVnd,
+                  content,
+                  bankBin: session.checkoutFields['bankBin'],
+                  accountNumber: session.checkoutFields['accountNumber'],
+                  accountHolder: session.checkoutFields['accountHolderName'],
+                ),
+              ),
             ),
-          ),
+            const SizedBox(height: AppSpacing.md),
+            Center(
+              child: Text(
+                formatPrice(amountVnd.toDouble(), 'VND'),
+                style: theme.textTheme.titleMedium,
+              ),
+            ),
+            if (content != null && content.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Center(
+                child: Text(
+                  '${AppStrings.transferContentLabel}: $content',
+                  style: theme.textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ] else ...[
+            Text(
+              AppStrings.bankDetailsAfterOrder(
+                formatPrice(amountVnd.toDouble(), 'VND'),
+              ),
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
         ],
       ),
     );

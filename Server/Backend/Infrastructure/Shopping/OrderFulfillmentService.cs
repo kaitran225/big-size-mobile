@@ -36,7 +36,9 @@ internal sealed class OrderFulfillmentService(
 
         if (!includeDelivered)
         {
-            query = query.Where(order => order.Status != "Delivered");
+            // Closed orders would otherwise pile up on the board after every rejection.
+            query = query.Where(order =>
+                order.Status != "Delivered" && order.Status != "Cancelled");
         }
 
         var totalCount = await query.CountAsync(cancellationToken);

@@ -45,6 +45,13 @@ abstract final class AppStrings {
   // Actions ---------------------------------------------------------------
 
   static String get cancel => _text('Cancel', 'Hủy');
+  static String get delete => _text('Delete', 'Xóa');
+  static String get deleteAddressTitle =>
+      _text('Delete this address?', 'Xóa địa chỉ này?');
+  static String get deleteAddressBody => _text(
+    'Orders already placed keep their delivery snapshot. This address will no longer be selectable at checkout.',
+    'Các đơn đã đặt vẫn giữ địa chỉ giao hàng. Địa chỉ này sẽ không còn chọn được khi thanh toán.',
+  );
   static String get save => _text('Save', 'Lưu');
   static String get later => _text('Later', 'Để sau');
   static String get tryAgain => _text('Try again', 'Thử lại');
@@ -280,6 +287,10 @@ abstract final class AppStrings {
   static String get paymentBankSubtitle => _text(
     'Bank Hub sandbox transfer. No real money is charged.',
     'Chuyển khoản thử trên Bank Hub sandbox. Không phát sinh tiền thật.',
+  );
+  static String bankDetailsAfterOrder(String amount) => _text(
+    'Bank transfer details and the payment QR for $amount appear right after you place the order, with the order number as the transfer content.',
+    'Thông tin chuyển khoản và mã QR cho $amount sẽ hiện ngay sau khi bạn đặt hàng, kèm mã đơn làm nội dung chuyển khoản.',
   );
   static String get paymentGateway =>
       _text('SePay card sandbox', 'Thẻ SePay sandbox');
